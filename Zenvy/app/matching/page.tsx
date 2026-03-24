@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
 import SearchInput from '@/app/components/SearchInput';
+import ConnectButton from './ConnectButton';
 
 // Extracted Hardcoded Data
 const PARTNERS = [
@@ -105,7 +106,7 @@ function PartnerCard({ partner }: { partner: any }) {
         ) : (
           <>
             <Link href={`/chat/personal?name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-primary-container text-on-primary-container rounded-full font-bold text-xs hover:bg-primary hover:text-white transition-colors text-center inline-block">DM</Link>
-            <button className="flex-1 py-3 bg-surface-container text-on-surface-variant rounded-full font-bold text-xs hover:bg-primary-fixed-dim hover:text-on-primary-fixed transition-colors">Add to Group</button>
+            <ConnectButton partnerId={partner.id} buttonText="Add to Group" />
           </>
         )}
       </div>

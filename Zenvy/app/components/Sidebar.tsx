@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import CreateGroupModal from './CreateGroupModal';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -14,7 +15,6 @@ export default function Sidebar() {
     { href: '/matching', icon: 'person_search', label: 'Partner Matching' },
     { href: '/profile', icon: 'account_circle', label: 'Profile' },
     { href: '/scheduling', icon: 'calendar_today', label: 'Scheduling' },
-    { href: '/admin', icon: 'admin_panel_settings', label: 'Admin' },
   ];
 
   return (
@@ -26,7 +26,7 @@ export default function Sidebar() {
             <span className="material-symbols-outlined">school</span>
           </div>
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
-            <h1 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">Study Sanctuary</h1>
+            <h1 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">Zenvy</h1>
             <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mt-1">Academic Commons</p>
           </div>
         </div>
@@ -55,12 +55,13 @@ export default function Sidebar() {
           })}
         </nav>
         
-        {/* Create Group Button */}
-        <div className="mt-auto hidden md:flex pb-4 justify-center">
-          <button className="h-12 w-12 group-hover:w-full rounded-full overflow-hidden bg-gradient-to-r from-primary to-secondary text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center">
-            <span className="material-symbols-outlined flex-shrink-0">add</span>
-            <span className="opacity-0 w-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 whitespace-nowrap">Create Group</span>
-          </button>
+        <div className="mt-auto hidden md:flex pb-4 justify-center w-full px-4">
+          <CreateGroupModal className="w-full flex justify-center">
+            <button className="h-12 w-12 group-hover:w-full rounded-full overflow-hidden bg-gradient-to-r from-primary to-secondary text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center">
+              <span className="material-symbols-outlined flex-shrink-0">add</span>
+              <span className="opacity-0 w-0 group-hover:w-auto group-hover:opacity-100 group-hover:ml-2 transition-all duration-300 whitespace-nowrap">Create Group</span>
+            </button>
+          </CreateGroupModal>
         </div>
       </div>
     </aside>

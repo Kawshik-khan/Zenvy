@@ -6,7 +6,7 @@ export default function Home() {
       {/* TopNavBar */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-sm dark:shadow-none">
         <div className="flex justify-between items-center h-20 px-4 md:px-8 max-w-7xl mx-auto">
-          <div className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-['Inter']">Study Sanctuary</div>
+          <div className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 font-['Inter']">Zenvy</div>
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
             <a className="text-indigo-600 dark:text-indigo-400 font-semibold border-b-2 border-indigo-600 transition-colors" href="#">Find Partners</a>
@@ -37,7 +37,7 @@ export default function Home() {
               Find Your Perfect <br className="hidden md:block"/> <span className="text-gradient">Study Partner</span>
             </h1>
             <p className="text-xl text-on-surface-variant leading-relaxed max-w-xl">
-              Unlock the power of collaborative learning. Study Sanctuary connects you with peers who share your goals, schedule, and academic drive.
+              Unlock the power of collaborative learning. Zenvy connects you with peers who share your goals, schedule, and academic drive.
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <Link href="/register" className="inline-block bg-gradient-to-r from-primary to-secondary text-on-primary px-8 py-4 md:px-10 md:py-5 rounded-full text-base md:text-lg font-bold shadow-xl shadow-primary/25 hover:scale-[1.03] transition-transform">Get Started</Link>
@@ -196,7 +196,7 @@ export default function Home() {
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
               </div>
               <p className="text-lg italic text-on-surface-variant mb-8 leading-relaxed">
-                "I found my entire research group through Study Sanctuary. The smart matching accurately paired me with people who have the same drive for excellence."
+                "I found my entire research group through Zenvy. The smart matching accurately paired me with people who have the same drive for excellence."
               </p>
               <div className="flex items-center gap-4">
                 <img className="w-12 h-12 rounded-full object-cover" alt="Chloe, Engineering Student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpLpt_v7R-D0yP4oLg8YVmqk790bQBf7ev4KUxO4BO3hMblN-Au-Jnqi6AXIKvktffP64Qf7GJnteDK4yBLUQzgbhH-CJmR5Ng77aoESfe5OjgdHxnx9D2z9qCa7OnTb86GlDqwc72VLzoVMzHQAyDm8jMsWXNDK0NT0M78VA6kItXvNk0v9AHiHSx-4JHj6YGaY_0E0CvF-6qnjBWPEhNbHm3kOF8WICO_JoB2vP2nUuFZcMht8CVpU0D8wrXlNVtHd9m4Uo42PI" />
@@ -256,9 +256,9 @@ export default function Home() {
       <footer className="w-full rounded-t-[2rem] md:rounded-t-[3rem] mt-20 bg-slate-50 dark:bg-slate-950 tonal shift bg-slate-100 dark:bg-slate-900">
         <div className="w-full py-12 md:py-16 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left max-w-7xl mx-auto">
           <div className="space-y-4">
-            <div className="text-lg font-bold text-slate-900 dark:text-slate-100">Study Sanctuary</div>
+            <div className="text-lg font-bold text-slate-900 dark:text-slate-100">Zenvy</div>
             <p className="text-sm font-['Inter'] text-slate-500 dark:text-slate-400 max-w-xs">
-              &copy; 2024 Study Sanctuary. The Digital Commons for Academic Excellence.
+              &copy; 2024 Zenvy. The Digital Commons for Academic Excellence.
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-8">

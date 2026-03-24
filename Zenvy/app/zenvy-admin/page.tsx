@@ -7,7 +7,7 @@ import Sidebar from '@/app/components/Sidebar';
 
 export default async function AdminDashboardPage() {
   const session = await auth();
-  if (!session?.user?.email) redirect('/login');
+  if (!session?.user?.email) redirect('/zenvy-admin/login');
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },

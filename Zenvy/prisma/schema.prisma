@@ -23,7 +23,19 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   profile       Profile?
-  messages      Message[]
+  messages           Message[]
+  
+  // New Relations for UI Logic
+  administeredGroups StudyGroup[]    @relation("GroupAdmin")
+  groupMemberships   GroupMember[]
+  createdEvents      Event[]         @relation("EventCreator")
+  eventRSVPs         EventAttendee[]
+  groupMessages      GroupMessage[]
+  notifications      Notification[]  @relation("UserNotifications")
+  blocks             UserBlock[]     @relation("UserBlocking")
+  blockedBy          UserBlock[]     @relation("UserBlocked")
+  reports            Report[]        @relation("UserReporting")
+  reportedBy         Report[]        @relation("UserReported")
 }
 
 model Profile {
@@ -76,5 +88,105 @@ model Message {
   sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   chatRoomId String
   chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+// ============================================
+// NEW MODELS FOR UI LOGIC & SUPABASE MIGRATION
+// ============================================
+
+model StudyGroup {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  subject     String?
+  avatar      String?
+  adminId     String
+  admin       User           @relation("GroupAdmin", fields: [adminId], references: [id])
+  members     GroupMember[]
+  messages    GroupMessage[]
+  events      Event[]
+  createdAt   DateTime       @default(now())
+}
+
+model GroupMember {
+  id        String     @id @default(cuid())
+  groupId   String
+  userId    String
+  role      String     @default("MEMBER") // ADMIN, MEMBER
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime   @default(now())
+  
+  @@unique([groupId, userId])
+}
+
+model Event {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  type        String          @default("VIRTUAL")
+  creatorId   String
+  creator     User            @relation("EventCreator", fields: [creatorId], references: [id])
+  groupId     String?
+  group       StudyGroup?     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  attendees   EventAttendee[]
+  createdAt   DateTime        @default(now())
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String   @default("GOING") // GOING, MAYBE, DECLINED
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, userId])
+}
+
+model GroupMessage {
+  id        String     @id @default(cuid())
+  content   String
+  senderId  String
+  groupId   String
+  sender    User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // MATCH_REQUEST, GROUP_INVITE, SYSTEM
+  content   String
+  read      Boolean  @default(false)
+  relatedId String?  // ID of the group/match
+  createdAt DateTime @default(now())
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("UserBlocking", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("UserBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([blockerId, blockedId])
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   User     @relation("UserReporting", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedId String
+  reported   User     @relation("UserReported", fields: [reportedId], references: [id], onDelete: Cascade)
+  reason     String
+  status     String   @default("PENDING")
   createdAt  DateTime @default(now())
 }

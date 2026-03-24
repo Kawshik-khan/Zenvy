@@ -12,7 +12,7 @@ export default function RegisterPage() {
       {/* Top Navigation */}
       <nav className="w-full top-0 z-40 no-border bg-[#f5f7f9] dark:bg-slate-950">
         <div className="flex justify-between items-center px-4 md:px-8 py-4 md:py-6 max-w-[1440px] mx-auto">
-          <div className="text-2xl font-bold tracking-tighter text-[#2c2f31] dark:text-slate-100 font-['Inter']">Academic Nexus</div>
+          <div className="text-2xl font-bold tracking-tighter text-[#2c2f31] dark:text-slate-100 font-['Inter']">Zenvy</div>
           <div className="flex items-center gap-8">
             <Link className="text-[#595c5e] dark:text-slate-400 font-semibold hover:text-[#4647d3] dark:hover:text-[#9396ff] transition-colors" href="/login">Sign In</Link>
           </div>
@@ -64,7 +64,7 @@ export default function RegisterPage() {
           {/* Welcome Header */}
           <header className="mb-8 md:mb-12">
             <h1 className="text-3xl md:text-[2.75rem] font-bold text-on-surface tracking-tighter leading-tight mb-4">Create your account.</h1>
-            <p className="text-on-surface-variant text-base md:text-lg max-w-xl">Join Academic Nexus to find study partners, share resources, and excel in your university journey.</p>
+            <p className="text-on-surface-variant text-base md:text-lg max-w-xl">Join Zenvy to find study partners, share resources, and excel in your university journey.</p>
           </header>
 
           {/* Registration Form Card */}
@@ -152,7 +152,7 @@ export default function RegisterPage() {
           </section>
 
           <footer className="mt-24 pt-12 border-t border-outline-variant/10 text-on-surface-variant text-sm flex justify-between items-center">
-            <p>&copy; 2024 Academic Nexus. All rights reserved.</p>
+            <p>&copy; 2024 Zenvy. All rights reserved.</p>
             <div className="flex gap-8">
               <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
               <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>

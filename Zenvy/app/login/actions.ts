@@ -6,12 +6,13 @@ import { AuthError } from "next-auth";
 export async function login(prevState: string | undefined, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const callbackUrl = formData.get("callbackUrl") as string | null;
 
   try {
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/dashboard",
+      redirectTo: callbackUrl || "/dashboard",
     });
   } catch (error) {
     if (error instanceof AuthError) {

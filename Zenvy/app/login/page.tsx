@@ -13,7 +13,7 @@ export default function LoginPage() {
       <header className="bg-[#f5f7f9] dark:bg-slate-950 z-50">
         <nav className="flex justify-between items-center w-full px-6 md:px-12 py-4 md:py-6 max-w-[1440px] mx-auto">
           <div className="text-2xl font-bold tracking-tighter text-[#2c2f31] dark:text-slate-100">
-            Academic Nexus
+            Zenvy
           </div>
           <div className="hidden md:flex items-center gap-8 font-['Inter'] text-sm font-medium tracking-tight">
             <Link className="text-[#595c5e] dark:text-slate-400 hover:text-[#4647d3] transition-colors duration-200" href="/">Explore</Link>
@@ -110,7 +110,7 @@ export default function LoginPage() {
       <footer className="bg-[#f5f7f9] dark:bg-slate-950 border-t border-[#abadaf]/15">
         <div className="w-full py-8 md:py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center gap-4 max-w-[1440px] mx-auto text-center md:text-left">
           <div className="font-['Inter'] text-xs font-normal text-[#595c5e] dark:text-slate-500">
-            &copy; 2024 Academic Nexus. The Digital Commons for modern scholars.
+            &copy; 2024 Zenvy. The Digital Commons for modern scholars.
           </div>
           <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-8 font-['Inter'] text-xs font-normal text-[#595c5e]">
             <a className="hover:text-[#4647d3] dark:hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
