@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chat Rooms | Study Sanctuary</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-dim": "#3939c7",
+                        "primary": "#4647d3",
+                        "inverse-surface": "#0b0f10",
+                        "on-background": "#2c2f31",
+                        "on-tertiary-container": "#63054a",
+                        "inverse-primary": "#8083ff",
+                        "primary-fixed": "#9396ff",
+                        "on-error-container": "#510017",
+                        "on-secondary": "#f8f0ff",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f5f7f9",
+                        "secondary-fixed-dim": "#ceb9ff",
+                        "on-secondary-container": "#5517bf",
+                        "secondary": "#6a37d4",
+                        "error": "#b41340",
+                        "on-primary-container": "#0a0081",
+                        "tertiary-fixed-dim": "#ef81c4",
+                        "on-surface-variant": "#595c5e",
+                        "secondary-fixed": "#dac9ff",
+                        "surface": "#f5f7f9",
+                        "on-error": "#ffefef",
+                        "on-secondary-fixed-variant": "#5f28c8",
+                        "error-container": "#f74b6d",
+                        "on-tertiary-fixed-variant": "#6e1354",
+                        "surface-dim": "#d0d5d8",
+                        "tertiary": "#963776",
+                        "on-tertiary": "#ffeef4",
+                        "outline": "#747779",
+                        "surface-container": "#e5e9eb",
+                        "primary-container": "#9396ff",
+                        "outline-variant": "#abadaf",
+                        "surface-container-high": "#dfe3e6",
+                        "primary-fixed-dim": "#8387ff",
+                        "on-tertiary-fixed": "#3b002b",
+                        "surface-tint": "#4647d3",
+                        "secondary-dim": "#5e26c7",
+                        "on-surface": "#2c2f31",
+                        "tertiary-fixed": "#ff8ed2",
+                        "surface-container-highest": "#d9dde0",
+                        "surface-container-low": "#eef1f3",
+                        "tertiary-dim": "#882a69",
+                        "surface-bright": "#f5f7f9",
+                        "tertiary-container": "#ff8ed2",
+                        "on-primary-fixed": "#000000",
+                        "error-dim": "#a70138",
+                        "inverse-on-surface": "#9a9d9f",
+                        "on-primary": "#f4f1ff",
+                        "on-secondary-fixed": "#40009b",
+                        "on-primary-fixed-variant": "#0e009d",
+                        "secondary-container": "#dac9ff",
+                        "surface-variant": "#d9dde0"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden">
+<!-- SideNavBar (Shared Component JSON) -->
+<aside class="fixed left-0 top-0 h-full flex flex-col h-screen w-72 border-none bg-slate-100 dark:bg-slate-900 z-50">
+<div class="p-8">
+<h1 class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white mb-1">Study Sanctuary</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium tracking-tight uppercase">Academic Commons</p>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-hide">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Study Groups -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Study Groups</span>
+</a>
+<!-- Chat Rooms (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-3 text-indigo-700 dark:text-indigo-300 relative before:absolute before:left-0 before:w-1 before:h-6 before:bg-indigo-600 before:rounded-r-full font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span>Chat Rooms</span>
+</a>
+<!-- Partner Matching -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span>Partner Matching</span>
+</a>
+<!-- Profile -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span>Profile</span>
+</a>
+<!-- Scheduling -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span>Scheduling</span>
+</a>
+<!-- Admin -->
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Admin</span>
+</a>
+</nav>
+<div class="p-6">
+<button class="w-full py-4 bg-primary text-on-primary rounded-full font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>Create Group</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-72 flex flex-col h-screen">
+<!-- TopNavBar (Shared Component JSON) -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-sm">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Search conversations or groups..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-slate-500">notifications</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-slate-500">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3 border-l pl-6 border-slate-200 dark:border-slate-800">
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface">Alex Rivera</p>
+<p class="text-[10px] text-on-surface-variant">Computer Science Senior</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Close up portrait of a male student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkn6V3k8qkVkUtSsbiy42uBavrxGvV9YacXeX5RJ_O7VaK3mgVSsrTnUohEE09M88_8YkFkgksltEDmA-XkLWVQQaUl-mja0joQJjBW_j84Zs3Scn1b2Ph2ALM6VnC5cjRPW-Ebwf1AAcQx1Kux04reTSmpb-AXgVkOtUjhidjrM961avkYq228DGyoiWoasuhccjhUULUlmmC_4p-Grjs8V1bLZ9Ue1kPW2HnXCQt9V3GKxh2YQZDMCha2w6sCWSmHfNxDcEuw0Q"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Chat Ecosystem (Slack-like 3-Column) -->
+<section class="flex-1 flex overflow-hidden p-6 gap-6">
+<!-- Column 1: Channel/Group List -->
+<div class="w-72 bg-surface-container-low rounded-lg flex flex-col overflow-hidden">
+<div class="p-5 border-b border-outline-variant/10">
+<h2 class="text-xs font-black uppercase tracking-widest text-on-surface-variant">My Channels</h2>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<!-- Active Channel -->
+<button class="w-full flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-DEFAULT text-left font-medium text-sm transition-all">
+<span class="text-primary-dim">#</span>
+<span>calculus-exam-prep</span>
+<span class="ml-auto w-2 h-2 rounded-full bg-primary"></span>
+</button>
+<!-- Inactive Channels -->
+<button class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container text-on-surface rounded-DEFAULT text-left text-sm transition-all group">
+<span class="text-on-surface-variant group-hover:text-on-surface">#</span>
+<span class="flex-1 truncate">data-structures-project</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container text-on-surface rounded-DEFAULT text-left text-sm transition-all group">
+<span class="text-on-surface-variant group-hover:text-on-surface">#</span>
+<span>intro-to-psychology</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container text-on-surface rounded-DEFAULT text-left text-sm transition-all group">
+<span class="text-on-surface-variant group-hover:text-on-surface">#</span>
+<span>machine-learning-study</span>
+</button>
+<div class="pt-6 pb-2 px-4">
+<h2 class="text-xs font-black uppercase tracking-widest text-on-surface-variant">Direct Messages</h2>
+</div>
+<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-container text-on-surface rounded-DEFAULT text-left text-sm transition-all">
+<div class="relative">
+<img alt="Sarah J." class="w-8 h-8 rounded-full" data-alt="Avatar of female student user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyGmC4Y1asKxlNbn4Fbl8e6rm_yNeAap7oS87kGQFHOjrTfrTRir2Z_zm2A94SIPIZU13Sm8ahoF3WeNxbJ0bcdQ-WFoAMIJkK5kErwJ9wIf9Ma96PxtbElbxzJPQQ6jo9G5lGsJTBrDrllPfpUkmgTnb3_cswzDKAXKt3E6ZUqUNtzdJVQTDTRkeJdBtLr7bkJALoPn8DRzCs5785kKVVOam9qlTnMuvAiEHv3FD-qtP2xT0Q21tYQIBh6JGo7Q6W7doc2mxaMKo"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface-container-low"></span>
+</div>
+<span>Sarah Jenkins</span>
+</button>
+<button class="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-container text-on-surface rounded-DEFAULT text-left text-sm transition-all">
+<div class="relative">
+<img alt="David L." class="w-8 h-8 rounded-full" data-alt="Avatar of male student user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAWNktbkcFVv6qDLYgIz3fyAtb0dwxp7j1OMm9rw0GrT5pfsvoBI5h_KIOZ01ur5wRVeuRFz8VxTX-BrEFXCLKPcraAv5EAh_IlPyX7Hjcv_uGGNc3G4o50DWhysJ9BWmmGJRwjlfAVYEoD3rTTuXpSIi4AO6QIPcO6a_oIO7yHflRuqL-0i-05scGolG-4moci0K5g4KduBa4IIywFplSSTTYycpL5m_VYqMWStcwDd9GQV2p2rgk2foVcXVlux6oIHIOGyTupEA"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-slate-300 rounded-full border-2 border-surface-container-low"></span>
+</div>
+<span>David Liu</span>
+</button>
+</div>
+</div>
+<!-- Column 2: Active Chat Window -->
+<div class="flex-1 bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/5 flex flex-col overflow-hidden relative">
+<!-- Chat Header -->
+<div class="px-8 py-5 flex items-center justify-between bg-surface-container-lowest border-b border-outline-variant/10">
+<div>
+<h3 class="text-lg font-bold text-on-surface flex items-center gap-2">
+<span class="text-primary">#</span> calculus-exam-prep
+                        </h3>
+<p class="text-xs text-on-surface-variant">Preparing for Midterm 2 - Integration &amp; Derivatives</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">videocam</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">info</span>
+</button>
+</div>
+</div>
+<!-- Messages Area -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8">
+<!-- Date Divider -->
+<div class="relative flex items-center">
+<div class="flex-grow border-t border-outline-variant/20"></div>
+<span class="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Today</span>
+<div class="flex-grow border-t border-outline-variant/20"></div>
+</div>
+<!-- Message Received -->
+<div class="flex items-start gap-4">
+<img alt="Emily" class="w-10 h-10 rounded-xl" data-alt="Profile photo of Emily" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE7t5DVzOl_-fGat2bJTjn5k9PAivbvoik5s_AohOrT_qVmClk29ybp3wFg3pTAK4VDGJUOT3NL-0iPDpsrbWb6PppgyUzIlHba8E9FxSpg_omnLXDz7eWheE0tjL1Fo-ESlSelCsubCkTONvDTtafVqQaXBeEFpqxDvTV8ggpk8C-4w-oxeTst3T-aX1ogfM959GrUWAaNGF7NQSdDxZlNL8rquE2eRi5dAh9Qc8MTU6OCIIpcLAlaeTOssj8RrEpwhx3P8ByuNQ"/>
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-bold text-sm">Emily Chen</span>
+<span class="text-[10px] text-on-surface-variant">10:24 AM</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed max-w-md">
+                                Has anyone figured out the third problem on the practice sheet? The Taylor series expansion is throwing me off.
+                            </div>
+</div>
+</div>
+<!-- Message Received -->
+<div class="flex items-start gap-4">
+<img alt="Marcus" class="w-10 h-10 rounded-xl" data-alt="Profile photo of Marcus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxjw4KRct6ADPwjyMEMoQUhK2pmRZnruJ13LdtS32OkCzE-r8VOCFE-1IrN_Cc4v9opmVJm3srKmm9ATghw68TlUg9yMNUhtdHxsn6NQy4CzTTbJubYauxa73X5HOaylrYtJIGf8EaRGDjR0zTmYW0zUuZLSeWnDp6RsKAeg9UOWjehwBpy9xW0km3BoXYyY0swuL_xGgkDjeP-BbXodAp-HszrZKQOP7xgYZCxhrMt5e3KqplfQl3wnVNlyQ2O4pIP6Fsdb3LG8M"/>
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-bold text-sm">Marcus Thorne</span>
+<span class="text-[10px] text-on-surface-variant">10:26 AM</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed max-w-md">
+                                I think you need to center it at x=1, not 0. Check the bounds again.
+                            </div>
+<div class="flex gap-2 mt-2">
+<span class="px-2 py-1 bg-primary/5 text-primary text-[10px] font-bold rounded-full border border-primary/10">👍 3</span>
+</div>
+</div>
+</div>
+<!-- Message Sent (Self) -->
+<div class="flex items-start gap-4 flex-row-reverse">
+<img alt="Alex" class="w-10 h-10 rounded-xl" data-alt="Profile photo of Alex" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgXK75Id0woJZg8xDVratD92O0ndWbX8u3PqRdUhqXg3GLMF1MklWSZzDM1K-WI5IHrcrHl8_-cyXTeUhGlUSKfO_fyBO-Z8v-6lhUqXKg6oeptLZCcq1kHS9LcK9_xAn_zN_P_Bt12yGpL3BdxAEMBugLIYK6SGVQhhcwfImVy5Pnv2Mu_gZvp2h87Buea-Do4fO6K8lrVr1Crw5DAMwssk62pC0AqlEdin0GYBuqN4abxqoLrFmXDvT7LjFr-RbyIcGji8EgCs8"/>
+<div class="space-y-1 text-right">
+<div class="flex items-center gap-2 justify-end">
+<span class="text-[10px] text-on-surface-variant">10:30 AM</span>
+<span class="font-bold text-sm">Alex Rivera</span>
+</div>
+<div class="bg-primary text-on-primary p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed max-w-md text-left">
+                                Exactly what Marcus said. Also, I uploaded the step-by-step solution in the pinned files if you want to cross-reference.
+                            </div>
+</div>
+</div>
+<!-- System Info -->
+<div class="flex justify-center">
+<span class="px-4 py-1.5 bg-surface-container rounded-full text-[11px] font-medium text-on-surface-variant">
+                            Sarah Jenkins joined the channel
+                        </span>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-6 bg-surface-container-lowest border-t border-outline-variant/10">
+<div class="bg-surface-container-low rounded-2xl p-2">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-sm p-3 resize-none" placeholder="Message #calculus-exam-prep..." rows="1"></textarea>
+<div class="flex items-center justify-between px-3 py-2">
+<div class="flex items-center gap-2">
+<button class="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg">
+<span class="material-symbols-outlined text-lg">format_bold</span>
+</button>
+<button class="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg">
+<span class="material-symbols-outlined text-lg">attach_file</span>
+</button>
+<button class="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg">
+<span class="material-symbols-outlined text-lg">mood</span>
+</button>
+</div>
+<button class="bg-primary text-on-primary w-10 h-10 flex items-center justify-center rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all">
+<span class="material-symbols-outlined text-lg">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 3: Member List & Pinned Items -->
+<div class="w-80 flex flex-col gap-6">
+<!-- Member List -->
+<div class="flex-1 bg-surface-container-low rounded-lg overflow-hidden flex flex-col">
+<div class="p-5 border-b border-outline-variant/10 flex justify-between items-center">
+<h2 class="text-xs font-black uppercase tracking-widest text-on-surface-variant">Members • 12</h2>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Member Item -->
+<div class="flex items-center gap-3">
+<div class="relative">
+<img alt="Emily" class="w-9 h-9 rounded-full" data-alt="Student member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_2YxcUGrMeXMrOI412IZ2rIY0elbgeKSlk42XydXg0Inu5XwjW6x2s4KtUUQ2ngJzFYO-VOSBEBKpkJaEFlYu4_cjHnpx9E_NnB7OcnMQURACRSzH4sCuO7uGpoEW7VFyqvAz6qWdVhqZ7fj0jmyO9lxlrE51Qys6_8Vaahx9Apba5uaGDvyTqD3oHrVnPFURu5fd3CEy-23U6v-lipJ_YIfp12Y_jo8KuSep2ZJ8kHoNFc3GyL1peC6kewGlnUm4CIIT-0MNNcs"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface-container-low"></span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Emily Chen</p>
+<p class="text-[10px] text-on-surface-variant">Active now</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<img alt="Marcus" class="w-9 h-9 rounded-full" data-alt="Student member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcnDahtm2kY1KpWbAHrikFNsH_kz3kxn3hmQuV6kmKNfpVVzWcma53SLALXeJU5RaIU8r0Pzloqmd623jn_qAr1NtXI9Y06QVNm0lpIXm2igagqDY8zz2ef2dXBHyVlbvdPTLWwLDzq9OGbw5XNd9m4wpD1ci9-O63t4kLb3FCRkRc_65rytWd0lzpkyaq2WkjeCgh5g5fUA24nm9H4yEF4_2CBM5IWKNBwJUpFILzgOCLC2KQzeQV9Th-InSYXDd3EqWEzNM5ys4"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface-container-low"></span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Marcus Thorne</p>
+<p class="text-[10px] text-on-surface-variant">Writing...</p>
+</div>
+</div>
+<div class="flex items-center gap-3 opacity-60">
+<div class="relative">
+<img alt="Lena" class="w-9 h-9 rounded-full" data-alt="Student member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaHVoY5__4vIKgvrl5csv9trOX7NRjJFrfK66qAfyJLh5Ah-7I6P9lxusD--d26H4rRD34V5qqq13TgSKTbVnVaYYnD9vrx5QpvIR8sgPbrNDYVl_qcv5FDA5ZFzTMeU1KDxcQT333qtDAeXKRnNYUOXHKPEGiu74NFkGtpwmmLYqoS6MObQVNnjHFCVA0BP-_aScmHvMWWIRg6zFF_MVztQe3ouHQuJBkeIsT5AcdQRWfgI2d2AK5CkqJ1nB1Ee2Xn-r0CXsT2J4"/>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-slate-300 rounded-full border-2 border-surface-container-low"></span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-bold text-on-surface truncate">Lena Vogt</p>
+<p class="text-[10px] text-on-surface-variant">Away</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Pinned Items -->
+<div class="h-64 bg-surface-container-low rounded-lg p-5 flex flex-col">
+<h2 class="text-xs font-black uppercase tracking-widest text-on-surface-variant mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">push_pin</span> Pinned
+                    </h2>
+<div class="flex-1 space-y-3 overflow-y-auto scrollbar-hide">
+<div class="p-3 bg-surface-container-lowest rounded-DEFAULT border border-outline-variant/5">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-xs">picture_as_pdf</span>
+<span class="text-xs font-bold text-on-surface">midterm_prep.pdf</span>
+</div>
+<p class="text-[10px] text-on-surface-variant truncate">Shared by Alex Rivera • 2h ago</p>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded-DEFAULT border border-outline-variant/5">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-tertiary text-xs">link</span>
+<span class="text-xs font-bold text-on-surface">Zoom Study Room</span>
+</div>
+<p class="text-[10px] text-on-surface-variant truncate">Recurring link for Tue/Thu</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual FAB (Suppressed based on logic, but kept placeholder if needed for specific triggers) -->
+<!-- Hidden because this is a deep task-focused view -->
+</body></html>

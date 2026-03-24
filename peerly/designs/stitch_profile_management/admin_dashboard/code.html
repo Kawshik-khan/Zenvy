@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard | Study Sanctuary</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-dim": "#3939c7",
+              "primary": "#4647d3",
+              "inverse-surface": "#0b0f10",
+              "on-background": "#2c2f31",
+              "on-tertiary-container": "#63054a",
+              "inverse-primary": "#8083ff",
+              "primary-fixed": "#9396ff",
+              "on-error-container": "#510017",
+              "on-secondary": "#f8f0ff",
+              "surface-container-lowest": "#ffffff",
+              "background": "#f5f7f9",
+              "secondary-fixed-dim": "#ceb9ff",
+              "on-secondary-container": "#5517bf",
+              "secondary": "#6a37d4",
+              "error": "#b41340",
+              "on-primary-container": "#0a0081",
+              "tertiary-fixed-dim": "#ef81c4",
+              "on-surface-variant": "#595c5e",
+              "secondary-fixed": "#dac9ff",
+              "surface": "#f5f7f9",
+              "on-error": "#ffefef",
+              "on-secondary-fixed-variant": "#5f28c8",
+              "error-container": "#f74b6d",
+              "on-tertiary-fixed-variant": "#6e1354",
+              "surface-dim": "#d0d5d8",
+              "tertiary": "#963776",
+              "on-tertiary": "#ffeef4",
+              "outline": "#747779",
+              "surface-container": "#e5e9eb",
+              "primary-container": "#9396ff",
+              "outline-variant": "#abadaf",
+              "surface-container-high": "#dfe3e6",
+              "primary-fixed-dim": "#8387ff",
+              "on-tertiary-fixed": "#3b002b",
+              "surface-tint": "#4647d3",
+              "secondary-dim": "#5e26c7",
+              "on-surface": "#2c2f31",
+              "tertiary-fixed": "#ff8ed2",
+              "surface-container-highest": "#d9dde0",
+              "surface-container-low": "#eef1f3",
+              "tertiary-dim": "#882a69",
+              "surface-bright": "#f5f7f9",
+              "tertiary-container": "#ff8ed2",
+              "on-primary-fixed": "#000000",
+              "error-dim": "#a70138",
+              "inverse-on-surface": "#9a9d9f",
+              "on-primary": "#f4f1ff",
+              "on-secondary-fixed": "#40009b",
+              "on-primary-fixed-variant": "#0e009d",
+              "secondary-container": "#dac9ff",
+              "surface-variant": "#d9dde0"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Inter', sans-serif; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col h-screen w-72 border-none bg-slate-100 dark:bg-slate-900 z-50">
+<div class="p-8">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+</div>
+<div>
+<h1 class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">Study Sanctuary</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Academic Commons</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">group</span> Study Groups
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">forum</span> Chat Rooms
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">person_search</span> Partner Matching
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">account_circle</span> Profile
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">calendar_today</span> Scheduling
+                </a>
+<!-- Active Admin State -->
+<a class="flex items-center gap-3 px-4 py-3 text-indigo-700 dark:text-indigo-300 relative before:absolute before:left-0 before:w-1 before:h-6 before:bg-indigo-600 before:rounded-r-full font-sans antialiased text-sm font-medium tracking-tight" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span> Admin
+                </a>
+</nav>
+<div class="mt-12">
+<button class="w-full py-4 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-bold text-sm shadow-md hover:shadow-xl transition-shadow">
+                    Create Group
+                </button>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-72 min-h-screen">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex items-center gap-6 w-1/2">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Search analytics or users..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 text-slate-500">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 text-slate-500">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant/20 mx-2"></div>
+<div class="flex items-center gap-3">
+<img alt="User Profile Avatar" class="w-8 h-8 rounded-full border border-primary/20" data-alt="Professional admin avatar headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvYMk2WBI2_bFYLJ0Xd2tYgAxKDr3TlsksHuWbZFt0Uw2312HyOYdp5wGTzhDTLVuV9WcHHjjJM4kq7tajKhVR1VMCMJ2r6yIYCG-xh45xQ058RrdHLhnumk2alqME8deenUEh1ZMEYeKl6xhepRiQrJJPy_i36GOwSHrd0ql2ZUeXHjySSAb_j1fCdSKyfJu8CJ1gobOhJhlvHZiDsDBxA3oDqdSH-kGUBzneJ_mYKofgATDrpD3IiQrHMSaY5yC_bM6sW4j4MYs"/>
+<span class="text-sm font-semibold">Admin Panel</span>
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<div class="p-10 space-y-10">
+<!-- Page Header -->
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-4xl font-black text-on-surface tracking-tight mb-1">Administrative Overview</h2>
+<p class="text-on-surface-variant font-medium">Real-time health and engagement of the academic ecosystem.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded-full bg-surface-container-highest text-on-surface font-bold text-sm">Export Report</button>
+<button class="px-6 py-2.5 rounded-full bg-primary text-on-primary font-bold text-sm shadow-lg">Refresh Data</button>
+</div>
+</div>
+<!-- KPI Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Total Users -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_20px_40px_rgba(70,71,211,0.06)] flex flex-col justify-between">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-primary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">groups</span>
+</div>
+<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">+12.5%</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-sm font-medium">Total Users</p>
+<p class="text-3xl font-black text-on-surface mt-1">24,592</p>
+</div>
+</div>
+<!-- Active Groups -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_20px_40px_rgba(70,71,211,0.06)] flex flex-col justify-between">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">hub</span>
+</div>
+<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">+8.2%</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-sm font-medium">Active Groups</p>
+<p class="text-3xl font-black text-on-surface mt-1">1,840</p>
+</div>
+</div>
+<!-- Reported Issues -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_20px_40px_rgba(70,71,211,0.06)] flex flex-col justify-between">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">warning</span>
+</div>
+<span class="text-xs font-bold text-error bg-error-container/10 px-2 py-1 rounded-md">14 Priority</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-sm font-medium">Reported Issues</p>
+<p class="text-3xl font-black text-on-surface mt-1">42</p>
+</div>
+</div>
+<!-- Platform Growth -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_20px_40px_rgba(70,71,211,0.06)] flex flex-col justify-between border-2 border-primary-container/10">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary">trending_up</span>
+</div>
+<span class="text-xs font-bold text-primary bg-primary-container/30 px-2 py-1 rounded-md">Target Met</span>
+</div>
+<div>
+<p class="text-on-surface-variant text-sm font-medium">Monthly Growth</p>
+<p class="text-3xl font-black text-on-surface mt-1">28.4%</p>
+</div>
+</div>
+</div>
+<!-- engagement Graph & Moderation Queue -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Engagement Graph Area -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-lg p-8 shadow-[0_20px_40px_rgba(70,71,211,0.06)]">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="text-xl font-bold text-on-surface">Engagement Analytics</h3>
+<p class="text-sm text-on-surface-variant">Daily active users over last 30 days</p>
+</div>
+<div class="flex gap-2">
+<button class="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-on-primary">Daily</button>
+<button class="text-xs font-bold px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant">Weekly</button>
+</div>
+</div>
+<div class="h-64 flex items-end justify-between gap-2">
+<!-- Simulated Chart Bars -->
+<div class="w-full bg-primary/10 rounded-t-full h-[40%]"></div>
+<div class="w-full bg-primary/20 rounded-t-full h-[55%]"></div>
+<div class="w-full bg-primary/10 rounded-t-full h-[45%]"></div>
+<div class="w-full bg-primary/30 rounded-t-full h-[70%]"></div>
+<div class="w-full bg-primary/20 rounded-t-full h-[60%]"></div>
+<div class="w-full bg-gradient-to-t from-primary to-secondary rounded-t-full h-[95%]"></div>
+<div class="w-full bg-primary/40 rounded-t-full h-[75%]"></div>
+<div class="w-full bg-primary/20 rounded-t-full h-[50%]"></div>
+<div class="w-full bg-primary/15 rounded-t-full h-[40%]"></div>
+<div class="w-full bg-primary/30 rounded-t-full h-[65%]"></div>
+<div class="w-full bg-primary/10 rounded-t-full h-[35%]"></div>
+<div class="w-full bg-primary/50 rounded-t-full h-[80%]"></div>
+<div class="w-full bg-primary/20 rounded-t-full h-[55%]"></div>
+<div class="w-full bg-gradient-to-t from-primary to-secondary rounded-t-full h-[100%]"></div>
+</div>
+<div class="flex justify-between mt-4 px-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oct 01</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Oct 15</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Today</span>
+</div>
+</div>
+<!-- Flagged Content Sidebar -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-[0_20px_40px_rgba(70,71,211,0.06)]">
+<h3 class="text-xl font-bold text-on-surface mb-6">Moderation Queue</h3>
+<div class="space-y-6">
+<!-- Flagged Item 1 -->
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error text-lg">flag</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-on-surface">Spam in "Calculus III"</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Reported by Sarah J. • 5m ago</p>
+<div class="flex gap-2 mt-3">
+<button class="text-[10px] font-bold px-3 py-1 rounded bg-error text-white uppercase tracking-tighter">Remove</button>
+<button class="text-[10px] font-bold px-3 py-1 rounded bg-surface-container text-on-surface-variant uppercase tracking-tighter">Dismiss</button>
+</div>
+</div>
+</div>
+<!-- Flagged Item 2 -->
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary text-lg">person_cancel</span>
+</div>
+<div>
+<h4 class="text-sm font-bold text-on-surface">Toxic Behavior: @user_491</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Reported by Auto-Mod • 22m ago</p>
+<div class="flex gap-2 mt-3">
+<button class="text-[10px] font-bold px-3 py-1 rounded bg-primary text-white uppercase tracking-tighter">Suspend</button>
+<button class="text-[10px] font-bold px-3 py-1 rounded bg-surface-container text-on-surface-variant uppercase tracking-tighter">View Log</button>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 rounded-xl border border-outline-variant/20 text-xs font-bold text-primary hover:bg-primary/5 transition-colors uppercase tracking-widest">View All Reports (14)</button>
+</div>
+</div>
+<!-- Recent Registrations Table -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden shadow-[0_20px_40px_rgba(70,71,211,0.06)]">
+<div class="p-8 border-b border-surface-container flex justify-between items-center">
+<h3 class="text-xl font-bold text-on-surface">Recent User Registrations</h3>
+<button class="text-primary text-sm font-bold hover:underline">View Full Directory</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">Student</th>
+<th class="px-8 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">Major</th>
+<th class="px-8 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">Joined</th>
+<th class="px-8 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">Status</th>
+<th class="px-8 py-4 text-xs font-black text-on-surface-variant uppercase tracking-widest">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">AM</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Alex Morgan</p>
+<p class="text-[11px] text-on-surface-variant">alex.m@university.edu</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Computer Science</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Oct 18, 2023</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-tight">Verified</span>
+</td>
+<td class="px-8 py-5">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">LC</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Liam Chen</p>
+<p class="text-[11px] text-on-surface-variant">l.chen@polytech.edu</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Bio-Engineering</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Oct 18, 2023</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-tight">Pending</span>
+</td>
+<td class="px-8 py-5">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold text-xs">SK</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Sofia Kovic</p>
+<p class="text-[11px] text-on-surface-variant">sofia.k@arts.edu</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Liberal Arts</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">Oct 17, 2023</td>
+<td class="px-8 py-5">
+<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-tight">Verified</span>
+</td>
+<td class="px-8 py-5">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>

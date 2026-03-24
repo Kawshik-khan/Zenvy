@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scheduling - Study Sanctuary</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-dim": "#3939c7",
+              "primary": "#4647d3",
+              "inverse-surface": "#0b0f10",
+              "on-background": "#2c2f31",
+              "on-tertiary-container": "#63054a",
+              "inverse-primary": "#8083ff",
+              "primary-fixed": "#9396ff",
+              "on-error-container": "#510017",
+              "on-secondary": "#f8f0ff",
+              "surface-container-lowest": "#ffffff",
+              "background": "#f5f7f9",
+              "secondary-fixed-dim": "#ceb9ff",
+              "on-secondary-container": "#5517bf",
+              "secondary": "#6a37d4",
+              "error": "#b41340",
+              "on-primary-container": "#0a0081",
+              "tertiary-fixed-dim": "#ef81c4",
+              "on-surface-variant": "#595c5e",
+              "secondary-fixed": "#dac9ff",
+              "surface": "#f5f7f9",
+              "on-error": "#ffefef",
+              "on-secondary-fixed-variant": "#5f28c8",
+              "error-container": "#f74b6d",
+              "on-tertiary-fixed-variant": "#6e1354",
+              "surface-dim": "#d0d5d8",
+              "tertiary": "#963776",
+              "on-tertiary": "#ffeef4",
+              "outline": "#747779",
+              "surface-container": "#e5e9eb",
+              "primary-container": "#9396ff",
+              "outline-variant": "#abadaf",
+              "surface-container-high": "#dfe3e6",
+              "primary-fixed-dim": "#8387ff",
+              "on-tertiary-fixed": "#3b002b",
+              "surface-tint": "#4647d3",
+              "secondary-dim": "#5e26c7",
+              "on-surface": "#2c2f31",
+              "tertiary-fixed": "#ff8ed2",
+              "surface-container-highest": "#d9dde0",
+              "surface-container-low": "#eef1f3",
+              "tertiary-dim": "#882a69",
+              "surface-bright": "#f5f7f9",
+              "tertiary-container": "#ff8ed2",
+              "on-primary-fixed": "#000000",
+              "error-dim": "#a70138",
+              "inverse-on-surface": "#9a9d9f",
+              "on-primary": "#f4f1ff",
+              "on-secondary-fixed": "#40009b",
+              "on-primary-fixed-variant": "#0e009d",
+              "secondary-container": "#dac9ff",
+              "surface-variant": "#d9dde0"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Inter', sans-serif; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e9eb; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-0 h-full flex flex-col h-screen w-72 border-none bg-slate-100 dark:bg-slate-900 font-sans antialiased text-sm font-medium tracking-tight z-50">
+<div class="p-8">
+<div class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white mb-1">Study Sanctuary</div>
+<div class="text-xs font-semibold text-on-surface-variant tracking-widest uppercase opacity-60">Academic Commons</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                Study Groups
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+                Chat Rooms
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person_search">person_search</span>
+                Partner Matching
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+                Profile
+            </a>
+<!-- Active State: Scheduling -->
+<a class="flex items-center gap-3 px-4 py-3 text-indigo-700 dark:text-indigo-300 relative before:absolute before:left-0 before:w-1 before:h-6 before:bg-indigo-600 before:rounded-r-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+                Scheduling
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+                Admin
+            </a>
+</nav>
+<div class="p-6">
+<button class="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                Create Group
+            </button>
+</div>
+</aside>
+<!-- Main Content Stage -->
+<main class="ml-72 min-h-screen">
+<!-- Top Navigation -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 text-sm" placeholder="Search events or groups..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 relative">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-px bg-outline-variant opacity-20 mx-2"></div>
+<div class="flex items-center gap-3">
+<span class="font-medium">Alex Rivera</span>
+<img alt="User Profile Avatar" class="w-8 h-8 rounded-full border-2 border-primary-container" data-alt="Profile photo of a smiling student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChj6X5PimRPbQy4iLf_eZ-fcCAuPF1gi-9pbTR7_BsQx0SPv3KE75P3iAcHgOyxVrsylNt4nLiCMGUFBhtTBkDwAYf-s2cMO7TwyR-2NF9WKUdiUaTq6i-QUmRvp8mrYHIzfeTwg3OUX-_pfaNvd-wXqG6oBgo7iYyUzaewm4ikQNknQl8UCEdhtJ9hgui-uUnKArT32CTBeFBQ8HILSVA1arwgTAE6qqwSZ0XXCGVKGUw23DQML8lY-6V0Ksshu2U3axwOfGilEE"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="p-8">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="text-[2.75rem] font-bold tracking-tight text-on-surface leading-tight">Your Academic Calendar</h1>
+<p class="text-on-surface-variant mt-2 text-lg">Manage your study sessions and group syncs.</p>
+</div>
+<div class="flex gap-3">
+<div class="flex bg-surface-container rounded-full p-1">
+<button class="px-6 py-2 bg-surface-container-lowest shadow-sm rounded-full font-semibold text-primary">Monthly</button>
+<button class="px-6 py-2 text-on-surface-variant font-medium">Weekly</button>
+</div>
+<button class="flex items-center gap-2 bg-primary px-6 py-3 text-on-primary rounded-full font-bold active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="edit_calendar">edit_calendar</span>
+                        Schedule Session
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-8">
+<!-- Monthly Calendar View -->
+<div class="col-span-8 bg-surface-container-lowest rounded-lg p-8 shadow-[0_20px_40px_rgba(70,71,211,0.06)]">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-4">
+<h2 class="text-2xl font-bold">September 2024</h2>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors"><span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span></button>
+<button class="p-1 hover:bg-surface-container rounded-full transition-colors"><span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+<div class="flex gap-4 text-xs font-semibold">
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> Study Session</div>
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span> Exam Prep</div>
+<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Project Meeting</div>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-px bg-outline-variant/10 rounded-xl overflow-hidden">
+<!-- Days Header -->
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Mon</div>
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Tue</div>
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Wed</div>
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Thu</div>
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Fri</div>
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Sat</div>
+<div class="bg-surface-container-low p-4 text-center font-bold text-xs uppercase tracking-widest text-on-surface-variant">Sun</div>
+<!-- Calendar Grid (Sample Week) -->
+<!-- Week 1 -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors opacity-30">26</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors opacity-30">27</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors opacity-30">28</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors opacity-30">29</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors opacity-30">30</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors opacity-30">31</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">
+<span class="font-bold">1</span>
+</div>
+<!-- Week 2 -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">2</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">
+<span class="font-bold">3</span>
+<div class="mt-2 space-y-1">
+<div class="text-[10px] bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-bold truncate">Intro to CS</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">4</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">
+<span class="font-bold">5</span>
+<div class="mt-2 space-y-1">
+<div class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-1 rounded-full font-bold truncate">Midterm Quiz</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">6</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">7</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">8</div>
+<!-- Week 3 (Active Selection example) -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">9</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">10</div>
+<div class="bg-primary/5 min-h-[140px] p-4 relative">
+<span class="font-bold text-primary">11</span>
+<div class="mt-2 space-y-1">
+<div class="text-[10px] bg-tertiary-container text-on-tertiary-container px-2 py-1 rounded-full font-bold truncate">UX Workshop</div>
+<div class="text-[10px] bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-bold truncate">Group Sync</div>
+</div>
+<div class="absolute inset-x-0 bottom-0 h-1 bg-primary"></div>
+</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">12</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">13</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">14</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 group hover:bg-surface-bright transition-colors">15</div>
+<!-- Rest of the grid visualized simply -->
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">16</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">17</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">18</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">19</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">20</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">21</div>
+<div class="bg-surface-container-lowest min-h-[140px] p-4 opacity-40">22</div>
+</div>
+</div>
+<!-- Sidebar: Upcoming Events -->
+<div class="col-span-4 space-y-6">
+<div class="bg-surface-container-low rounded-lg p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-lg">Upcoming Events</h3>
+<span class="text-xs bg-primary text-on-primary px-2 py-0.5 rounded-full">4 Active</span>
+</div>
+<div class="space-y-4">
+<!-- Event Card -->
+<div class="bg-surface-container-lowest p-4 rounded-DEFAULT flex gap-4 hover:translate-x-1 transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-DEFAULT bg-primary-container flex flex-col items-center justify-center shrink-0">
+<span class="text-[10px] uppercase font-black text-primary">SEP</span>
+<span class="text-lg font-bold text-primary">11</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm truncate">Advanced UX Workshop</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-xs text-on-surface-variant" data-icon="schedule">schedule</span>
+<span class="text-xs text-on-surface-variant">2:00 PM • 90 min</span>
+</div>
+<div class="mt-2 inline-flex text-[10px] bg-tertiary-container text-on-tertiary-container px-2 py-0.5 rounded-full font-bold">Project Meeting</div>
+</div>
+</div>
+<!-- Event Card -->
+<div class="bg-surface-container-lowest p-4 rounded-DEFAULT flex gap-4 hover:translate-x-1 transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-DEFAULT bg-secondary-container flex flex-col items-center justify-center shrink-0">
+<span class="text-[10px] uppercase font-black text-secondary">SEP</span>
+<span class="text-lg font-bold text-secondary">11</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm truncate">Macroeconomics Group Sync</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-xs text-on-surface-variant" data-icon="schedule">schedule</span>
+<span class="text-xs text-on-surface-variant">4:30 PM • 60 min</span>
+</div>
+<div class="mt-2 inline-flex text-[10px] bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full font-bold">Study Session</div>
+</div>
+</div>
+<!-- Event Card -->
+<div class="bg-surface-container-lowest p-4 rounded-DEFAULT flex gap-4 hover:translate-x-1 transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-DEFAULT bg-outline-variant/10 flex flex-col items-center justify-center shrink-0">
+<span class="text-[10px] uppercase font-black text-on-surface-variant">SEP</span>
+<span class="text-lg font-bold text-on-surface-variant">14</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm truncate">Data Structures Lab Prep</h4>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-xs text-on-surface-variant" data-icon="schedule">schedule</span>
+<span class="text-xs text-on-surface-variant">10:00 AM • 120 min</span>
+</div>
+<div class="mt-2 inline-flex text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-bold">Exam Prep</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-3 border border-outline-variant/30 rounded-full text-xs font-bold hover:bg-surface transition-colors">View All Schedules</button>
+</div>
+<div class="bg-gradient-to-br from-primary to-secondary rounded-lg p-6 text-on-primary relative overflow-hidden group">
+<div class="relative z-10">
+<h3 class="font-bold text-lg mb-2">Need a Tutor?</h3>
+<p class="text-xs opacity-80 mb-4 leading-relaxed">Book a 1-on-1 session with a senior mentor to clear your doubts before the finals.</p>
+<button class="bg-white text-primary px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md active:scale-95 transition-transform">Browse Tutors</button>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-500" data-icon="school">school</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Modal Mockup: Schedule Session Form -->
+<div class="fixed inset-0 z-[100] bg-inverse-surface/40 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+<!-- Floating Glass Modal -->
+<div class="bg-white/95 backdrop-blur-xl w-full max-w-lg rounded-xl shadow-2xl overflow-hidden border border-white/20">
+<div class="p-8">
+<div class="flex justify-between items-start mb-8">
+<div>
+<h2 class="text-2xl font-bold tracking-tight">Schedule Session</h2>
+<p class="text-on-surface-variant text-sm">Organize a new study sync with your peers.</p>
+</div>
+<button class="p-2 hover:bg-surface-container rounded-full"><span class="material-symbols-outlined" data-icon="close">close</span></button>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Session Title</label>
+<input class="w-full bg-surface-container border-none rounded-DEFAULT p-3 text-sm focus:ring-2 focus:ring-primary/20" placeholder="e.g., Calculus 101 Midterm Prep" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Date</label>
+<input class="w-full bg-surface-container border-none rounded-DEFAULT p-3 text-sm focus:ring-2 focus:ring-primary/20" type="date"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Time</label>
+<input class="w-full bg-surface-container border-none rounded-DEFAULT p-3 text-sm focus:ring-2 focus:ring-primary/20" type="time"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Category</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="py-2 px-3 rounded-DEFAULT border-2 border-primary bg-primary/5 text-primary text-xs font-bold" type="button">Study Session</button>
+<button class="py-2 px-3 rounded-DEFAULT border-2 border-transparent bg-surface-container text-on-surface-variant text-xs font-bold hover:bg-surface-container-high transition-colors" type="button">Exam Prep</button>
+<button class="py-2 px-3 rounded-DEFAULT border-2 border-transparent bg-surface-container text-on-surface-variant text-xs font-bold hover:bg-surface-container-high transition-colors" type="button">Project</button>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Participants</label>
+<div class="flex -space-x-2">
+<img alt="Student" class="w-8 h-8 rounded-full border-2 border-white" data-alt="Avatar of a student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKSHxiyr6fNTBtd1UZ14dkK1B9CPiWSvzRG4Dcys407qZYWdfkUpAzrBJ2VGZNOkYu03W77UzoH6TpSo6fQkltJdtvQHqm0aye0J05ty4iSO85ChGz3-2Xfq7YM3XGe28JM-h6AEi8jmbZmTc_-8U5H1aZTlIK-7fKhFapjf7o1KnYuoxnNFJ963luwiJ8oJvXtMI0RAwwGWXSQWOpYdHTbpyFH6Vz-XWOdIj9VXOFuPuABcNEtheGsMcIzjCARE2p_BmNxKAzd4g"/>
+<img alt="Student" class="w-8 h-8 rounded-full border-2 border-white" data-alt="Avatar of a student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSI_S5M0H3WXOd7iMSd63KMRox7nzsfiT3dA6UFbfFyFlutlPkKFK0Nx6OeY-FKuigBislwuZheISUhfxgPzcuduJVExAHl51BDfYqpjCFGZdK76pd31qbOnqwU-H89MOESmrCLGl7oJpP0l7idNI1wjqQ14fz6I0Si3A_KZZ9X4jR5InDmRms88s93HO1W0SO4_73hp3QMhU8LWHaSGWGBivPeRdIQWOe5kYek1Q6ARdkWHgCdJYLrs54jpjzAupJ4pvmfdCsL-A"/>
+<img alt="Student" class="w-8 h-8 rounded-full border-2 border-white" data-alt="Avatar of a student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9yQm9g-kjfGMCXvo_7UWB3zjc3BVLUgsiu1Ox-eoJAkn9ww-x04g6nlRgebwPB-ECkr5K0wbGU9CXnqCLjuOZY4_seDDJFmWkmOYgXt4VBdlYm4FTcPrv-Wn-RpS9phNmyI84yU04AcqGJMxHEMpJrsifq-HtQsM1IWPbu4Uf0MfYVT5mdVTE26betfy0N1qkQyYyBAfqePBfppZ5V8N1GjT5FWIUzJV3MUcaGJGWZtxp8Hr6O8o4mPyis3tKF1A3N9UlFNlu-Lc"/>
+<button class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border-2 border-white" type="button">
+<span class="material-symbols-outlined text-xs" data-icon="add">add</span>
+</button>
+</div>
+</div>
+<div class="pt-4 flex gap-4">
+<button class="flex-1 py-4 text-on-surface-variant font-bold hover:bg-surface transition-colors rounded-full" type="button">Cancel</button>
+<button class="flex-1 py-4 bg-primary text-on-primary font-bold rounded-full shadow-lg shadow-primary/20 active:scale-95 transition-transform" type="submit">Confirm Schedule</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</body></html>

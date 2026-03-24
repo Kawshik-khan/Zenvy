@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Academic Nexus</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#dac9ff",
+              "on-surface": "#2c2f31",
+              "inverse-on-surface": "#9a9d9f",
+              "on-primary": "#f4f1ff",
+              "error-dim": "#a70138",
+              "on-tertiary": "#ffeef4",
+              "outline": "#747779",
+              "surface-dim": "#d0d5d8",
+              "on-error": "#ffefef",
+              "on-secondary-fixed-variant": "#5f28c8",
+              "background": "#f5f7f9",
+              "secondary": "#6a37d4",
+              "primary-fixed": "#9396ff",
+              "surface-container-low": "#eef1f3",
+              "on-tertiary-fixed-variant": "#6e1354",
+              "primary": "#4647d3",
+              "inverse-surface": "#0b0f10",
+              "inverse-primary": "#8083ff",
+              "surface-container-highest": "#d9dde0",
+              "tertiary-container": "#ff8ed2",
+              "surface-container-high": "#dfe3e6",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary": "#f8f0ff",
+              "tertiary-fixed-dim": "#ef81c4",
+              "outline-variant": "#abadaf",
+              "on-surface-variant": "#595c5e",
+              "primary-container": "#9396ff",
+              "primary-fixed-dim": "#8387ff",
+              "on-primary-fixed-variant": "#0e009d",
+              "on-error-container": "#510017",
+              "on-background": "#2c2f31",
+              "tertiary": "#963776",
+              "secondary-dim": "#5e26c7",
+              "on-primary-fixed": "#000000",
+              "primary-dim": "#3939c7",
+              "secondary-fixed-dim": "#ceb9ff",
+              "on-secondary-fixed": "#40009b",
+              "secondary-container": "#dac9ff",
+              "surface-tint": "#4647d3",
+              "surface-bright": "#f5f7f9",
+              "on-tertiary-fixed": "#3b002b",
+              "on-secondary-container": "#5517bf",
+              "error-container": "#f74b6d",
+              "surface-container": "#e5e9eb",
+              "tertiary-fixed": "#ff8ed2",
+              "surface-variant": "#d9dde0",
+              "error": "#b41340",
+              "on-tertiary-container": "#63054a",
+              "on-primary-container": "#0a0081",
+              "tertiary-dim": "#882a69",
+              "surface": "#f5f7f9"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-academic-pattern {
+            background-color: #f5f7f9;
+            background-image: radial-gradient(#4647d3 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface flex flex-col min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar Suppression Check: Login is transactional/focused, but instruction requested inclusion. 
+         Note: In a standard UX flow this might be suppressed, but we follow the specific prompt request. -->
+<header class="bg-[#f5f7f9] dark:bg-slate-950 z-50">
+<nav class="flex justify-between items-center w-full px-12 py-6 max-w-[1440px] mx-auto">
+<div class="text-2xl font-bold tracking-tighter text-[#2c2f31] dark:text-slate-100">
+                Academic Nexus
+            </div>
+<div class="hidden md:flex items-center gap-8 font-['Inter'] text-sm font-medium tracking-tight">
+<a class="text-[#595c5e] dark:text-slate-400 hover:text-[#4647d3] transition-colors duration-200" href="#">Explore</a>
+<a class="text-[#595c5e] dark:text-slate-400 hover:text-[#4647d3] transition-colors duration-200" href="#">Community</a>
+<a class="text-[#595c5e] dark:text-slate-400 hover:text-[#4647d3] transition-colors duration-200" href="#">Resources</a>
+</div>
+<div>
+<button class="bg-gradient-to-r from-primary to-secondary text-on-primary px-6 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-all active:scale-95 shadow-md shadow-primary/10">
+                    Create Account
+                </button>
+</div>
+</nav>
+</header>
+<main class="flex-grow flex items-center justify-center relative overflow-hidden py-12 px-6">
+<!-- Abstract Academic Background Shapes -->
+<div class="absolute inset-0 z-0 pointer-events-none opacity-40">
+<div class="absolute top-[-10%] left-[-5%] w-[40rem] h-[40rem] bg-primary/5 rounded-full blur-[100px]"></div>
+<div class="absolute bottom-[-10%] right-[-5%] w-[35rem] h-[35rem] bg-secondary/5 rounded-full blur-[100px]"></div>
+<div class="absolute top-1/4 right-10 opacity-10">
+<span class="material-symbols-outlined text-[12rem] text-primary" data-icon="auto_stories">auto_stories</span>
+</div>
+<div class="absolute bottom-1/4 left-10 opacity-10">
+<span class="material-symbols-outlined text-[10rem] text-secondary" data-icon="school">school</span>
+</div>
+</div>
+<!-- Login Card -->
+<div class="relative z-10 w-full max-w-[480px]">
+<div class="bg-surface-container-lowest rounded-xl p-10 md:p-14 shadow-[0_20px_40px_rgba(70,71,211,0.06)] border border-outline-variant/10">
+<div class="mb-10 text-center">
+<h1 class="text-on-surface font-headline text-3xl font-bold tracking-tight mb-2">Welcome Back</h1>
+<p class="text-on-surface-variant text-sm">Enter your credentials to access your sanctuary.</p>
+</div>
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1" for="email">Email Address</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl transition-colors group-focus-within:text-primary" data-icon="alternate_email">alternate_email</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-transparent rounded-full text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all outline-none text-on-surface" id="email" placeholder="scholar@nexus.edu" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center ml-1">
+<label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider" for="password">Password</label>
+<a class="text-xs text-primary font-medium hover:underline" href="#">Forgot?</a>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl transition-colors group-focus-within:text-primary" data-icon="lock">lock</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-transparent rounded-full text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white transition-all outline-none text-on-surface" id="password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Sign In Action -->
+<div class="pt-2">
+<button class="w-full bg-gradient-to-r from-primary to-secondary text-on-primary py-4 rounded-full font-bold text-base shadow-lg shadow-primary/20 hover:opacity-95 hover:scale-[1.01] active:scale-[0.98] transition-all" type="button">
+                            Sign In
+                        </button>
+</div>
+<!-- Divider -->
+<div class="relative flex items-center py-4">
+<div class="flex-grow border-t border-outline-variant/15"></div>
+<span class="flex-shrink mx-4 text-xs font-medium text-on-surface-variant uppercase tracking-widest">or</span>
+<div class="flex-grow border-t border-outline-variant/15"></div>
+</div>
+<!-- Social Login -->
+<button class="w-full flex items-center justify-center gap-3 bg-surface-container-low text-on-surface py-4 rounded-full font-semibold text-sm hover:bg-surface-container transition-colors border border-outline-variant/5" type="button">
+<img alt="Google Logo" class="w-5 h-5" data-alt="Google colorful logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSVQwVdlAuQpxJ1ysyDo0VFTfa1_KXYWj98Tqoret-hkztzjqxCUenCrLzMrpp1A0swDEPtAn9XO9uPIOwSRimOk_mVY5c6Mxn6U2S9WNq0segh9ghfnq070alUkSnPzr_0LOvc7ntq3WkzCU4Cl2ovG3XR821P8m6Vpehf-9eQBPPKNJq_LytKkfvLBzZ0aDk71Z1lYHXwhrsFLQu4MI7rSGXY32MnXVikCWr7q83TStNWGQTnz0bHYU_zpJDowBfk9WUkki4cuY"/>
+                        Continue with Google
+                    </button>
+</form>
+<div class="mt-10 text-center">
+<p class="text-sm text-on-surface-variant">
+                        Don't have an account? 
+                        <a class="text-primary font-bold hover:underline ml-1" href="#">Sign Up</a>
+</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-[#f5f7f9] dark:bg-slate-950 border-t border-[#abadaf]/15">
+<div class="w-full py-12 px-12 flex flex-col md:flex-row justify-between items-center gap-4 max-w-[1440px] mx-auto">
+<div class="font-['Inter'] text-xs font-normal text-[#595c5e] dark:text-slate-500">
+                © 2024 Academic Nexus. The Digital Commons for modern scholars.
+            </div>
+<div class="flex gap-8 font-['Inter'] text-xs font-normal text-[#595c5e]">
+<a class="hover:text-[#4647d3] dark:hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="hover:text-[#4647d3] dark:hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="hover:text-[#4647d3] dark:hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Help Center</a>
+<a class="hover:text-[#4647d3] dark:hover:text-indigo-300 transition-colors opacity-80 hover:opacity-100" href="#">Contact Us</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Study Sanctuary - Study Groups Directory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary-dim": "#3939c7",
+                "primary": "#4647d3",
+                "inverse-surface": "#0b0f10",
+                "on-background": "#2c2f31",
+                "on-tertiary-container": "#63054a",
+                "inverse-primary": "#8083ff",
+                "primary-fixed": "#9396ff",
+                "on-error-container": "#510017",
+                "on-secondary": "#f8f0ff",
+                "surface-container-lowest": "#ffffff",
+                "background": "#f5f7f9",
+                "secondary-fixed-dim": "#ceb9ff",
+                "on-secondary-container": "#5517bf",
+                "secondary": "#6a37d4",
+                "error": "#b41340",
+                "on-primary-container": "#0a0081",
+                "tertiary-fixed-dim": "#ef81c4",
+                "on-surface-variant": "#595c5e",
+                "secondary-fixed": "#dac9ff",
+                "surface": "#f5f7f9",
+                "on-error": "#ffefef",
+                "on-secondary-fixed-variant": "#5f28c8",
+                "error-container": "#f74b6d",
+                "on-tertiary-fixed-variant": "#6e1354",
+                "surface-dim": "#d0d5d8",
+                "tertiary": "#963776",
+                "on-tertiary": "#ffeef4",
+                "outline": "#747779",
+                "surface-container": "#e5e9eb",
+                "primary-container": "#9396ff",
+                "outline-variant": "#abadaf",
+                "surface-container-high": "#dfe3e6",
+                "primary-fixed-dim": "#8387ff",
+                "on-tertiary-fixed": "#3b002b",
+                "surface-tint": "#4647d3",
+                "secondary-dim": "#5e26c7",
+                "on-surface": "#2c2f31",
+                "tertiary-fixed": "#ff8ed2",
+                "surface-container-highest": "#d9dde0",
+                "surface-container-low": "#eef1f3",
+                "tertiary-dim": "#882a69",
+                "surface-bright": "#f5f7f9",
+                "tertiary-container": "#ff8ed2",
+                "on-primary-fixed": "#000000",
+                "error-dim": "#a70138",
+                "inverse-on-surface": "#9a9d9f",
+                "on-primary": "#f4f1ff",
+                "on-secondary-fixed": "#40009b",
+                "on-primary-fixed-variant": "#0e009d",
+                "secondary-container": "#dac9ff",
+                "surface-variant": "#d9dde0"
+              },
+              fontFamily: {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signature-gradient {
+            background: linear-gradient(135deg, #4647d3 0%, #6a37d4 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .depth-tonal-shift {
+            background-color: #f5f7f9;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col h-screen w-72 border-none bg-slate-100 dark:bg-slate-900 z-50">
+<div class="p-8">
+<div class="flex items-center gap-3 mb-10">
+<div class="w-10 h-10 signature-gradient rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+</div>
+<div>
+<h1 class="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">Study Sanctuary</h1>
+<p class="text-xs font-medium text-slate-500 uppercase tracking-widest">Academic Commons</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-sans antialiased text-sm font-medium tracking-tight">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-indigo-700 dark:text-indigo-300 relative before:absolute before:left-0 before:w-1 before:h-6 before:bg-indigo-600 before:rounded-r-full font-sans antialiased text-sm font-medium tracking-tight bg-slate-200/50 dark:bg-slate-800/50 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Study Groups</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-sans antialiased text-sm font-medium tracking-tight">Chat Rooms</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="person_search">person_search</span>
+<span class="font-sans antialiased text-sm font-medium tracking-tight">Partner Matching</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-sans antialiased text-sm font-medium tracking-tight">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-sans antialiased text-sm font-medium tracking-tight">Scheduling</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-sans antialiased text-sm font-medium tracking-tight">Admin</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-8">
+<button class="w-full py-4 px-6 signature-gradient text-white rounded-full font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                Create Group
+            </button>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="sticky top-0 z-40 flex justify-between items-center px-8 ml-72 h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20" placeholder="Search by subject, goal, or member..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-slate-500" data-icon="notifications">notifications</span>
+</button>
+<button class="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-slate-500" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden ml-2 ring-2 ring-primary/10">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="User profile avatar with friendly face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtbe80mc7G63GqQwqAnMRjXf5BRypBLwggEkIwa-cvBv8GyZS6Qg4rywvjv7seAWsEZpXihhdrV7iNzl3JAPkJHr05p3MNOXjgykpalJhu7DEDjV9EdipLw6V-qnSad_YF2ZI5cbGwIWwzMjuraaDfw91TjT0LV01Grs4p4cVAsJb7XKLF26leE2Cq0ZwGNzNKbxnL_Yo952z_JHw2R7vxIjSFRjKiyQETZyb2RKvNtFs4cdVPjrdqOvc16Qargl4OuFcolN1OTYc"/>
+</div>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-72 p-12 min-h-screen">
+<!-- Hero Section -->
+<div class="mb-12">
+<h2 class="text-[2.75rem] font-black text-on-surface leading-tight tracking-tighter mb-4">Find your tribe.</h2>
+<p class="text-on-surface-variant max-w-2xl text-lg leading-relaxed">
+                Connect with peers who share your academic drive. Join specialized study groups designed to help you master complex subjects through collaborative learning.
+            </p>
+</div>
+<!-- Filter Bar -->
+<div class="bg-surface-container-low rounded-xl p-4 mb-10 flex flex-wrap items-center gap-4">
+<div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg text-sm font-medium text-on-surface-variant shadow-sm border border-outline-variant/10">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+<span>Filters:</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-white border-none rounded-lg text-xs font-semibold py-2 pl-4 pr-10 focus:ring-2 focus:ring-primary/10 shadow-sm min-w-[140px]">
+<option>Subject</option>
+<option>Computer Science</option>
+<option>Biology</option>
+<option>Physics</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-white border-none rounded-lg text-xs font-semibold py-2 pl-4 pr-10 focus:ring-2 focus:ring-primary/10 shadow-sm min-w-[140px]">
+<option>Goals</option>
+<option>Exam Prep</option>
+<option>Project Work</option>
+<option>Discussion</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-white border-none rounded-lg text-xs font-semibold py-2 pl-4 pr-10 focus:ring-2 focus:ring-primary/10 shadow-sm min-w-[140px]">
+<option>Members</option>
+<option>1-5</option>
+<option>5-10</option>
+<option>10+</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-white border-none rounded-lg text-xs font-semibold py-2 pl-4 pr-10 focus:ring-2 focus:ring-primary/10 shadow-sm min-w-[140px]">
+<option>Difficulty</option>
+<option>Beginner</option>
+<option>Intermediate</option>
+<option>Advanced</option>
+</select>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[16px] pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+<button class="ml-auto text-xs font-bold text-primary hover:underline px-4">Clear All</button>
+</div>
+<!-- Grid of Study Groups -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Group Card 1 -->
+<div class="group bg-surface-container-lowest rounded-lg p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(70,71,211,0.06)] relative flex flex-col h-full">
+<div class="flex justify-between items-start mb-8">
+<span class="px-4 py-1.5 bg-tertiary-container text-on-tertiary-container text-xs font-bold rounded-full">Active Now</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">3h Daily</span>
+</div>
+<div class="mb-4">
+<span class="text-xs font-bold text-primary mb-2 block uppercase tracking-tight">Computer Science</span>
+<h3 class="text-xl font-bold text-on-surface mb-3 leading-tight">Neural Networks &amp; Deep Learning</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">Focusing on PyTorch implementation of Transformer architectures. Midterm prep starting soon.</p>
+</div>
+<div class="mt-auto pt-8 flex items-center justify-between border-t border-outline-variant/10">
+<div class="flex -space-x-3">
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk28nEJ38nfH_aAjKnxfq6dDwuH46stgcPElBw5jEBgbp4zCX6VP7fqJtdk5-7tuVWo4qgphrAHJDUv8ZO6q5PPnDwgeLnEJ8Sk5KkYQuEub7olxAOucN8tHz9vb1eMByNalbVe7JvMFn0ebqSX-ZFp-fXFH1fyDcIxf3PVFssylnVR64dLXryhu8uxw_Ey6SjajY9-gqVsKaaZ9NJ0xCF8xZLXFM-L9qtikAncwfpRya0dDkz3HKccjhj0LqcnIzSg0JMhD3IMCU"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHQC8uNnVdzlI9yszuJnNLMe-Be2e5bZSv5i9laPKSgfsfAKYr5ClHIMPvkAkDe-D9oEn0H5EAWqHDAGtLPsvjJ5ispxTDJgu7ueDrEZ41wesd07DOSz2ItFvAmhfxfW7zML7y4zBI7I25Z7Sf4PMWi8EiVMFzF3Yc1RVYhS2e5-yhQLAJLigkbZTUYbirChbdOPOPbGLcOvgcVBXq7RdIq5p3NDqEls62HC0hgfAFxTr77fZqsvFsSNvUSckbT9H9XsEZWt1o9Ho"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2y8u9Jbxatgmugq4quGUiEi8oXV-dXtK-3dkMwIQeUYkNAjbqJXNCxVk6_bQ9CWl3Fmik2F6UU4RMPLEGxsKqbpYndE8axMT0DwzRsR7WNW0hg5j4qlMhtgIGKGEJgmNZUtyxU3uqXx-nZU91BZy94d9elOlGgLnKqnvmHFczhRyvWwHexKsGEH0Hhm-SyD-nzMpg3IIy4ULphPJYZHpw0td-VQRRxnV-LC8JwSeIzqWu3j23PJidwX111tyAl16_NYe6hGeC-ig"/>
+<div class="w-10 h-10 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">+8</div>
+</div>
+<button class="px-6 py-2 signature-gradient text-white rounded-full text-xs font-bold hover:scale-105 transition-transform active:scale-95 shadow-md">Join Group</button>
+</div>
+</div>
+<!-- Group Card 2 -->
+<div class="group bg-surface-container-lowest rounded-lg p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(70,71,211,0.06)] relative flex flex-col h-full">
+<div class="flex justify-between items-start mb-8">
+<span class="px-4 py-1.5 bg-primary-container text-on-primary-container text-xs font-bold rounded-full">Mid-Difficulty</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Weekends</span>
+</div>
+<div class="mb-4">
+<span class="text-xs font-bold text-primary mb-2 block uppercase tracking-tight">Biology</span>
+<h3 class="text-xl font-bold text-on-surface mb-3 leading-tight">Advanced Molecular Genetics</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">Exploring CRISPR-Cas9 mechanisms and regulatory pathways in eukaryotic systems.</p>
+</div>
+<div class="mt-auto pt-8 flex items-center justify-between border-t border-outline-variant/10">
+<div class="flex -space-x-3">
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAlTlwNP9c-byBlQiPYdp-r5vSYTyvceNjzdnA2BK9a4_1vl6lk5q1jZslWjIsxxWnMS-AJCOxd6YYGRbpnsiDJnyJXddDQCfzMfp-63dDrmurVcfaY9VlKpQTfSZiwAYOVHHZnAbF2KBRBeovbZG5ZR0J2u9wPVWZEsx-Dq2xXcfHwro5Jo01FVjfDsnK0PrdGiiVzsQREacxwMiGyn2-r_U81_jdrm9Gvh_I7jbxE5UIcm_xrzsLJPQRcS6gzva0o07DxZZlxeo"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLDzpHIdPeTDgi9wZMy5qewGVmO_ePBm4tEmKqF_XlnCnHt3tlORceKdoSWwSI4tCCQ8JJN6Dhzp9u20i-0EqOwyEVIRA5-JkxCiPGEdm5xNVCuFOUlQkeqJ13SzB91x0SE7E_Mo512XRT24FtEa0L8owNPaIT4c3WYgdoPtfCGxMU-azl2uXdS2Sg2qdt9yCCMo3RZ6NaTVyXspAQHUXdo13W-Hw563xCQK94ijY8rqYWGFg4DcuoINdnkq3sgRdhcOOYc7rxG-k"/>
+<div class="w-10 h-10 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">+4</div>
+</div>
+<button class="px-6 py-2 border-2 border-primary text-primary rounded-full text-xs font-bold hover:bg-primary/5 transition-colors active:scale-95">Request Access</button>
+</div>
+</div>
+<!-- Group Card 3 -->
+<div class="group bg-surface-container-lowest rounded-lg p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(70,71,211,0.06)] relative flex flex-col h-full">
+<div class="flex justify-between items-start mb-8">
+<span class="px-4 py-1.5 bg-surface-container text-on-surface-variant text-xs font-bold rounded-full">Open Enrollment</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Tue/Thu</span>
+</div>
+<div class="mb-4">
+<span class="text-xs font-bold text-primary mb-2 block uppercase tracking-tight">Business</span>
+<h3 class="text-xl font-bold text-on-surface mb-3 leading-tight">Strategic Market Dynamics</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">Case study analysis for MBA core curriculum. Looking for collaborative peer reviewers.</p>
+</div>
+<div class="mt-auto pt-8 flex items-center justify-between border-t border-outline-variant/10">
+<div class="flex -space-x-3">
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6MH-yURr30xJ2aMuX3jeHCf8mZU9WzqROnTkOXPMlS9iHdlNX7b_msaK8tXBQMa0R0Fi2_pq0hIWAQ3YRO73jAM0lv0U5pX_JZB3ecybjl1Up3xEj--VwVOiayRqIWvEn5jJ7uXt5HVSbA9ykSyb9WXZL3bYyp5YrO7i5l4aIqS8redy43AFG-JW07jVZRFCIc9vC0UuZCKFJ75OlguZRRsVzajb8WdTMhudZtMHw1rDorXDc3fVVB2Crm8GKnUM3pYfiUEswTyM"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNUKvtWjlkEs2dvCHTS4HDtYQAWUZ82N7ggkxJoR53_NbkTBiPKE8WgWz14LWPt54Llw9-CtM7Gs4Aj5HZV3EKg2VUdSwiUl5MhWK2TkvM3F_tyz2QvUVHUrd7bAhEekuY6d3uEriQHIANXLEnPsvTVdVqv8BNFR_LdffUlcP-ZsJuRD4WZG4ZYAAOEmT6e0PdIrdGOb3w9i2jnjef1EihtI0AqB_6YIFlbs4UY20jFLhsG3VOmrte-q9Yaqe2y7kXMl8FywTSyXg"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4-C6M7ZvMUS_DrM6BN7upD2ddlBmZrkLK05U7oaumWx24cJ1DXxrVyAdkID6x6eT2Qv595nn1neqHlp_fUHErn5LRcFhScuODMw3HHNEOc40d_KLAiQcVranG3DNZwYARrwTRvMwROQsCLmST1lLP_uOGdBYonxVbYtydDyt3ebf22QubuhPPKBlmklQAEvvVr-X4P-_gM3q6X4Sx-iHgaq7yIlxT_DbOe_gP_Lp_AlXd_D-vI0BFzRw17TuWrYLnAuIZXvOdLWE"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByx0lw3ZsVGUDJPSTxROfXoO8aDJp-k4zp2qAsPUHkC5Bo9nJoQ8RHyMBSBeGHVR9ZGMEFg-uN4JdZCv1NfUopn_ZqWle9lxingF7ddme-k1t7wFK3oehkDxqLQ0cpRqh8akoRBEXQA1c-bLLDZm5NxjyncB0YQol6SV16S93MfSB6ytFMMcPzInbFU0MoHRcxAvOX93xZxu-aOI6dpx3YO3CteIbs2Ug6pDRVNAh6d9NnXT2XuQ6nbfICO-pdvPd3zG8hhWev6GU"/>
+</div>
+<button class="px-6 py-2 signature-gradient text-white rounded-full text-xs font-bold hover:scale-105 transition-transform active:scale-95 shadow-md">Join Group</button>
+</div>
+</div>
+<!-- Group Card 4 -->
+<div class="group bg-surface-container-lowest rounded-lg p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(70,71,211,0.06)] relative flex flex-col h-full">
+<div class="flex justify-between items-start mb-8">
+<span class="px-4 py-1.5 bg-tertiary-container text-on-tertiary-container text-xs font-bold rounded-full">New Group</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Mornings</span>
+</div>
+<div class="mb-4">
+<span class="text-xs font-bold text-primary mb-2 block uppercase tracking-tight">Philosophy</span>
+<h3 class="text-xl font-bold text-on-surface mb-3 leading-tight">Ethics in the Digital Age</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">Discussing the moral implications of artificial general intelligence and automated systems.</p>
+</div>
+<div class="mt-auto pt-8 flex items-center justify-between border-t border-outline-variant/10">
+<div class="flex -space-x-3">
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1gzK79kaXJehhD2VHh8l8JCJNt-3weNoPews0cCjnL55aUa6j47CwjpCKZBDbUNVI4eWu6USkhguLFcBRn-SIq3p2oaSetcCrOdAcVHDtIlegZnRZhwrp8KTRKbuF60FIU2z4EioRP6tVg2kcdfXQ-zfpPY2kVzkNuX6DBZFOhIX59yomXJaF7r1ZsrLp31TjJblvE6DSVOL0s7zxdaChrBHEu81-OD-DAYszszmpAFfE-lLzqq_iLO0nCOc5EgkI0OdcjzlAIZc"/>
+<div class="w-10 h-10 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">1/6</div>
+</div>
+<button class="px-6 py-2 signature-gradient text-white rounded-full text-xs font-bold hover:scale-105 transition-transform active:scale-95 shadow-md">Join Group</button>
+</div>
+</div>
+<!-- Group Card 5 -->
+<div class="group bg-surface-container-lowest rounded-lg p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(70,71,211,0.06)] relative flex flex-col h-full">
+<div class="flex justify-between items-start mb-8">
+<span class="px-4 py-1.5 bg-primary-container text-on-primary-container text-xs font-bold rounded-full">Intensive</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Daily</span>
+</div>
+<div class="mb-4">
+<span class="text-xs font-bold text-primary mb-2 block uppercase tracking-tight">Physics</span>
+<h3 class="text-xl font-bold text-on-surface mb-3 leading-tight">Quantum Mechanics II</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">Strict problem-set based study. Must have completed QM I with B+ or higher.</p>
+</div>
+<div class="mt-auto pt-8 flex items-center justify-between border-t border-outline-variant/10">
+<div class="flex -space-x-3">
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxTYPHbtKzFZ5o1TCcb1FwTONtxBtdIj9nxaF03Xv2T14BlHbXvr6ioI_KVUbAQTHp4EcI2lVBtKi9RE5TTu65HxGYhVZv1SkW2WM4Q6ZMtDbp7bwqf5F3zbOnlXQa8iBFYhwsc-kXek_cBp1FXUl0qM7uboFqkiZIqrggGCNvx1bn7GLmfGFafUZZNJgB0_h4gt3awg-xgNuMnbr3kjkr3nJGLXUjuBDSu5CXR5RJ2FCSor27p9HFlDMBDhakJYrhwwJTLv8GVKA"/>
+<img alt="Member" class="w-10 h-10 rounded-full border-4 border-white object-cover" data-alt="Student profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNNmNIe8aS6PvXzisynq6YJFLC3Jrb-Yd7kB2_x92SqMDK57MeERudRGTIjKRLTtH-tztxmC097zM-N4emy2ZaxuZA4dt9DFjRLwoJhzVZvWzASNg1B8BRW1qun8nBKSGddRz-3rlO6912YIWD9uK_7w6dj7gFGQLKO0ObOO-M952cTn72a0zbMiHuUX82aStTLHOdGJ8DuQxiP_Vi_EvnCKjHwZ6X-JyHAjZ9yf2zwlWYwns2a7LAt20V4X1UXNvSI_YN5LcuDwg"/>
+</div>
+<button class="px-6 py-2 border-2 border-primary text-primary rounded-full text-xs font-bold hover:bg-primary/5 transition-colors active:scale-95">Request Access</button>
+</div>
+</div>
+<!-- Empty / CTA Card -->
+<div class="bg-surface-container rounded-lg p-8 border-2 border-dashed border-outline-variant/30 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="add_circle">add_circle</span>
+</div>
+<h3 class="text-lg font-bold text-on-surface mb-2">Can't find your subject?</h3>
+<p class="text-sm text-on-surface-variant mb-6">Create a new group and lead the way for other students.</p>
+<button class="text-sm font-bold text-primary hover:underline">Start a New Group</button>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Floating Action Button) -->
+<button class="fixed bottom-10 right-10 w-16 h-16 signature-gradient text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 z-50">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</body></html>

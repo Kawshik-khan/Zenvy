@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#dac9ff",
+                        "on-error": "#ffefef",
+                        "surface": "#f5f7f9",
+                        "inverse-primary": "#8083ff",
+                        "secondary-dim": "#5e26c7",
+                        "on-secondary-container": "#5517bf",
+                        "secondary": "#6a37d4",
+                        "on-primary": "#f4f1ff",
+                        "outline-variant": "#abadaf",
+                        "on-tertiary-fixed-variant": "#6e1354",
+                        "on-surface-variant": "#595c5e",
+                        "primary-fixed": "#9396ff",
+                        "surface-container": "#e5e9eb",
+                        "tertiary": "#963776",
+                        "on-tertiary-container": "#63054a",
+                        "error-dim": "#a70138",
+                        "tertiary-fixed": "#ff8ed2",
+                        "tertiary-container": "#ff8ed2",
+                        "inverse-surface": "#0b0f10",
+                        "surface-container-high": "#dfe3e6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#f8f0ff",
+                        "surface-bright": "#f5f7f9",
+                        "primary": "#4647d3",
+                        "on-surface": "#2c2f31",
+                        "surface-container-highest": "#d9dde0",
+                        "secondary-fixed-dim": "#ceb9ff",
+                        "on-tertiary-fixed": "#3b002b",
+                        "on-primary-fixed-variant": "#0e009d",
+                        "tertiary-fixed-dim": "#ef81c4",
+                        "surface-container-low": "#eef1f3",
+                        "on-tertiary": "#ffeef4",
+                        "error": "#b41340",
+                        "primary-container": "#9396ff",
+                        "on-secondary-fixed-variant": "#5f28c8",
+                        "on-secondary-fixed": "#40009b",
+                        "outline": "#747779",
+                        "background": "#f5f7f9",
+                        "error-container": "#f74b6d",
+                        "on-background": "#2c2f31",
+                        "on-primary-fixed": "#000000",
+                        "inverse-on-surface": "#9a9d9f",
+                        "on-error-container": "#510017",
+                        "primary-dim": "#3939c7",
+                        "surface-variant": "#d9dde0",
+                        "tertiary-dim": "#882a69",
+                        "surface-tint": "#4647d3",
+                        "on-primary-container": "#0a0081",
+                        "surface-dim": "#d0d5d8",
+                        "secondary-fixed": "#dac9ff",
+                        "primary-fixed-dim": "#8387ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar (from JSON) -->
+<aside class="h-screen w-72 fixed left-0 top-0 bg-[#eef1f3] dark:bg-slate-900 flex flex-col py-8 space-y-2 font-['Inter'] antialiased text-sm font-medium z-50">
+<div class="px-8 mb-10">
+<h1 class="text-2xl font-black tracking-tighter text-[#2c2f31] dark:text-slate-50">StudySanctuary</h1>
+<p class="text-xs text-on-surface-variant opacity-70">The Academic Sanctuary</p>
+</div>
+<nav class="flex-grow">
+<a class="flex items-center text-[#595c5e] dark:text-slate-400 px-6 py-3 transition-all hover:text-[#4647d3] hover:bg-white/40" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="grid_view">grid_view</span>
+<span>Dashboard</span>
+</a>
+<a class="relative flex items-center text-[#4647d3] before:content-[''] before:absolute before:left-0 before:w-1 before:h-6 before:bg-[#4647d3] before:rounded-r-full px-6 py-3" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="person_search">person_search</span>
+<span>Study Partners</span>
+</a>
+<a class="flex items-center text-[#595c5e] dark:text-slate-400 px-6 py-3 transition-all hover:text-[#4647d3] hover:bg-white/40" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="groups_3">groups_3</span>
+<span>Study Groups</span>
+</a>
+<a class="flex items-center text-[#595c5e] dark:text-slate-400 px-6 py-3 transition-all hover:text-[#4647d3] hover:bg-white/40" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="calendar_today">calendar_today</span>
+<span>Schedule</span>
+</a>
+<a class="flex items-center text-[#595c5e] dark:text-slate-400 px-6 py-3 transition-all hover:text-[#4647d3] hover:bg-white/40" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="auto_stories">auto_stories</span>
+<span>Library</span>
+</a>
+</nav>
+<div class="px-6 py-4">
+<button class="w-full py-3 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-full font-bold shadow-lg shadow-primary/20 transform active:scale-95 transition-all">
+                Start Session
+            </button>
+</div>
+<div class="pt-4 mt-auto">
+<a class="flex items-center text-[#595c5e] dark:text-slate-400 px-6 py-3 transition-all hover:text-[#4647d3] hover:bg-white/40" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center text-[#595c5e] dark:text-slate-400 px-6 py-3 transition-all hover:text-[#4647d3] hover:bg-white/40" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="contact_support">contact_support</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar (from JSON) -->
+<header class="fixed top-0 left-72 right-0 h-20 z-40 bg-[#f5f7f9]/80 dark:bg-slate-950/80 backdrop-blur-xl flex justify-between items-center px-12 w-full font-['Inter'] text-sm tracking-tight">
+<div class="flex items-center bg-surface-container rounded-full px-4 py-2 w-96">
+<span class="material-symbols-outlined text-on-surface-variant text-xl mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-on-surface-variant/60" placeholder="Search for partners or subjects..." type="text"/>
+</div>
+<div class="flex items-center space-x-6">
+<button class="p-2 hover:bg-[#eef1f3] rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="flex items-center space-x-3 cursor-pointer p-1 pr-4 hover:bg-[#eef1f3] rounded-full transition-all">
+<img alt="User profile" class="w-8 h-8 rounded-full bg-primary-fixed" data-alt="User profile avatar circular" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBprbI8CKu8nOCk3QZvdQJHzgK742Mtn2pqttppTaa0iiEKSCqqlr7z13u9f-TikPwxMJtGsBKXS9k6kBP0jxfOjdkOcwkiUOdn6OFCcDpX7HfDmCX7Ht0qrghxjimSmLWLDQvt7GbLVi3y5gom-CNMKvC2Za7rQAEPElZdZ2HDgM1wiDyK0ir9nbTVnmG24hAzWrbnmHSrIZ9JkWNGD8FzuC2P0Iee0K72s55mIYmeFmvUnFu19JlmmOaLtX4GaYPYmsLdHIXKM2w"/>
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content Stage -->
+<main class="ml-72 pt-20 min-h-screen">
+<div class="px-12 py-10 max-w-7xl mx-auto space-y-12">
+<!-- Hero / Match with Partner Header -->
+<section class="relative overflow-hidden rounded-xl bg-surface-container-low p-12">
+<div class="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div class="max-w-xl">
+<span class="inline-block px-4 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold tracking-widest uppercase mb-4">New Feature</span>
+<h2 class="text-5xl font-extrabold tracking-tight leading-tight text-on-surface mb-4">
+                            Find your academic <span class="text-primary italic">soulmate</span>.
+                        </h2>
+<p class="text-on-surface-variant text-lg">Our AI-powered engine matches you with students who share your learning style, schedule, and academic goals.</p>
+</div>
+<div class="flex flex-col items-end gap-4">
+<div class="flex items-center gap-3 bg-surface-container-lowest p-2 rounded-full shadow-sm">
+<span class="ml-4 text-sm font-medium text-on-surface">AI Smart Match</span>
+<button class="w-12 h-6 rounded-full bg-primary relative transition-colors">
+<span class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></span>
+</button>
+</div>
+<button class="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-full font-bold shadow-xl shadow-primary/30 flex items-center gap-2 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+                            Match with Partner
+                        </button>
+</div>
+</div>
+<!-- Abstract Background Elements -->
+<div class="absolute -right-20 -top-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="absolute -left-20 -bottom-20 w-64 h-64 bg-secondary/5 rounded-full blur-3xl"></div>
+</section>
+<!-- Main Layout Grid -->
+<div class="grid grid-cols-12 gap-8 items-start">
+<!-- Filters Sidebar -->
+<aside class="col-span-12 lg:col-span-3 space-y-8">
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm">
+<h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="tune">tune</span>
+                            Refine Search
+                        </h3>
+<div class="space-y-6">
+<!-- Subject Filter -->
+<div class="space-y-3">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Subject</label>
+<select class="w-full bg-surface-container border-none rounded-DEFAULT text-sm focus:ring-primary">
+<option>All Subjects</option>
+<option>Quantum Physics</option>
+<option>Calculus II</option>
+<option>Organic Chemistry</option>
+<option>Microeconomics</option>
+</select>
+</div>
+<!-- Study Goal -->
+<div class="space-y-3">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Study Goal</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-semibold">Exam Prep</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-medium hover:bg-surface-container-high">Project</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-medium hover:bg-surface-container-high">Homework</button>
+<button class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-medium hover:bg-surface-container-high">Deep Focus</button>
+</div>
+</div>
+<!-- Learning Style -->
+<div class="space-y-3">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Learning Style</label>
+<div class="space-y-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container" type="checkbox"/>
+<span class="text-sm text-on-surface group-hover:text-primary transition-colors">Visual Learner</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container" type="checkbox"/>
+<span class="text-sm text-on-surface group-hover:text-primary transition-colors">Quiet Study</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary bg-surface-container" type="checkbox"/>
+<span class="text-sm text-on-surface group-hover:text-primary transition-colors">Verbalizer</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Connections -->
+<div class="bg-surface-container-low rounded-lg p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold text-on-surface">Recent Connections</h3>
+<a class="text-xs font-bold text-primary hover:underline" href="#">See all</a>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<img alt="Sarah" class="w-10 h-10 rounded-full bg-secondary-container" data-alt="Student profile image Sarah" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPVDTvqo8G7S00PyHti3R1MilN7kQYZmL4nr3_C-_qO9YNV8rG3V1SBe-QfKpr5-tS5vkLWzu93yxEyUUqmM9BXkJVEdRaW9jRm8GmLX117YH-ikDM4C-cdJTsVUMfs6qFMxkDDattRl330DGSyAI0-3gAT6YB2T4LL5bxCLR7REjrX8LunTk1thC5_7-8imWF3gEDgBzeKVAgPNoPV9MsbEM15y4dU3KgN6fnxHI3QehUtyRDIvHC-kBIOcT3ZCCTdSVY7ZV-17s"/>
+<div>
+<p class="text-sm font-bold text-on-surface">Sarah Miller</p>
+<p class="text-[10px] text-on-surface-variant">Active 10m ago</p>
+</div>
+<div class="ml-auto w-2 h-2 rounded-full bg-green-500"></div>
+</div>
+<div class="flex items-center gap-3">
+<img alt="James" class="w-10 h-10 rounded-full bg-primary-container" data-alt="Student profile image James" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuWhKprLKCBt4kjRvDZGAYWNYLCsgydE4bemipSDxIxUxriZaCzzD83vzi661NBP3Kp2M6ujdjSK7WUUQbSJiP3kzf4H6TAh1exL-S-2x3nSrZKSEQ1lMywi0cpaar4SBoINzwlPVOB0xoN8gN1pSgoQ3DTh5lWKHnqwnoO6k2kq0eD4RQhd5zd5h7hFXJsN1lahCzPqUwg_sb4dAvPiniOM_EmWzh6NQ48wSf04Ue9MJ_dedscINXsgWPGdxSnp-1E3Al3zw_EKs"/>
+<div>
+<p class="text-sm font-bold text-on-surface">James Wilson</p>
+<p class="text-[10px] text-on-surface-variant">Active yesterday</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Matches Grid -->
+<div class="col-span-12 lg:col-span-9">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-2xl font-bold tracking-tight text-on-surface">Top Matches</h3>
+<p class="text-on-surface-variant">Based on your shared interest in Calculus II &amp; Visual Learning</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<button class="p-2 rounded-full bg-surface-container-low text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Profile Card 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group border border-transparent hover:border-primary/10">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Elena" class="w-20 h-20 rounded-xl bg-secondary-container object-cover" data-alt="Elena student profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCULDpdinHNBxBn0G-s6GVS2e8iyNBitDhx1Ak46QvsxcmM4WFJ3EUn0d0A2n7XFE57PibArrbrfnObfJF_PHR2CkwvY_Mj6JQ6vm2Tk_X9_M63PAhiyk95mdjY17TNLcP8rUnifv-rGHsVlJMNatHC6Vftr_AKtBtHS_6mmjCk_WgXhvDfyMDF83EA4dZSezPpaWl2K0k29hP8UQaVKpy1iOz2IE4OZ_yOk1pSiurcK7aRay2qKyNYy4n1LnGtA2MhtBMA5JvovUE"/>
+<div class="absolute -bottom-2 -right-2 bg-tertiary-container text-on-tertiary-container px-2 py-1 rounded-md text-[10px] font-black shadow-sm">
+                                        PRO
+                                    </div>
+</div>
+<div class="text-right">
+<p class="text-3xl font-black text-primary leading-none">98%</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Compatibility</p>
+</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Elena Rodriguez</h4>
+<p class="text-sm text-on-surface-variant">Stanford University • Computer Science</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="library_books">library_books</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Common Subjects</p>
+<p class="text-sm font-medium text-on-surface">Calculus II, AI Ethics, Data Structures</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="schedule">schedule</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Availability</p>
+<p class="text-sm font-medium text-on-surface">Mon-Wed, 6:00 PM – 8:00 PM</p>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 py-3 px-4 bg-surface-container text-on-surface rounded-full text-sm font-bold hover:bg-surface-container-high transition-colors">
+                                    View Profile
+                                </button>
+<button class="flex-1 py-3 px-4 bg-primary text-on-primary rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                                    Request Session
+                                </button>
+</div>
+</div>
+<!-- Profile Card 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group border border-transparent hover:border-primary/10">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Marcus" class="w-20 h-20 rounded-xl bg-primary-container object-cover" data-alt="Marcus student profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8m69ZTtyBnhuAOLQYc2No5pvGe4J7JZWky_E9HZ6Z_sey6GzyNA32pEaj0_fesI_ZMb-nTTPysX2OK8Q0FOC68XYKb7ugl7KpXlyKnD_Ah62QWEMiTHOksfgYnlCU5EkVbAvRjqx6BlET0fFIyopU-6wVB_FGmGoJFzdpUvs9YzdHkmpecCqi92s4cEMUUgQHE8X8jtUn-erNdl3GskglG4msCi9Bary1dkBC34K6UDFTPqy-XcLSkaSnyLWKRA3pg4NAcSQoDNo"/>
+</div>
+<div class="text-right">
+<p class="text-3xl font-black text-secondary leading-none">94%</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Compatibility</p>
+</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Marcus Thorne</h4>
+<p class="text-sm text-on-surface-variant">MIT • Theoretical Physics</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="library_books">library_books</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Common Subjects</p>
+<p class="text-sm font-medium text-on-surface">Quantum Mechanics, Calc II, Linear Algebra</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="schedule">schedule</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Availability</p>
+<p class="text-sm font-medium text-on-surface">Weekends, 10:00 AM – 2:00 PM</p>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 py-3 px-4 bg-surface-container text-on-surface rounded-full text-sm font-bold hover:bg-surface-container-high transition-colors">
+                                    View Profile
+                                </button>
+<button class="flex-1 py-3 px-4 bg-primary text-on-primary rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                                    Request Session
+                                </button>
+</div>
+</div>
+<!-- Profile Card 3 -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group border border-transparent hover:border-primary/10">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Aisha" class="w-20 h-20 rounded-xl bg-tertiary-container object-cover" data-alt="Aisha student profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB0Wc7OsVte9mwY8mQMIwxUXvuS4o3cyXxRAa4SRzRhLW9njDAOw22cXvAKN-_iJK63Q9CGqG4ieOD1bPcOSdwBHv9HpaRcOQWQcnWrv0nYAmFNWJI7R3k0POli8XzZMsLB5HNWw5O4zY__AeS5EmoqXu5IN3aug9U9Fq7CvchhHZ1juLDjAauRo21WCZo33FEiGP-K9RCoyF7MPJewqhjcVKKwKOPAXUfdZcdMQpGQMNI8Xckm2H9NFwblK0B7rIRjF6BcGDVSAM"/>
+</div>
+<div class="text-right">
+<p class="text-3xl font-black text-primary leading-none">89%</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Compatibility</p>
+</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Aisha Khan</h4>
+<p class="text-sm text-on-surface-variant">UCL • Bio-Engineering</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="library_books">library_books</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Common Subjects</p>
+<p class="text-sm font-medium text-on-surface">Calculus II, Organic Chemistry</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="schedule">schedule</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Availability</p>
+<p class="text-sm font-medium text-on-surface">Tues-Thurs, 4:00 PM – 6:00 PM</p>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 py-3 px-4 bg-surface-container text-on-surface rounded-full text-sm font-bold hover:bg-surface-container-high transition-colors">
+                                    View Profile
+                                </button>
+<button class="flex-1 py-3 px-4 bg-primary text-on-primary rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                                    Request Session
+                                </button>
+</div>
+</div>
+<!-- Profile Card 4 -->
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all group border border-transparent hover:border-primary/10">
+<div class="flex justify-between items-start mb-6">
+<div class="relative">
+<img alt="Liam" class="w-20 h-20 rounded-xl bg-secondary-fixed object-cover" data-alt="Liam student profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdeyHSKNob29CFaH1bfgNPE64gmJdGuVo-HfVpEDeFJ8pzSNKLlUQDmBdcWkZW7s_gvqvs3OVemAxHPf6fW3Vb_D1CKkjnQmvVmBLBB-N3vh3h3X48ce9MPjGpZHEjAzEPQB8ANvTSaqLpI4YmSxx8gvvwRpbtiq1TKJOsxZyYYitjNrZHyq7j4bwnKFJ_Z-kTGdcJMaK7-Suug0BPp1KR9SkoH8lkHP85xfzzny0pBE1lrfjjWNmzOaS0GZ8HRIbSiOCW8ITFctY"/>
+</div>
+<div class="text-right">
+<p class="text-3xl font-black text-secondary leading-none">87%</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Compatibility</p>
+</div>
+</div>
+<div class="mb-6">
+<h4 class="text-xl font-bold text-on-surface mb-1">Liam O'Connor</h4>
+<p class="text-sm text-on-surface-variant">Trinity College • Economics</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="library_books">library_books</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Common Subjects</p>
+<p class="text-sm font-medium text-on-surface">Microeconomics, Calc II, Statistics</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-fixed mt-0.5 text-lg" data-icon="schedule">schedule</span>
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wide">Availability</p>
+<p class="text-sm font-medium text-on-surface">Mon-Fri, 8:00 PM – 10:00 PM</p>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 py-3 px-4 bg-surface-container text-on-surface rounded-full text-sm font-bold hover:bg-surface-container-high transition-colors">
+                                    View Profile
+                                </button>
+<button class="flex-1 py-3 px-4 bg-primary text-on-primary rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                                    Request Session
+                                </button>
+</div>
+</div>
+</div>
+<div class="mt-12 flex justify-center">
+<button class="px-10 py-4 bg-surface-container text-on-surface font-bold rounded-full hover:bg-surface-container-high transition-colors">
+                            Load More Potential Partners
+                        </button>
+</div>
+</div>
+</div>
+<!-- Bento Bottom: Stats & Active Goal -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-20">
+<div class="col-span-1 md:col-span-2 bg-gradient-to-br from-primary to-secondary p-10 rounded-xl text-on-primary flex items-center justify-between">
+<div>
+<h4 class="text-2xl font-bold mb-2">Ready for a Group Session?</h4>
+<p class="opacity-80 max-w-sm mb-6">Group studies have shown a 40% increase in retention. Join or create a Calculus II group now.</p>
+<button class="px-6 py-3 bg-white text-primary font-bold rounded-full hover:shadow-xl transition-shadow">
+                            Browse Groups
+                        </button>
+</div>
+<div class="hidden lg:flex gap-4">
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+<span class="material-symbols-outlined text-3xl" data-icon="hub">hub</span>
+</div>
+<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+<span class="material-symbols-outlined text-3xl" data-icon="forum">forum</span>
+</div>
+</div>
+</div>
+<div class="bg-tertiary p-10 rounded-xl text-on-tertiary">
+<div class="mb-4">
+<span class="material-symbols-outlined text-4xl" data-icon="bolt">bolt</span>
+</div>
+<h4 class="text-xl font-bold mb-2">Weekly Goal</h4>
+<p class="opacity-80 text-sm mb-6">Meet with 3 different study partners to diversify your perspectives.</p>
+<div class="w-full bg-black/10 rounded-full h-2 mb-2">
+<div class="bg-white rounded-full h-full w-2/3"></div>
+</div>
+<p class="text-xs font-bold text-right">2/3 Partners Met</p>
+</div>
+</section>
+</div>
+</main>
+<!-- FAB Suppression: Contextually suppressed as per mandate for detailed/matching pages -->
+</body></html>

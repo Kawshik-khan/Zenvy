@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Academic Nexus | The Digital Commons</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-dim": "#3939c7",
+              "on-surface-variant": "#595c5e",
+              "secondary-dim": "#5e26c7",
+              "on-error-container": "#510017",
+              "surface-container-low": "#eef1f3",
+              "tertiary-dim": "#882a69",
+              "on-tertiary-container": "#63054a",
+              "surface-dim": "#d0d5d8",
+              "primary-fixed-dim": "#8387ff",
+              "on-tertiary-fixed-variant": "#6e1354",
+              "tertiary-container": "#ff8ed2",
+              "tertiary": "#963776",
+              "surface-container-high": "#dfe3e6",
+              "tertiary-fixed-dim": "#ef81c4",
+              "inverse-on-surface": "#9a9d9f",
+              "surface-tint": "#4647d3",
+              "on-background": "#2c2f31",
+              "inverse-primary": "#8083ff",
+              "on-primary-fixed-variant": "#0e009d",
+              "surface": "#f5f7f9",
+              "on-secondary-fixed-variant": "#5f28c8",
+              "error": "#b41340",
+              "error-dim": "#a70138",
+              "tertiary-fixed": "#ff8ed2",
+              "on-secondary-container": "#5517bf",
+              "on-tertiary": "#ffeef4",
+              "secondary": "#6a37d4",
+              "surface-container-highest": "#d9dde0",
+              "on-surface": "#2c2f31",
+              "secondary-fixed-dim": "#ceb9ff",
+              "background": "#f5f7f9",
+              "on-secondary-fixed": "#40009b",
+              "primary-fixed": "#9396ff",
+              "error-container": "#f74b6d",
+              "surface-bright": "#f5f7f9",
+              "primary-container": "#9396ff",
+              "surface-container": "#e5e9eb",
+              "outline": "#747779",
+              "primary": "#4647d3",
+              "secondary-fixed": "#dac9ff",
+              "inverse-surface": "#0b0f10",
+              "on-tertiary-fixed": "#3b002b",
+              "on-primary": "#f4f1ff",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed": "#000000",
+              "secondary-container": "#dac9ff",
+              "on-secondary": "#f8f0ff",
+              "surface-variant": "#d9dde0",
+              "outline-variant": "#abadaf",
+              "on-error": "#ffefef",
+              "on-primary-container": "#0a0081"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d9dde0; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen overflow-hidden flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-[#f5f7f9] dark:bg-slate-900 flex justify-between items-center w-full px-12 py-4 max-w-full docked full-width top-0 z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-[#2c2f31] dark:text-white">The Digital Commons</span>
+<nav class="hidden md:flex gap-6 font-['Inter'] font-medium text-sm tracking-tight">
+<a class="text-[#595c5e] dark:text-slate-400 hover:text-[#2c2f31] hover:bg-[#e5e9eb] dark:hover:bg-slate-800 transition-colors duration-200 px-3 py-1 rounded" href="#">Study Hub</a>
+<a class="text-indigo-600 dark:text-indigo-400 font-semibold border-b-2 border-indigo-600 px-3 py-1" href="#">Library</a>
+<a class="text-[#595c5e] dark:text-slate-400 hover:text-[#2c2f31] hover:bg-[#e5e9eb] dark:hover:bg-slate-800 transition-colors duration-200 px-3 py-1 rounded" href="#">Schedule</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative bg-[#eef1f3] dark:bg-slate-800 rounded-full px-4 py-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 font-body" placeholder="Search resources..." type="text"/>
+</div>
+<button class="p-2 rounded-full hover:bg-[#e5e9eb] dark:hover:bg-slate-800 transition-colors" data-icon="video_call">
+<span class="material-symbols-outlined text-on-surface-variant">video_call</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#e5e9eb] dark:hover:bg-slate-800 transition-colors" data-icon="call">
+<span class="material-symbols-outlined text-on-surface-variant">call</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#e5e9eb] dark:hover:bg-slate-800 transition-colors" data-icon="more_vert">
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Side Navigation (Chat List & Groups) -->
+<aside class="h-screen w-72 left-0 top-0 bg-[#eef1f3] dark:bg-slate-950 flex flex-col py-8 px-4 border-r border-transparent shadow-[0_20px_40px_rgba(70,71,211,0.06)] z-40">
+<div class="mb-8 px-4">
+<div class="flex items-center gap-4 mb-6">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="Close up of a smiling student with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDl7dUhHZBhLfJQlJwqm1ytljfcN4PgIkHP8_rU3M8lcFstKXKrEXDSXVaJO0i1Gtpaz5SmfLCeFGnkZlyzI1NwxfkBgE_DNjacEfJnfZ29sy36pJ4Zz3w9Y_v1VdGN3BqdfrJI5KrT2jz5wgOIRW44bK97L_PlFpw3N-rQ8egMeNoj17QRvxr6-nhWUbYkmk5ssTxi4Uyl5Qq9Q143gIAbPYLZpjChkeypyg76fGfzTp2F6gAbDXafpZPXP9_bg9fgin_99ihbCW0"/>
+<div>
+<p class="font-headline font-bold text-on-surface leading-tight">Alex Rivers</p>
+<p class="text-xs text-on-surface-variant font-body">Active in 4 groups</p>
+</div>
+</div>
+<button class="w-full bg-gradient-to-r from-primary to-secondary text-on-primary py-3 rounded-full font-medium text-sm shadow-lg shadow-primary/20 hover:scale-[0.98] transition-all duration-150">
+                    New Group
+                </button>
+</div>
+<nav class="flex-1 font-['Inter'] text-[0.875rem] leading-relaxed space-y-1 overflow-y-auto custom-scrollbar">
+<a class="flex items-center gap-3 px-4 py-3 text-[#595c5e] dark:text-slate-400 hover:text-indigo-600 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+                    All Chats
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-indigo-600 dark:text-indigo-400 border-l-4 border-indigo-600 bg-white/50 dark:bg-slate-900/50" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+                    Bio 101 Group
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#595c5e] dark:text-slate-400 hover:text-indigo-600 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+                    Thesis Prep
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#595c5e] dark:text-slate-400 hover:text-indigo-600 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+                    Organic Chem
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#595c5e] dark:text-slate-400 hover:text-indigo-600 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+                    Physics Lab
+                </a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/15 pt-6 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#595c5e] dark:text-slate-400 hover:text-indigo-600 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#595c5e] dark:text-slate-400 hover:text-indigo-600 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                    Support
+                </a>
+</div>
+</aside>
+<!-- Main Chat Window -->
+<main class="flex-1 flex flex-col bg-surface relative">
+<!-- Chat Header -->
+<div class="h-20 bg-surface-container-lowest/80 backdrop-blur-xl px-8 flex items-center justify-between z-10">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="group">group</span>
+</div>
+<div>
+<h1 class="text-on-surface font-bold text-lg tracking-tight">Bio 101 Group</h1>
+<p class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+                            12 Members Online
+                        </p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container rounded-full text-on-surface-variant hover:bg-surface-bright transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-lg" data-icon="add_call">add_call</span>
+                        Join Voice
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-full hover:bg-primary-dim transition-colors text-sm font-medium shadow-md shadow-primary/10">
+<span class="material-symbols-outlined text-lg" data-icon="videocam">videocam</span>
+                        Join Video
+                    </button>
+<div class="w-px h-6 bg-outline-variant/20 mx-2"></div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors" data-icon="info">
+<span class="material-symbols-outlined">info</span>
+</button>
+</div>
+</div>
+<!-- Chat Content & Active Call Indicator -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+<!-- Call Overlay Hint -->
+<div class="bg-indigo-50 dark:bg-slate-900/40 border border-primary/10 rounded-lg p-4 flex items-center justify-between mb-8">
+<div class="flex items-center gap-4">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-surface object-cover" data-alt="Portrait of a female university student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRYvE6PyKDLejO3hNdmbPMLk8eKhLLCPX6vyrlDCIB4kt4Hq_H7VSfohYKM6-tiysWNKCOjrSb2SMofYXg5QewGhJTcvgjShoTcew0lb_88a7Ffm0vyh0yNKhXA3viLYGp_Go6bPHr8wZOJo4Qni_Wie-7daewwrtquIlVEdn5TfHK-YoqccQdAGkKJdqgVTZwHtMav-XrTbq_FFIo0_0bdJnSOgn_RDPEcFSw-228e-o41YR8t2muZ8icbzxfx7PpiN3s_qScMd0"/>
+<img class="w-8 h-8 rounded-full border-2 border-surface object-cover" data-alt="Portrait of a male graduate student" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUfyibq7oUlhtbPgKf7az8SESnaF7RzMd6lujT9jqp4ZyWFnqtpwW9ju3qx6zdcC64oT_ciE8iczMpOu4TjUx_wLjS8Q7QFduGZWw4_muiKutGPw20bK888jO_wgDROjK6wuCfff1oE0qimD7WPtkHkyY4RYuouef64_VPTNcvjLB9vvkK9VYrhRlWiaKHKgyjklubY_UFyZsTjDKrcZ9HhNTyrtYU8ZFtcOQOa8aXRUGi8HQxuhi8Zp0Ooz4Oc6ahBA8D-sGBFk"/>
+</div>
+<p class="text-sm text-primary font-medium">Jordan and Sam are in a video session</p>
+</div>
+<button class="text-xs font-bold uppercase tracking-wider text-primary px-3 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors">Join Now</button>
+</div>
+<!-- Message Received -->
+<div class="flex items-start gap-4 max-w-2xl">
+<img class="w-10 h-10 rounded-full object-cover mt-1" data-alt="Profile of Sarah" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQIW4Bx2PAt20peTkEu52hCyPNyDKUQSnZrGznkVfmN2V7QBbDYWnOCudJjWy-7VzcPRVMXnFn0uzqSWW7bpHc0HZPmi8aN0XeY7JXtEirASPfBQb55r2bOR22Cv-XQHShp20NzIDu78_en4QodTfIdtpjI318R-DhJYeW0lCSsAseKUDPi3dLzWZaq4H0LjtOQk7KIfIiW8R8OGzmoAXk7JBj_CqipJsMipw1NyvJ-hsKWHLXneoeA5F8Kq8p6WNHNKXrb7Njq9o"/>
+<div>
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-bold text-on-surface">Sarah Miller</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">10:42 AM</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg rounded-tl-none">
+<p class="text-sm leading-relaxed text-on-surface">Did everyone see the lab notes for the cellular mitosis session? I'm having a hard time with the telophase diagram. 🧬</p>
+</div>
+</div>
+</div>
+<!-- Message Sent -->
+<div class="flex items-start gap-4 max-w-2xl ml-auto flex-row-reverse">
+<img class="w-10 h-10 rounded-full object-cover mt-1" data-alt="Alex Rivers profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyrPDd4M41wLijEoO4Vfm_Uq5qi5RPW-b_C4F_fdsai4M2-gXeVJEJ2-EJpw1TnLgy1GziL7rql83DlUfyzvu0zbkwk6_Zkz0oyjLzg4Ksc5RhGOEHQcoNvV2BPXLwzd_Jtb_g-kvW_3YnIartd88v3geScXm71V-oGv4CwaztvWdC6VbesY_0Lk-Y75Ky7nrMAiFxws4CujwD2iZ1q5yvIsDz2F_1ieFLUUeAKTg5bUINk5eH4xa1aeor-DhwA963dQQks2wlql8"/>
+<div class="flex flex-col items-end">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">10:45 AM</span>
+<span class="font-bold text-on-surface">You</span>
+</div>
+<div class="bg-primary text-on-primary p-4 rounded-lg rounded-tr-none shadow-sm">
+<p class="text-sm leading-relaxed">Yeah, Sarah! I found a great high-res video that breaks it down visually. I'll drop the link here in a second.</p>
+</div>
+</div>
+</div>
+<!-- Shared Resource Card -->
+<div class="flex items-start gap-4 max-w-2xl ml-auto flex-row-reverse">
+<div class="flex flex-col items-end w-full">
+<div class="bg-surface-container-lowest border border-outline-variant/20 p-4 rounded-lg rounded-tr-none shadow-lg shadow-black/[0.03] w-full max-w-sm">
+<div class="flex items-center gap-4 mb-3">
+<div class="w-12 h-12 rounded bg-error-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-error" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Mitosis_Visual_Guide.pdf</p>
+<p class="text-xs text-on-surface-variant">2.4 MB • PDF Document</p>
+</div>
+</div>
+<button class="w-full py-2 bg-surface-container hover:bg-surface-container-high transition-colors rounded text-xs font-bold text-on-surface">Download Resource</button>
+</div>
+</div>
+</div>
+<!-- System Divider -->
+<div class="flex items-center gap-4 py-4">
+<div class="flex-1 h-px bg-outline-variant/20"></div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">New Messages</span>
+<div class="flex-1 h-px bg-outline-variant/20"></div>
+</div>
+<!-- Message Received -->
+<div class="flex items-start gap-4 max-w-2xl">
+<img class="w-10 h-10 rounded-full object-cover mt-1" data-alt="Profile of Jordan" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN_z5TrBe1vceFrVA7tmKRW-6Bi2MzxoYXFLqY_NIV6tSRnm3s-pW7IFcaUXYGJLao-x0O1df8Dglwz5d24ROprxO3xeuPnw_m932PHGOnPGPKW73iJv92SiPVcdw4vOwgiYCAvUF-cr2UkcHhm5XAGS4iFaYHLCcLHiXSN8WsV76f8zNvBI5Ul4WNn6-VKbcsQjnUANXdofdPUazIUa4t55sGGKscXpDBzzzpzZXJmx9WzKQ6nF97myDg2KF38dycF7CWls-qO94"/>
+<div>
+<div class="flex items-baseline gap-2 mb-1">
+<span class="font-bold text-on-surface">Jordan Chen</span>
+<span class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest">11:02 AM</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg rounded-tl-none">
+<p class="text-sm leading-relaxed text-on-surface">Thanks Alex! This is exactly what I needed for the quiz prep. Anyone want to hop on a quick video call to quiz each other?</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Input Area -->
+<div class="p-8 bg-surface">
+<div class="bg-surface-container-lowest rounded-lg shadow-xl shadow-black/[0.02] border border-outline-variant/10 p-2">
+<textarea class="w-full bg-transparent border-none focus:ring-0 text-sm p-4 h-20 resize-none font-body placeholder:text-on-surface-variant/50" placeholder="Message #Bio-101-Group"></textarea>
+<div class="flex items-center justify-between px-2 pb-2">
+<div class="flex items-center gap-1">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded transition-colors" data-icon="add">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="w-px h-4 bg-outline-variant/20 mx-1"></div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded transition-colors" data-icon="format_bold">
+<span class="material-symbols-outlined">format_bold</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded transition-colors" data-icon="alternate_email">
+<span class="material-symbols-outlined">alternate_email</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded transition-colors" data-icon="mood">
+<span class="material-symbols-outlined">mood</span>
+</button>
+</div>
+<button class="bg-primary hover:bg-primary-dim text-on-primary p-2 px-4 rounded-full flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
+<span class="text-xs font-bold uppercase tracking-widest">Send</span>
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Right Participant Sidebar -->
+<aside class="hidden xl:flex w-80 bg-surface-container-low flex-col p-8 border-l border-outline-variant/10 overflow-y-auto custom-scrollbar">
+<h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-6">Group Participants</h3>
+<div class="space-y-6">
+<!-- Participant -->
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Sarah Miller avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg8iN0s-4kaoNdVz5ohMS2KphHONUQusHYQUx-XORjipY0CNvB2ITe-4eDULjHvY4_O781jh5j26x1JV2GNHfzTZlMPMiKuGjkUOoiNgIchiQYZLsOdez_GJQNDl1a1zy-p0NnY1zp5rsAUGlhjPMqYuHEZAhUS-Cx8967eCiOdV0Ft9R-PDpqYvg_IyXpv76A_hf9P3GvDiqkjxR15SQ3y9y_F_rlT6kOtgHiyCqT-oFXm0zOk_ueUW1372eFqRoydGDc6Q3wbno"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">Sarah Miller</p>
+<p class="text-xs text-on-surface-variant">Focusing on genetics</p>
+</div>
+</div>
+<!-- Participant -->
+<div class="flex items-center gap-4 group cursor-pointer">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Jordan Chen avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC28RPX87ifJVMK9UpCcDBecpVMzOmv0YS-8zhsI9t4gasz3dww9PAkgHsjAjn8KBFgkJVDs_PCWikq3M1PuWhOBAJ002TXoF8to3ZZf-XMBbbMwwDbeNDgOOHDLixqiW5RVUUONVDVVeR0z4JKjWAmQj4DebVdQgibeOGp2B8L58jHhTowbdId76TNySqm4XUmDMszZamxnukXR2ksULOnP79qhBepRLgUEnJK5BHHvVCkHb3wPIdQJteK3OCSagImL_gSLnWFJdI"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-tertiary-container border-2 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">Jordan Chen</p>
+<p class="text-xs text-on-surface-variant">Active in Call</p>
+</div>
+</div>
+<!-- Participant (Offline) -->
+<div class="flex items-center gap-4 opacity-60">
+<div class="relative">
+<img class="w-10 h-10 rounded-full object-cover grayscale" data-alt="Marcus Brown avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZZKHf2NCqz46qf4FxC87grTO5czxqd9NSqoxSv4qL4Ooqt6ILGpK7zWSGCd0hvfrfnFOcL-n6FfOftC-kCQLgTUDEP-I2c3N9tdahsObGKOxX6WY1ch6VyOozxVFh6lC3lGl1QALnOUnR2qAolS6xhphv8fqQIGuYeqnxNGxpuNUlN2R_QhG9mbC2qOZgdwHfxCT3s252x9cXYHNOY7ShrpaKq6sl8wTZrBGnM1d9Ug-Zm3tH05b8DIGXbaczu8xv7rz7EAchns8"/>
+<div class="absolute bottom-0 right-0 w-3 h-3 bg-outline-variant border-2 border-surface-container-low rounded-full"></div>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Marcus Brown</p>
+<p class="text-xs text-on-surface-variant">Offline</p>
+</div>
+</div>
+</div>
+<div class="mt-12">
+<h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mb-6">Pinned Resources</h3>
+<div class="space-y-3">
+<div class="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/10 hover:border-primary/20 transition-all cursor-pointer">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="link">link</span>
+<p class="text-xs font-bold text-on-surface truncate">Syllabus_Fall_2024.pdf</p>
+</div>
+<p class="text-[10px] text-on-surface-variant">Pinned by Sarah • 2 days ago</p>
+</div>
+<div class="p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/10 hover:border-primary/20 transition-all cursor-pointer">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="calendar_month">calendar_month</span>
+<p class="text-xs font-bold text-on-surface truncate">Final Review Session</p>
+</div>
+<p class="text-[10px] text-on-surface-variant">Dec 12, 4:00 PM</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>
