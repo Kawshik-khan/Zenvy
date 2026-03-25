@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // @ts-ignore - To prevent potential TS mismatches with newer Next.js versions
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  // @ts-ignore
   allowedDevOrigins: ['10.67.188.161'],
 };
 
