@@ -6,26 +6,35 @@ import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
 import JoinGroupButton from '@/app/components/JoinGroupButton';
 import CreateGroupModal from '@/app/components/CreateGroupModal';
+import ErrorView from '@/app/components/ErrorView';
 
 export default async function StudyGroupsPage() {
   const session = await auth();
   if (!session?.user?.email) redirect('/login');
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { profile: true },
-  });
+  let user;
+  let groups;
 
-  if (!user) return redirect('/login');
+  try {
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { profile: true },
+    });
 
-  const groups = await prisma.studyGroup.findMany({
-    include: {
-      members: {
-        include: { user: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+    if (!user) return redirect('/login');
+
+    groups = await prisma.studyGroup.findMany({
+      include: {
+        members: {
+          include: { user: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  } catch (error) {
+    console.error("Groups Page Error:", error);
+    return <ErrorView error={error} />;
+  }
 
   return (
     <div className="bg-surface text-on-surface antialiased min-h-screen">

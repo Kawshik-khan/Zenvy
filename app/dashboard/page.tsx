@@ -6,6 +6,7 @@ import Sidebar from '@/app/components/Sidebar';
 import { prisma } from '@/lib/prisma';
 import QuickJoinButton from './QuickJoinButton';
 import ThreeDotMenu from '@/app/components/ThreeDotMenu';
+import ErrorView from '@/app/components/ErrorView';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -13,30 +14,41 @@ export default async function DashboardPage() {
     redirect('/login');
   }
   
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: {
-      groupMemberships: {
-        include: { group: true }
+  let user;
+  let popularGroups;
+
+  try {
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: {
+        groupMemberships: {
+          include: { group: true }
+        }
       }
+    });
+
+    if (!user) {
+      console.error("Dashboard: User session exists but DB user not found:", session.user.email);
+      redirect('/login');
     }
-  });
 
-  if (!user) redirect('/login');
+    // Fetch up to 3 popular groups the user is not in
+    popularGroups = await prisma.studyGroup.findMany({
+      where: {
+        members: {
+          none: { userId: user.id }
+        }
+      },
+      take: 3,
+      orderBy: { members: { _count: 'desc' } }
+    });
+  } catch (error) {
+    console.error("CRITICAL DASHBOARD ERROR:", error);
+    return <ErrorView error={error} />;
+  }
 
-  const userName = user.name || 'Scholar';
-  const activeGroupCount = user.groupMemberships.length;
-  
-  // Fetch up to 3 popular groups the user is not in
-  const popularGroups = await prisma.studyGroup.findMany({
-    where: {
-      members: {
-        none: { userId: user.id }
-      }
-    },
-    take: 3,
-    orderBy: { members: { _count: 'desc' } }
-  });
+  const userName = user?.name || 'Scholar';
+  const activeGroupCount = user?.groupMemberships.length || 0;
 
   return (
     <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container flex min-h-screen">
