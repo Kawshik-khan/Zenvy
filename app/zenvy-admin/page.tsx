@@ -1,4 +1,5 @@
 import React from 'react';
+export const runtime = 'nodejs';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';

@@ -1,4 +1,5 @@
 import React from 'react';
+export const runtime = 'nodejs';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
