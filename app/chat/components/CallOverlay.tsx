@@ -9,6 +9,7 @@ interface CallOverlayProps {
   targetUser: any;
   roomId: string;
   isIncoming: boolean;
+  isVideoCall: boolean;
   onClose: () => void;
   incomingSignal?: any;
 }
@@ -18,6 +19,7 @@ export default function CallOverlay({
   targetUser, 
   roomId, 
   isIncoming, 
+  isVideoCall,
   onClose,
   incomingSignal 
 }: CallOverlayProps) {
@@ -25,18 +27,27 @@ export default function CallOverlay({
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [callStatus, setCallStatus] = useState<'INITIALIZING' | 'RINGING' | 'CONNECTED' | 'ENDED'>('INITIALIZING');
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(!isVideoCall);
   
   const myVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const peerRef = useRef<Peer.Instance | null>(null);
 
   useEffect(() => {
     const initCall = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const constraints = { 
+          video: isVideoCall, 
+          audio: true 
+        };
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
         setStream(mediaStream);
-        if (myVideo.current) myVideo.current.srcObject = mediaStream;
+        streamRef.current = mediaStream;
+        
+        if (isVideoCall && myVideo.current) {
+          myVideo.current.srcObject = mediaStream;
+        }
 
         if (isIncoming && incomingSignal) {
           answerCall(mediaStream);
@@ -53,7 +64,7 @@ export default function CallOverlay({
     initCall();
 
     return () => {
-      stream?.getTracks().forEach(track => track.stop());
+      streamRef.current?.getTracks().forEach(track => track.stop());
       peerRef.current?.destroy();
     };
   }, []);
@@ -73,14 +84,17 @@ export default function CallOverlay({
         roomId,
         signalData: data,
         from: currentUser.id,
-        name: currentUser.name
+        name: currentUser.name,
+        isVideo: isVideoCall
       });
     });
 
     peer.on('stream', (rStream) => {
       setRemoteStream(rStream);
       setCallStatus('CONNECTED');
-      if (remoteVideo.current) remoteVideo.current.srcObject = rStream;
+      if (isVideoCall && remoteVideo.current) {
+        remoteVideo.current.srcObject = rStream;
+      }
     });
 
     socket.on('call_accepted', (signal) => {
@@ -105,7 +119,9 @@ export default function CallOverlay({
     peer.on('stream', (rStream) => {
       setRemoteStream(rStream);
       setCallStatus('CONNECTED');
-      if (remoteVideo.current) remoteVideo.current.srcObject = rStream;
+      if (isVideoCall && remoteVideo.current) {
+        remoteVideo.current.srcObject = rStream;
+      }
     });
 
     peer.signal(incomingSignal);
@@ -121,7 +137,7 @@ export default function CallOverlay({
   };
 
   const toggleVideo = () => {
-    if (stream) {
+    if (stream && isVideoCall) {
       stream.getVideoTracks()[0].enabled = isVideoOff;
       setIsVideoOff(!isVideoOff);
     }
@@ -129,6 +145,7 @@ export default function CallOverlay({
 
   const endCall = () => {
     socket.emit('end_call', { roomId });
+    streamRef.current?.getTracks().forEach(track => track.stop());
     onClose();
   };
 
@@ -142,7 +159,9 @@ export default function CallOverlay({
             <img src={targetUser.avatar} className="w-12 h-12 rounded-full border-2 border-primary" alt={targetUser.name} />
             <div>
               <h3 className="text-xl font-bold">{targetUser.name}</h3>
-              <p className="text-xs text-slate-400 capitalize">{callStatus.toLowerCase()}...</p>
+              <p className="text-xs text-slate-400 capitalize">
+                {isVideoCall ? 'Video' : 'Voice'} {callStatus.toLowerCase()}...
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full backdrop-blur-md">
@@ -153,39 +172,46 @@ export default function CallOverlay({
 
         {/* Video Canvas Container */}
         <div className="flex-1 relative bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-white/5">
-          {/* Remote Video (Main) */}
-          <video 
-            ref={remoteVideo} 
-            autoPlay 
-            playsInline 
-            className={`w-full h-full object-cover transition-opacity duration-700 ${callStatus === 'CONNECTED' ? 'opacity-100' : 'opacity-0'}`} 
-          />
-          
-          {callStatus !== 'CONNECTED' && (
+          {/* Avatar Placeholder for Voice Call or when remote video is off */}
+          {(!isVideoCall || callStatus !== 'CONNECTED') && (
              <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
                 <div className="w-32 h-32 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center relative">
                    <img src={targetUser.avatar} className="w-28 h-28 rounded-full z-10" alt={targetUser.name} />
                    <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-ping"></div>
                 </div>
-                <p className="text-white text-lg font-medium animate-pulse">Calling {targetUser.name}...</p>
+                <p className="text-white text-lg font-medium">
+                  {callStatus === 'CONNECTED' ? `In ${isVideoCall ? 'Video' : 'Voice'} Call with ${targetUser.name}` : `Calling ${targetUser.name}...`}
+                </p>
              </div>
           )}
 
-          {/* Local Video (PIP) */}
-          <div className="absolute bottom-6 right-6 w-32 md:w-56 h-48 md:h-80 bg-slate-800 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl z-20">
+          {/* Remote Video (Main) */}
+          {isVideoCall && (
             <video 
-              ref={myVideo} 
+              ref={remoteVideo} 
               autoPlay 
-              muted 
               playsInline 
-              className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`} 
+              className={`w-full h-full object-cover transition-opacity duration-700 ${callStatus === 'CONNECTED' ? 'opacity-100' : 'opacity-0'}`} 
             />
-            {isVideoOff && (
-               <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white">
-                 <span className="material-symbols-outlined text-4xl">videocam_off</span>
-               </div>
-            )}
-          </div>
+          )}
+
+          {/* Local Video (PIP) */}
+          {isVideoCall && (
+            <div className="absolute bottom-6 right-6 w-32 md:w-56 h-48 md:h-80 bg-slate-800 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl z-20">
+              <video 
+                ref={myVideo} 
+                autoPlay 
+                muted 
+                playsInline 
+                className={`w-full h-full object-cover ${isVideoOff ? 'opacity-0' : 'opacity-100'}`} 
+              />
+              {isVideoOff && (
+                 <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-white">
+                   <span className="material-symbols-outlined text-4xl">videocam_off</span>
+                 </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Controls Bar */}
@@ -197,12 +223,14 @@ export default function CallOverlay({
              <span className="material-symbols-outlined">{isMuted ? 'mic_off' : 'mic'}</span>
            </button>
            
-           <button 
-             onClick={toggleVideo}
-             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isVideoOff ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
-           >
-             <span className="material-symbols-outlined">{isVideoOff ? 'videocam_off' : 'videocam'}</span>
-           </button>
+           {isVideoCall && (
+             <button 
+               onClick={toggleVideo}
+               className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${isVideoOff ? 'bg-red-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+             >
+               <span className="material-symbols-outlined">{isVideoOff ? 'videocam_off' : 'videocam'}</span>
+             </button>
+           )}
 
            <button 
              onClick={endCall}

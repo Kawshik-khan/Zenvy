@@ -40,7 +40,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
   
   // Calling State
   const [activeCall, setActiveCall] = useState<{ isVideo: boolean; isIncoming: boolean; signal?: any } | null>(null);
-  const [incomingCall, setIncomingCall] = useState<{ from: string; name: string; signal: any } | null>(null);
+  const [incomingCall, setIncomingCall] = useState<{ from: string; name: string; signal: any; isVideo: boolean } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +105,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
   const handleAnswerCall = () => {
     if (incomingCall) {
-      setActiveCall({ isVideo: true, isIncoming: true, signal: incomingCall.signal });
+      setActiveCall({ isVideo: incomingCall.isVideo, isIncoming: true, signal: incomingCall.signal });
       setIncomingCall(null);
     }
   };
@@ -132,6 +132,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
           targetUser={targetUser}
           roomId={roomId}
           isIncoming={activeCall.isIncoming}
+          isVideoCall={activeCall.isVideo}
           incomingSignal={activeCall.signal}
           onClose={() => setActiveCall(null)}
         />
@@ -147,7 +148,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
             </div>
             <div>
               <p className="text-white font-black text-lg">{incomingCall.name}</p>
-              <p className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Incoming Video Call...</p>
+              <p className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Incoming {incomingCall.isVideo ? 'Video' : 'Voice'} Call...</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -190,7 +191,6 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
         </header>
 
         <section className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden p-4 md:p-6 gap-4 md:gap-6 min-h-0 relative">
-          {/* Channels Sidebar Toggle (Hidden on large screens as it's a sub-chat) */}
           <div className="hidden lg:flex w-72 flex-col shrink-0">
             <div className="p-5 border-b border-outline-variant/10">
               <Link href="/chat" className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary hover:text-primary-dim transition-colors">
@@ -320,7 +320,6 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
             </div>
           </div>
 
-          {/* Member Profile Sidebar */}
           <div className={`w-80 flex-col gap-6 shrink-0 absolute xl:relative right-0 top-0 bottom-0 z-30 bg-surface xl:bg-transparent shadow-2xl xl:shadow-none p-4 xl:p-0 border-l border-outline-variant/10 xl:border-none transition-transform duration-300 ${isProfileVisible ? 'flex translate-x-0' : 'hidden xl:flex xl:translate-x-0'}`}>
             <div className="flex justify-between items-center xl:hidden mb-4">
                <h2 className="text-sm font-bold text-on-surface">Profile</h2>
