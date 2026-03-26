@@ -29,6 +29,7 @@ export async function signUp(prevState: any, formData: FormData) {
         name,
         uniqueId,
         email,
+        emailVerified: new Date(), // Auto-verify for now
         password: hashedPassword,
         profile: {
           create: {
@@ -40,25 +41,22 @@ export async function signUp(prevState: any, formData: FormData) {
       },
     });
 
-    // Generate Verification Token
+    // Generate Verification Token (optional, for record keeping)
     const verificationToken = await generateVerificationToken(email);
 
-    // Send Verification Email
-    const confirmLink = `${process.env.NEXTAUTH_URL}/verify?token=${verificationToken.token}`;
+    // Send Verification Email (Silence errors so it doesn't block signup)
+    try {
+      const confirmLink = `${process.env.NEXTAUTH_URL}/verify?token=${verificationToken.token}`;
+      await resend.emails.send({
+        from: 'Zenvy <onboarding@resend.dev>',
+        to: email,
+        subject: 'Welcome to Zenvy!',
+        html: `<p>Welcome! Your account is active. Explore Zenvy here: ${confirmLink}</p>`
+      });
+    } catch (e) {
+      console.log("Signup: Email sending failed but bypassing error.");
+    }
 
-    await resend.emails.send({
-      from: 'Zenvy <onboarding@resend.dev>', // You should update this with your domain once verified on Resend
-      to: email,
-      subject: 'Verify your Zenvy account',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 8px;">
-          <h2 style="color: #4f46e5; font-weight: 800; font-size: 24px;">Welcome to Zenvy!</h2>
-          <p style="color: #475569; font-size: 16px; line-height: 24px;">Click the button below to verify your email address and activate your account.</p>
-          <a href="${confirmLink}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 9999px; font-weight: bold; margin-top: 20px;">Verify Email</a>
-          <p style="color: #94a3b8; font-size: 12px; margin-top: 40px;">If you didn't create an account, you can safely ignore this email.</p>
-        </div>
-      `
-    });
 
     console.log("Signup: User created and email sent for:", email);
   } catch (error) {
@@ -66,5 +64,5 @@ export async function signUp(prevState: any, formData: FormData) {
     return { error: "User already exists or email service error" };
   }
 
-  redirect("/login?message=check-email");
+  redirect("/login");
 }

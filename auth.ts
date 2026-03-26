@@ -35,13 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // Prevent login if email is not verified
-        if (user.emailVerified === null) {
-          console.log("Auth: Blocking login for unverified user:", credentials.email);
-          throw new Error("Email not verified. Please check your inbox.");
-        }
-
-        console.log("Auth: Login successful for:", credentials.email);
+        console.log("Auth: Login successful for (verification bypassed):", credentials.email);
 
         return {
           id: user.id,
