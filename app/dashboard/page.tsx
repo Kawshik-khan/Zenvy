@@ -26,8 +26,13 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  let user;
-  let popularGroups;
+  let nextEvent;
+  let activities: any[] = [];
+  let stats = {
+    activeGroups: 0,
+    attendanceRate: 98,
+    totalSessions: 0
+  };
 
   try {
     user = await prisma.user.findUnique({
@@ -35,7 +40,8 @@ export default async function DashboardPage() {
       include: {
         groupMemberships: {
           include: { group: true }
-        }
+        },
+        eventRSVPs: true
       }
     });
 
@@ -43,6 +49,61 @@ export default async function DashboardPage() {
       console.error("Dashboard: User session exists but DB user not found:", session.user.email);
       redirect('/login');
     }
+
+    const groupIds = user.groupMemberships.map(m => m.groupId);
+
+    // 1. Fetch Next Event
+    nextEvent = await prisma.event.findFirst({
+      where: {
+        groupId: { in: groupIds },
+        startTime: { gte: new Date() }
+      },
+      include: {
+        group: true,
+        _count: { select: { attendees: true } }
+      },
+      orderBy: { startTime: 'asc' }
+    });
+
+    // 2. Fetch Recent Activities (Last 5 messages or new members in user's groups)
+    const [recentMessages, newMembers] = await Promise.all([
+      prisma.groupMessage.findMany({
+        where: { groupId: { in: groupIds }, NOT: { senderId: user.id } },
+        take: 3,
+        orderBy: { createdAt: 'desc' },
+        include: { sender: true, group: true }
+      }),
+      prisma.groupMember.findMany({
+        where: { groupId: { in: groupIds }, NOT: { userId: user.id } },
+        take: 2,
+        orderBy: { joinedAt: 'desc' },
+        include: { user: true, group: true }
+      })
+    ]);
+
+    activities = [
+      ...recentMessages.map(m => ({
+        id: m.id,
+        type: 'MESSAGE',
+        title: 'New message',
+        description: `${m.sender.name} in ${m.group.name}`,
+        time: m.createdAt
+      })),
+      ...newMembers.map(m => ({
+        id: m.id,
+        type: 'MEMBER',
+        title: 'New Study Partner',
+        description: `${m.user.name} joined ${m.group.name}`,
+        time: m.joinedAt
+      }))
+    ].sort((a, b) => b.time.getTime() - a.time.getTime());
+
+    // 3. Stats Calculation
+    stats.activeGroups = groupIds.length;
+    stats.totalSessions = user.eventRSVPs.length * 2; // Rough estimate: 2hrs per RSVP
+    const totalRSVPs = user.eventRSVPs.length;
+    const goingRSVPs = user.eventRSVPs.filter(r => r.status === 'GOING').length;
+    stats.attendanceRate = totalRSVPs > 0 ? Math.round((goingRSVPs / totalRSVPs) * 100) : 100;
 
     // Fetch up to 3 popular groups the user is not in
     popularGroups = await prisma.studyGroup.findMany({
@@ -61,6 +122,15 @@ export default async function DashboardPage() {
 
   const userName = user?.name || 'Scholar';
   const activeGroupCount = user?.groupMemberships.length || 0;
+
+  const formatTimeAgo = (date: Date) => {
+    const diff = new Date().getTime() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} mins ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} hours ago`;
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container flex min-h-screen">
@@ -98,7 +168,7 @@ export default async function DashboardPage() {
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-4 md:p-12 max-w-[1440px] mx-auto space-y-8 md:space-y-12">
+        <div className="p-4 md:p-12 max-w-[1440px] mx-auto space-y-8 md:space-y-12 animate-slide-up stagger-1">
           {/* Welcome Header & Stats Bento */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-2">
@@ -107,16 +177,16 @@ export default async function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:justify-end">
-              <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50">
-                <p className="text-3xl font-black text-primary">{activeGroupCount}</p>
+              <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50 hover-lift">
+                <p className="text-3xl font-black text-primary">{stats.activeGroups}</p>
                 <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Active Groups</p>
               </div>
-              <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50">
-                <p className="text-3xl font-black text-secondary">24.5</p>
-                <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Hours This Week</p>
+              <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50 hover-lift">
+                <p className="text-3xl font-black text-secondary">{stats.totalSessions}</p>
+                <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Estimated Hours</p>
               </div>
-              <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50">
-                <p className="text-3xl font-black text-tertiary">98%</p>
+              <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50 hover-lift">
+                <p className="text-3xl font-black text-tertiary">{stats.attendanceRate}%</p>
                 <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-wider">Attendance</p>
               </div>
             </div>
@@ -127,26 +197,41 @@ export default async function DashboardPage() {
             {/* Left Column: Primary Actions & Groups */}
             <div className="col-span-12 lg:col-span-8 space-y-12">
               {/* Next Session Card */}
-              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-secondary p-10 text-on-primary shadow-2xl shadow-primary/20">
+              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-secondary p-10 text-on-primary shadow-2xl shadow-primary/20 hover-lift animate-slide-up stagger-2">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                  <div className="space-y-4">
-                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold tracking-widest uppercase">Up Next in 14:02</span>
-                    <h3 className="text-3xl font-black leading-tight">Advanced Algorithms &amp;<br />Data Structures</h3>
-                    <div className="flex items-center gap-4 text-on-primary/80">
-                      <div className="flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-lg">schedule</span>
-                        <span className="text-sm font-medium">Starts at 2:00 PM</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-lg">groups</span>
-                        <span className="text-sm font-medium">8 Members joined</span>
+                  {nextEvent ? (
+                    <div className="space-y-4">
+                      <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold tracking-widest uppercase">
+                        {new Date(nextEvent.startTime).getTime() - new Date().getTime() < 3600000 
+                          ? `Starting in ${Math.floor((new Date(nextEvent.startTime).getTime() - new Date().getTime()) / 60000)} mins`
+                          : `Next up: ${new Date(nextEvent.startTime).toLocaleDateString()}`
+                        }
+                      </span>
+                      <h3 className="text-3xl font-black leading-tight">{nextEvent.title}</h3>
+                      <div className="flex items-center gap-4 text-on-primary/80">
+                        <div className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-lg">schedule</span>
+                          <span className="text-sm font-medium">
+                            Starts at {new Date(nextEvent.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-lg">groups</span>
+                          <span className="text-sm font-medium">{nextEvent._count.attendees} Members joined</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold tracking-widest uppercase">Planning Mode</span>
+                      <h3 className="text-3xl font-black leading-tight">No active sessions.<br />Invite your peers!</h3>
+                      <p className="text-on-primary/80 font-medium italic">Your upcoming sessions will appear here.</p>
+                    </div>
+                  )}
 
                   <button className="px-8 py-4 bg-white text-primary rounded-full font-black text-sm hover:scale-105 transition-transform active:scale-95 flex items-center gap-2">
                     <span className="material-symbols-outlined">video_call</span>
-                    Join Session
+                    {nextEvent ? 'Join Session' : 'Schedule One'}
                   </button>
                 </div>
                 {/* Abstract Background Decoration */}
@@ -169,7 +254,7 @@ export default async function DashboardPage() {
                     </div>
                   ) : (
                     user.groupMemberships.slice(0, 4).map((membership) => (
-                      <div key={membership.groupId} className="group bg-surface-container-lowest p-6 rounded-lg shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+                      <div key={membership.groupId} className="group bg-surface-container-lowest p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 animate-slide-up stagger-3">
                         <div className="flex justify-between items-start mb-6">
                           <div className="p-3 bg-primary-container/30 rounded-lg text-primary">
                             <span className="material-symbols-outlined">school</span>
@@ -192,39 +277,27 @@ export default async function DashboardPage() {
             {/* Right Column: Sidebar Feeds */}
             <div className="col-span-12 lg:col-span-4 space-y-12">
               {/* Activity Feed */}
-              <section className="bg-surface-container-low p-8 rounded-lg space-y-8">
+              <section className="bg-surface-container-low p-8 rounded-lg space-y-8 animate-slide-up stagger-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black tracking-tight">Activity Feed</h3>
                   <ThreeDotMenu targetId="system-feed" />
                 </div>
 
                 <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-primary ring-4 ring-primary/10"></div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-on-surface">New study materials added</p>
-                      <p className="text-xs text-on-surface-variant">Sarah uploaded 'Neural Networks Pt.2' to React Masters.</p>
-                      <p className="text-[10px] text-on-surface-variant font-medium">10 mins ago</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-secondary ring-4 ring-secondary/10"></div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-on-surface">Group goal achieved!</p>
-                      <p className="text-xs text-on-surface-variant">Quantum Theory completed 100 hours of focus time this month.</p>
-                      <p className="text-[10px] text-on-surface-variant font-medium">2 hours ago</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-outline-variant"></div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-on-surface">Scheduled Session</p>
-                      <p className="text-xs text-on-surface-variant">James set a new session for tomorrow at 10 AM.</p>
-                      <p className="text-[10px] text-on-surface-variant font-medium">5 hours ago</p>
-                    </div>
-                  </div>
+                  {activities.length === 0 ? (
+                    <p className="text-sm text-on-surface-variant italic">No recent activity found.</p>
+                  ) : (
+                    activities.map((activity) => (
+                      <div key={activity.id} className="flex gap-4">
+                        <div className={`flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full ${activity.type === 'MESSAGE' ? 'bg-primary ring-primary/10' : 'bg-secondary ring-secondary/10'} ring-4`}></div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-on-surface tracking-tight">{activity.title}</p>
+                          <p className="text-xs text-on-surface-variant line-clamp-2">{activity.description}</p>
+                          <p className="text-[10px] text-on-surface-variant font-medium mt-1 uppercase tracking-wider">{formatTimeAgo(activity.time)}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </section>
 

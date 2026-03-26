@@ -8,59 +8,8 @@ import Sidebar from '@/app/components/Sidebar';
 import SearchInput from '@/app/components/SearchInput';
 import ConnectButton from './ConnectButton';
 
-// Extracted Hardcoded Data
-const PARTNERS = [
-  {
-    id: 'elena',
-    name: 'Elena Vance',
-    major: 'Applied Statistics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAsTCrc0yN-lZtLIEOXMm7EIyn2mWqJn7WQpkRmCp8phBfNqvqBZoTtUT_3kqXJkLLtm05ei-g1kdRwegMu9R2c0L-XXwmGyGRbokCno79Gnp4u0aESt8Jtnm85rFELgC75fW2Is9G9l6z6d-KN3yOy1IOw0NOmn5jwAQoreMEwEcNZL1zTBMmfufC_4pXuVuQP01PIUEuPt-SkQJW7M0JznVNJFSQMU1IkB448YvFaBGV5NqvfSgiwcRHFAnA9ieTlPIE3X13ezXI',
-    match: 98,
-    category: 'top',
-    skills: ['R Programming', 'Data Vis', 'SQL'],
-    schedule: 'Mon, Wed: 4pm - 8pm'
-  },
-  {
-    id: 'marcus',
-    name: 'Marcus Chen',
-    major: 'Data Science',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBUHJUEVjIjPPvl7Yyz8FKqEqDEn6rTW_RLg79-knacdE3DU3M7aU6Qe-FIAhVSKnOOQPCjGgD89kWfyQ2613yBXDB_FixMfTnUvAfjSbg8xPniC-5BkhUaikOzP-SceRdZIzKHkV-6J5NzMGcK6m0LwxHdRFBUHUTBdfTiG3ImpGH3eUspChT-1xz5MvvmE_UWGB-aPc7hpmlHPYEkEnSpclreLrdRb_V1YcrM4GN0XIeI-Y2_or6ZEGWhC1K1yO92wFshiC9UpPs',
-    match: 94,
-    category: 'top',
-    skills: ['Python', 'PyTorch'],
-    schedule: 'Weekends: 10am - 4pm'
-  },
-  {
-    id: 'sarah',
-    name: 'Sarah Jenkins',
-    major: 'Mathematics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBuBn4d_trSbvBQwBWPFljNtnq3bj2WntL1J6XTChwQM5BHCFJTY70Nu4dqDmTqloJN2pZR2rwv3TWVu9rvCaeBe19EWc21s2jRBKy7XhSCUmsXZcvGPVoMvkbiJTkmoH_vsP2wwk9goQvLpLLf-BOgStZ7RS76YMODH1Tx11oMEF3VkvnpGb5OcRD0ke93MnqMmRiNUg1Lj5zjG34efdGjlQjxCSfFM3m89FAL99yxAYpj7U87EpyPC0FJII3VHsNuoa2LKQAVX-A',
-    match: 89,
-    category: 'overlap',
-    skills: ['Calculus III', 'Matlab'],
-    schedule: 'Tues, Thurs: Morning'
-  },
-  {
-    id: 'jordan',
-    name: 'Jordan Smith',
-    major: 'Economics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCWv66HxLmrUqQ7oP_cHXzYd3Yc0mH6x5j6UXO3otpJKhoQMIWydErjRKSnKfIhUTVlz0eHru9d25ENyrwUM2lyojsh8kTIupqrue-lAuxjeGu-UgkJRj6TiJPc2JBu8dUossXXdmoBa6cFeKQYQmmwRj3yQ9nGfdIxrxniM9Dg34n7GptK3qrG2019ExsCFKPOVBYcS-Lb9OQzQVzdiwQCwTRO2iyVmkFA0cykln_9FVmceqSGEOr3qRB14C_oSS1hcCpzr_jrMI8',
-    match: 82,
-    category: 'overlap',
-    skills: ['Stata', 'Python'],
-    schedule: 'Daily: 7pm - 10pm'
-  },
-  {
-    id: 'maya',
-    name: 'Maya Rodriguez',
-    major: 'Biology & Genetics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDaWzQ4VNIxoOeSYxlMjmQ6CD5ktSQn5rTS-u_0Ra_IbmKHME_E9o7NZs9Nne4AN9LVz8tVK3-EgDWWWWOdu0cCVqdRCjigK6NGnaGU9eR3-zPOEFr2yVHHZTr4Vy7jSvthRFzNO8SjqJI_uFXbb4xluemW-mvH8ynJKE9FFFS7avAGjlEphOfQe1u1SMt79wzASteUmxu58AGrIBXCnuzimqj0bAyj-sAGocYh3dpkwDw7CcBQKQzCqCc5n8xBZlpjSgoiAk2GH-Q',
-    match: 78,
-    category: 'active',
-    skills: ['Bioinformatics', 'Statistics'],
-    schedule: 'Studying at Main Library now'
-  }
-];
+// Dynamic Partner fetching logic
+
 
 // Helper to render individual partner cards
 function PartnerCard({ partner }: { partner: any }) {
@@ -128,12 +77,57 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
     include: { profile: true },
   });
 
+  if (!user) redirect('/login');
+
+  const otherUsers = await prisma.user.findMany({
+    where: { NOT: { id: user.id } },
+    include: { profile: true },
+    take: 20
+  });
+
+  const processedPartners = otherUsers.map(u => {
+    // Logic for match %
+    let match = 60 + Math.floor(Math.random() * 20);
+    if (u.profile?.major === user.profile?.major) match += 15;
+    
+    // Logic for category
+    let category = 'overlap';
+    if (match > 85) category = 'top';
+    if (Math.random() > 0.8) category = 'active';
+
+    return {
+      id: u.id,
+      name: u.name || "Anonymous",
+      major: u.profile?.major || "Undecided",
+      avatar: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "U")}&background=random`,
+      match: Math.min(match, 100),
+      category: category,
+      skills: u.profile?.interests?.split(',').slice(0, 3) || ['Study Partner'],
+      schedule: u.profile?.availability || 'TBD'
+    };
+  });
+
   const query = q.toLowerCase();
-  const filteredPartners = PARTNERS.filter(p => 
+  const filteredPartners = processedPartners.filter(p => 
     p.name.toLowerCase().includes(query) || 
     p.major.toLowerCase().includes(query) ||
     p.skills.some(s => s.toLowerCase().includes(query))
   );
+
+  // Dynamic counts for columns
+  const counts = {
+    top: filteredPartners.filter(p => p.category === 'top').length,
+    overlap: filteredPartners.filter(p => p.category === 'overlap').length,
+    active: filteredPartners.filter(p => p.category === 'active').length,
+  };
+
+  // Fetch pending match requests
+  const pendingRequests = await prisma.match.count({
+    where: {
+      matchedProfileId: user.profile?.id,
+      status: 'PENDING'
+    }
+  });
 
   return (
     <div className="bg-surface text-on-surface min-h-screen antialiased overflow-x-hidden">
@@ -159,10 +153,10 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
           </div>
           <div className="flex items-center gap-3 border-l pl-4 border-outline-variant/20">
             <div className="text-right hidden sm:block">
-              <p className="font-bold text-on-surface">{user?.name || "Alex Rivera"}</p>
-              <p className="text-xs text-on-surface-variant">{user?.profile?.major || "Computer Science"}</p>
+              <p className="font-bold text-on-surface">{user?.name || "Student"}</p>
+              <p className="text-xs text-on-surface-variant">{user?.profile?.major || "Undecided"}</p>
             </div>
-            <img className="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2cOqOiPj1l6qFzkTSxu_lWX2-9YGWDLkucM8ledDb2DJDFmZoz5oid8hlDTkMkU1EsKkTT5KiIfsc5zX5Qqv_xuvs4C0r2oa-Dgyrf1l0eh5JoQ4j5m-ltLwG9vbbm5M9hzr082EoK8d32PhGSxRLfZc-IvbXn1uxM1kjUoBcPn4JqHgowexA7OpOVsHwV3YgKs9hOM_YWDV1WZkyJ1aYUQSVc-V1iYasipHvio_6AkulbEDordxlgA4R17ejK5WaHBFAK1ueSx8" alt="Avatar" />
+            <img className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20 ring-offset-2" src={user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "U")}&background=random`} alt="Avatar" />
           </div>
         </div>
       </header>
@@ -190,9 +184,9 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
             // Default Mode: 3 Categorized Columns
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
               {/* COLUMN Component helper */}
-              {[{ id: 'top', title: 'Top Synergy', color: 'primary', count: 4 },
-                { id: 'overlap', title: 'Skill Overlap', color: 'secondary', count: 12 },
-                { id: 'active', title: 'Active Now', color: 'tertiary-fixed', count: 'LIVE', isBadge: true }].map(col => {
+              {[{ id: 'top', title: 'Top Synergy', color: 'primary', count: counts.top },
+                { id: 'overlap', title: 'Skill Overlap', color: 'secondary', count: counts.overlap },
+                { id: 'active', title: 'Active Now', color: 'tertiary-fixed', count: counts.active === 0 ? 'LIVE' : counts.active, isBadge: true }].map(col => {
                 const colPartners = filteredPartners.filter(p => p.category === col.id);
                 if (colPartners.length === 0) return null;
                 
@@ -228,7 +222,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
             <div className="bg-indigo-600 rounded-xl p-8 flex items-center justify-between group overflow-hidden relative">
               <div className="z-10">
                 <h4 className="text-white text-2xl font-bold mb-2">Review Requests</h4>
-                <p className="text-indigo-100 text-sm max-w-[280px]">You have 3 students waiting to join your Statistics group.</p>
+                <p className="text-indigo-100 text-sm max-w-[280px]">You have {pendingRequests} student{pendingRequests === 1 ? '' : 's'} waiting to connect with you.</p>
                 <button className="mt-6 px-6 py-2 bg-indigo-900 text-white rounded-full font-bold text-sm hover:bg-indigo-800 transition-colors">Open Requests</button>
               </div>
               <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 text-white/5 group-hover:text-white/10 transition-all -rotate-12">notifications_active</span>

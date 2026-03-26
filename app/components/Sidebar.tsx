@@ -18,7 +18,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="fixed left-0 bottom-0 md:top-0 w-full md:w-20 md:hover:w-72 h-16 md:h-full bg-slate-100 dark:bg-slate-900 z-[100] transition-all duration-300 group shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:shadow-[4px_0_24px_rgba(0,0,0,0.02)] md:hover:shadow-[12px_0_48px_rgba(0,0,0,0.06)] border-t md:border-t-0 md:border-r border-outline-variant/10 md:overflow-x-hidden md:overflow-y-auto overflow-y-hidden overflow-x-auto no-scrollbar">
+    <aside className="fixed left-0 bottom-0 md:top-0 w-full md:w-20 md:hover:w-72 h-16 md:h-full bg-slate-100 dark:bg-slate-900 z-[100] transition-all duration-300 group shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:shadow-[4px_0_24px_rgba(0,0,0,0.02)] md:hover:shadow-[12px_0_48px_rgba(0,0,0,0.06)] border-t md:border-t-0 md:border-r border-outline-variant/10 md:overflow-x-hidden md:overflow-y-auto overflow-y-hidden overflow-x-auto no-scrollbar animate-fade-in">
       <div className="p-2 md:p-4 flex flex-row md:flex-col h-full items-center md:items-stretch min-w-max md:min-w-0 pointer-events-auto">
         {/* Logo - Hidden on mobile */}
         <div className="hidden md:flex items-center gap-3 mb-10 mt-4 ml-1">

@@ -23,7 +23,7 @@ function LoginForm() {
   return (
     <div className="bg-background font-body text-on-surface flex flex-col min-h-screen selection:bg-primary-container selection:text-on-primary-container">
       {/* TopNavBar */}
-      <header className="bg-[#f5f7f9] dark:bg-slate-950 z-50">
+      <header className="bg-[#f5f7f9] dark:bg-slate-950 z-50 animate-fade-in mb-4">
         <nav className="flex justify-between items-center w-full px-6 md:px-12 py-4 md:py-6 max-w-[1440px] mx-auto">
           <div className="text-2xl font-bold tracking-tighter text-[#2c2f31] dark:text-slate-100">
             Zenvy
@@ -55,8 +55,8 @@ function LoginForm() {
         </div>
 
         {/* Login Card */}
-        <div className="relative z-10 w-full max-w-[480px]">
-          <div className="bg-surface-container-lowest rounded-xl p-6 md:p-14 shadow-[0_20px_40px_rgba(70,71,211,0.06)] border border-outline-variant/10">
+        <div className="relative z-10 w-full max-w-[480px] animate-scale-in">
+          <div className="bg-surface-container-lowest rounded-xl p-6 md:p-14 shadow-[0_20px_40px_rgba(70,71,211,0.06)] border border-outline-variant/10 hover-lift transition-all duration-500">
             <div className="mb-10 text-center">
               <h1 className="text-on-surface font-headline text-3xl font-bold tracking-tight mb-2">Welcome Back</h1>
               <p className="text-on-surface-variant text-sm">Enter your credentials to access your sanctuary.</p>

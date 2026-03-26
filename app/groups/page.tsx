@@ -58,7 +58,7 @@ export default async function StudyGroupsPage() {
             <span className="material-symbols-outlined text-slate-500">settings</span>
           </button>
           <div className="w-8 h-8 rounded-full overflow-hidden ml-2 ring-2 ring-primary/10">
-            <img alt="User Profile Avatar" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtbe80mc7G63GqQwqAnMRjXf5BRypBLwggEkIwa-cvBv8GyZS6Qg4rywvjv7seAWsEZpXihhdrV7iNzl3JAPkJHr05p3MNOXjgykpalJhu7DEDjV9EdipLw6V-qnSad_YF2ZI5cbGwIWwzMjuraaDfw91TjT0LV01Grs4p4cVAsJb7XKLF26leE2Cq0ZwGNzNKbxnL_Yo952z_JHw2R7vxIjSFRjKiyQETZyb2RKvNtFs4cdVPjrdqOvc16Qargl4OuFcolN1OTYc" />
+            <img alt="User Profile Avatar" className="w-full h-full object-cover" src={user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "U")}&background=random`} />
           </div>
         </div>
       </header>
