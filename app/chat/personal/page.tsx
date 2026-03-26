@@ -8,7 +8,7 @@ import PersonalChatClient from './PersonalChatClient';
 export default async function PersonalInboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ name?: string; avatar?: string; major?: string }>;
+  searchParams: Promise<{ id?: string; name?: string; avatar?: string; major?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.email) redirect('/login');
@@ -23,6 +23,7 @@ export default async function PersonalInboxPage({
   if (!user) redirect('/login');
 
   const targetUser = {
+    id: resolvedParams.id,
     name: resolvedParams.name || 'Anonymous',
     avatar: resolvedParams.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedParams.name || "U")}&background=random`,
     major: resolvedParams.major || 'Scholar',

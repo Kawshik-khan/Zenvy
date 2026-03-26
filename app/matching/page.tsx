@@ -52,10 +52,10 @@ function PartnerCard({ partner }: { partner: any }) {
       </div>
       <div className="flex gap-2">
         {isTertiary ? (
-          <Link href={`/chat/personal?name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-full font-bold text-xs hover:shadow-lg transition-all text-center inline-block">Quick DM</Link>
+          <Link href={`/chat/personal?id=${partner.id}&name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-full font-bold text-xs hover:shadow-lg transition-all text-center inline-block">Quick DM</Link>
         ) : (
           <>
-            <Link href={`/chat/personal?name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-primary-container text-on-primary-container rounded-full font-bold text-xs hover:bg-primary hover:text-white transition-colors text-center inline-block">DM</Link>
+            <Link href={`/chat/personal?id=${partner.id}&name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-primary-container text-on-primary-container rounded-full font-bold text-xs hover:bg-primary hover:text-white transition-colors text-center inline-block">DM</Link>
             <ConnectButton partnerId={partner.id} buttonText="Add to Group" />
           </>
         )}
