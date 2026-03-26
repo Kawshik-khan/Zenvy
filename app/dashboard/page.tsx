@@ -10,7 +10,18 @@ import ThreeDotMenu from '@/app/components/ThreeDotMenu';
 import ErrorView from '@/app/components/ErrorView';
 
 export default async function DashboardPage() {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("AUTH INITIALIZATION ERROR:", error);
+    return <ErrorView 
+      error={error} 
+      title="Authentication Failure" 
+      message="The authentication system failed to initialize. Please ensure you have added the AUTH_SECRET environment variable to your Vercel project settings."
+    />;
+  }
+
   if (!session?.user?.email) {
     redirect('/login');
   }
