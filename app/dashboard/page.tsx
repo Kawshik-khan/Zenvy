@@ -26,8 +26,10 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
+  let user;
   let nextEvent;
   let activities: any[] = [];
+  let popularGroups: any[] = [];
   let stats = {
     activeGroups: 0,
     attendanceRate: 98,

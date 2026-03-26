@@ -19,7 +19,7 @@ export default async function ChatPage() {
   // Fetch groups where user is a member
   const userGroups = await prisma.studyGroup.findMany({
     where: {
-      members: { some: { id: user.id } }
+      members: { some: { userId: user.id } }
     },
     take: 10
   });
