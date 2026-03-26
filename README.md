@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎓 Zenvy: Smart Peer-to-Peer Study Platform
 
-## Getting Started
+**Zenvy** is a high-performance, real-time study platform designed to connect students through collaborative tools, AI-driven partner matching, and seamless communication.
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### 📡 Real-Time Communication
+- **Voice & Video Calling:** Peer-to-peer calling using WebRTC (`simple-peer`) and Socket.io signaling.
+- **Smart Hardware Release:** Automatic release of camera and microphone tracks after every call for maximum privacy.
+- **Global Study Lounge:** A real-time lobby for all active students.
+- **Private DMs:** Secure, direct messaging with persistence and real-time updates.
+
+### 🧠 Intelligent Partner Matching
+- **Compatibility Scoring:** Automatic synergy calculation based on majors, interests, and academic overlap.
+- **Partner Discovery:** Easily find and connect with peers whose study habits align with yours.
+
+### 📊 Dynamic Dashboard & Profiles
+- **Live Stats:** Real-time visibility into active study groups and upcoming sessions.
+- **Rich Profiles:** Personalized student profiles with major, college, and bio details.
+- **Cloud Storage:** Secure profile picture uploads integrated with Supabase Storage.
+
+### ✨ Visual Excellence
+- **Fluid Animations:** Butter-smooth page transitions and staggered entrance animations.
+- **Premium UI:** A high-end, responsive design with glassmorphism and modern typography.
+- **Elite Loading States:** Custom-designed loading screens for a seamless UX.
+
+## 🛠️ Tech Stack
+
+- **Frontend:** [Next.js 15+](https://nextjs.org/) (App Router), React, Tailwind CSS.
+- **Backend:** Node.js (Vercel Runtime), [Prisma ORM](https://www.prisma.io/).
+- **Database:** PostgreSQL (with PgBouncer support).
+- **Authentication:** [Auth.js v5](https://authjs.dev/) (NextAuth).
+- **Real-Time:** [Socket.io](https://socket.io/) & WebRTC.
+- **Storage:** [Supabase Storage](https://supabase.com/storage).
+- **Email:** [Resend](https://resend.com/).
+
+## ⚙️ Setup & Installation
+
+### 1. Requirements
+- Node.js 18+
+- PostgreSQL Database
+- Supabase Account
+- Resend API Key
+
+### 2. Environment Variables
+Create a `.env` file in the root directory and add the following:
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@host:port/dbname?pgbouncer=true"
+DIRECT_URL="postgresql://user:password@host:port/dbname"
+
+# Auth
+AUTH_SECRET="your-auth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Supabase (Storage)
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+
+# Resend (Email)
+RESEND_API_KEY="re_..."
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Initialize Database
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Run Development Server
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📂 Project Structure
+- `/app`: Next.js 15 app router pages and components.
+- `/prisma`: Database schema and migrations.
+- `/lib`: Shared utilities (Prima, Socket.io, Supabase client).
+- `/public`: Static assets (fonts, images).
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
