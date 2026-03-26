@@ -16,6 +16,11 @@ export async function login(prevState: string | undefined, formData: FormData) {
     });
   } catch (error) {
     if (error instanceof AuthError) {
+      // Check for custom error message from authorize()
+      if (error.cause?.err && error.cause.err instanceof Error) {
+        return error.cause.err.message;
+      }
+      
       switch (error.type) {
         case "CredentialsSignin":
           return "Invalid credentials.";

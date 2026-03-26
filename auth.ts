@@ -15,12 +15,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
+ 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
         });
 
         if (!user || !user.password) return null;
+        
+        // Prevent login if email is not verified
+        if (!user.emailVerified) {
+          throw new Error("Email not verified. Please check your inbox.");
+        }
 
         const isPasswordCorrect = await bcrypt.compare(
           credentials.password as string,

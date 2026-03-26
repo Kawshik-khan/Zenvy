@@ -1,11 +1,24 @@
 "use client";
 
-import React, { useActionState } from 'react';
+import React, { useActionState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { login } from './actions';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [state, formAction, pending] = useActionState(login, undefined);
+  const searchParams = useSearchParams();
+  const message = searchParams?.get('message');
+  const error = searchParams?.get('error');
+
 
   return (
     <div className="bg-background font-body text-on-surface flex flex-col min-h-screen selection:bg-primary-container selection:text-on-primary-container">
@@ -71,8 +84,28 @@ export default function LoginPage() {
                 </div>
               </div>
               
+              {message === 'check-email' && (
+                <div className="text-emerald-600 text-sm font-medium bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-xl">mark_email_read</span>
+                  <div>
+                    <p className="font-bold">Check your inbox!</p>
+                    <p className="text-xs opacity-90">We've sent a verification link to your email. Please click it to activate your account.</p>
+                  </div>
+                </div>
+              )}
+
               {state && (
-                <div className="text-red-500 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100">{state}</div>
+                <div className="text-red-500 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">error</span>
+                  {state}
+                </div>
+              )}
+
+              {error === 'Verification' && (
+                <div className="text-amber-600 text-sm font-medium bg-amber-50 p-3 rounded-lg border border-amber-100 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg">warning</span>
+                  Verification failed or link expired.
+                </div>
               )}
 
               {/* Sign In Action */}
