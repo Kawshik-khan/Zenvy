@@ -1,5 +1,5 @@
-import React from 'react';
 export const runtime = 'nodejs';
+import React from 'react';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   if (!session?.user?.email) {
     redirect('/login');
   }
-  
+
   let user;
   let popularGroups;
 
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
               <input className="w-full bg-surface-container border-none rounded-full py-2.5 pl-12 pr-4 text-on-surface focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Search for subjects, groups, or students..." type="text" />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant">
               <span className="material-symbols-outlined">notifications</span>
@@ -75,7 +75,7 @@ export default async function DashboardPage() {
               <span className="material-symbols-outlined">settings</span>
             </button>
             <div className="h-8 w-[1px] bg-outline-variant/20 mx-2"></div>
-            
+
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="text-right hidden sm:block">
                 <p className="font-bold leading-none">{userName}</p>
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
               <h2 className="text-display-md text-3xl md:text-5xl font-black tracking-tighter text-on-surface">Welcome Back, {userName}.</h2>
               <p className="text-on-surface-variant text-base md:text-lg">Your academic sanctuary is ready for today's focus session.</p>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-4 md:gap-6 lg:justify-end">
               <div className="flex-1 text-center p-4 rounded-xl bg-surface-container-low border border-white/50">
                 <p className="text-3xl font-black text-primary">{activeGroupCount}</p>
@@ -132,7 +132,7 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <button className="px-8 py-4 bg-white text-primary rounded-full font-black text-sm hover:scale-105 transition-transform active:scale-95 flex items-center gap-2">
                     <span className="material-symbols-outlined">video_call</span>
                     Join Session
@@ -149,7 +149,7 @@ export default async function DashboardPage() {
                   <h3 className="text-2xl font-black tracking-tight">My Groups</h3>
                   <Link className="text-primary font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all" href="#">View all groups <span className="material-symbols-outlined text-sm">arrow_forward</span></Link>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {user.groupMemberships.length === 0 ? (
                     <div className="col-span-12 p-8 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30">
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
                         </div>
                         <h4 className="text-lg font-black mb-1 line-clamp-1">{membership.group.name}</h4>
                         <p className="text-on-surface-variant text-sm mb-6 line-clamp-1">{membership.group.subject || 'General Studies'}</p>
-                        
+
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-primary">View Group &rarr;</span>
                         </div>
@@ -186,7 +186,7 @@ export default async function DashboardPage() {
                   <h3 className="text-xl font-black tracking-tight">Activity Feed</h3>
                   <ThreeDotMenu targetId="system-feed" />
                 </div>
-                
+
                 <div className="space-y-6">
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-primary ring-4 ring-primary/10"></div>
@@ -196,7 +196,7 @@ export default async function DashboardPage() {
                       <p className="text-[10px] text-on-surface-variant font-medium">10 mins ago</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-secondary ring-4 ring-secondary/10"></div>
                     <div className="space-y-1">
@@ -205,7 +205,7 @@ export default async function DashboardPage() {
                       <p className="text-[10px] text-on-surface-variant font-medium">2 hours ago</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-outline-variant"></div>
                     <div className="space-y-1">
