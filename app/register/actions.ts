@@ -18,6 +18,7 @@ export async function signUp(prevState: any, formData: FormData) {
     return { error: "Missing fields" };
   }
 
+  console.log("Signup: Attempting signup for:", email);
   const hashedPassword = await bcrypt.hash(password, 10);
   const baseName = name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
   const uniqueId = `${baseName}_${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
@@ -59,9 +60,10 @@ export async function signUp(prevState: any, formData: FormData) {
       `
     });
 
+    console.log("Signup: User created and email sent for:", email);
   } catch (error) {
-    console.error("Signup error:", error);
-    return { error: "User already exists or database error" };
+    console.error("Signup CRITICAL error:", error);
+    return { error: "User already exists or email service error" };
   }
 
   redirect("/login?message=check-email");

@@ -20,11 +20,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: credentials.email as string },
         });
 
-        if (!user || !user.password) return null;
-        
-        // Prevent login if email is not verified
-        if (!user.emailVerified) {
-          throw new Error("Email not verified. Please check your inbox.");
+        if (!user || !user.password) {
+          console.log("Auth: User not found or no password set for:", credentials.email);
+          return null;
         }
 
         const isPasswordCorrect = await bcrypt.compare(
@@ -32,7 +30,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           user.password
         );
 
-        if (!isPasswordCorrect) return null;
+        if (!isPasswordCorrect) {
+          console.log("Auth: Invalid password for:", credentials.email);
+          return null;
+        }
+
+        // Prevent login if email is not verified
+        if (user.emailVerified === null) {
+          console.log("Auth: Blocking login for unverified user:", credentials.email);
+          throw new Error("Email not verified. Please check your inbox.");
+        }
+
+        console.log("Auth: Login successful for:", credentials.email);
 
         return {
           id: user.id,
