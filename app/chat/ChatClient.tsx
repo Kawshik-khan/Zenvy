@@ -29,6 +29,16 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // SEC-009: Pre-load message history
+    fetch(`/api/messages?roomId=global_lobby`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.messages && Array.isArray(data.messages)) {
+          setMessages(data.messages);
+        }
+      })
+      .catch(console.error);
+
     socket.connect();
     socket.on('connect', () => {
       setIsConnected(true);
@@ -127,7 +137,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
               </div>
               
               {partners.map(p => (
-                <Link key={p.id} href={`/chat/personal?id=${p.id}&name=${encodeURIComponent(p.name)}&avatar=${encodeURIComponent(p.avatar)}&major=${encodeURIComponent(p.major)}`} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-container text-on-surface rounded-xl text-left text-sm transition-all">
+                <Link key={p.id} href={`/chat/personal?id=${p.id}`} className="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-container text-on-surface rounded-xl text-left text-sm transition-all">
                   <div className="relative">
                     <img alt={p.name} className="w-8 h-8 rounded-full" src={p.avatar} />
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-surface-container-low"></span>

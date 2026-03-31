@@ -8,7 +8,7 @@ import PersonalChatClient from './PersonalChatClient';
 export default async function PersonalInboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string; name?: string; avatar?: string; major?: string }>;
+  searchParams: Promise<{ id?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.email) redirect('/login');
@@ -21,12 +21,18 @@ export default async function PersonalInboxPage({
   });
 
   if (!user) redirect('/login');
+  if (!resolvedParams.id) redirect('/chat');
+
+  const targetDbUser = await prisma.user.findUnique({
+    where: { id: resolvedParams.id },
+    include: { profile: true }
+  });
 
   const targetUser = {
     id: resolvedParams.id,
-    name: resolvedParams.name || 'Anonymous',
-    avatar: resolvedParams.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedParams.name || "U")}&background=random`,
-    major: resolvedParams.major || 'Scholar',
+    name: targetDbUser?.name || 'Anonymous',
+    avatar: targetDbUser?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetDbUser?.name || "U")}&background=random`,
+    major: targetDbUser?.profile?.major || 'Scholar',
   };
 
   return <PersonalChatClient currentUser={user} targetUser={targetUser} />;

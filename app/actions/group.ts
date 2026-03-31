@@ -3,6 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+const groupSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  description: z.string().max(500).optional().nullable(),
+  subject: z.string().min(1, "Subject is required").max(100),
+});
 
 export async function createGroup(formData: FormData) {
   const session = await auth();
@@ -13,13 +20,17 @@ export async function createGroup(formData: FormData) {
   });
   if (!user) throw new Error("User not found");
 
-  const name = formData.get("name") as string;
-  const description = formData.get("description") as string;
-  const subject = formData.get("subject") as string;
+  const validation = groupSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+    subject: formData.get("subject"),
+  });
 
-  if (!name || !subject) {
-    throw new Error("Name and subject are required");
+  if (!validation.success) {
+    throw new Error(`Invalid input: ${validation.error.message}`);
   }
+
+  const { name, description, subject } = validation.data;
 
   const group = await prisma.studyGroup.create({
     data: {

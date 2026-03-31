@@ -5,8 +5,22 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { resend } from "@/lib/resend";
 import { generateVerificationToken } from "@/lib/tokens";
+import { z } from "zod";
+import { rateLimit } from "@/lib/rateLimit";
+import { headers } from "next/headers";
+
+const passwordSchema = z.string()
+  .min(8, "Password must be at least 8 characters long")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
 
 export async function signUp(prevState: any, formData: FormData) {
+  const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1";
+  const allowed = await rateLimit(`register_${ip}`, 5);
+  if (!allowed) {
+    return { error: "Too many sign-up attempts. Please try again later." };
+  }
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -16,6 +30,12 @@ export async function signUp(prevState: any, formData: FormData) {
 
   if (!email || !password || !name) {
     return { error: "Missing fields" };
+  }
+
+  // SEC-006: Password Strength Validation
+  const passValidation = passwordSchema.safeParse(password);
+  if (!passValidation.success) {
+    return { error: passValidation.error.issues[0].message };
   }
 
   console.log("Signup: Attempting signup for:", email);
@@ -29,7 +49,7 @@ export async function signUp(prevState: any, formData: FormData) {
         name,
         uniqueId,
         email,
-        emailVerified: new Date(), // Auto-verify for now
+        emailVerified: null, // SEC-005: Enforce verification
         password: hashedPassword,
         profile: {
           create: {
@@ -43,10 +63,14 @@ export async function signUp(prevState: any, formData: FormData) {
 
     // Generate Verification Token (optional, for record keeping)
     const verificationToken = await generateVerificationToken(email);
+    const confirmLink = `${process.env.NEXTAUTH_URL}/verify?token=${verificationToken.token}`;
+
+    console.log("----------------------------------------");
+    console.log("DEV: Validation Link:", confirmLink);
+    console.log("----------------------------------------");
 
     // Send Verification Email (Silence errors so it doesn't block signup)
     try {
-      const confirmLink = `${process.env.NEXTAUTH_URL}/verify?token=${verificationToken.token}`;
       await resend.emails.send({
         from: 'Zenvy <onboarding@resend.dev>',
         to: email,

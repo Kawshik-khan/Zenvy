@@ -45,6 +45,16 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // SEC-009: Pre-load message history
+    fetch(`/api/messages?roomId=${roomId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.messages && Array.isArray(data.messages)) {
+          setMessages(data.messages);
+        }
+      })
+      .catch(console.error);
+
     socket.connect();
     socket.on('connect', () => {
       setIsConnected(true);

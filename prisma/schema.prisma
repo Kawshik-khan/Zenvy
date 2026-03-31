@@ -29,11 +29,14 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  profile       Profile?
-  messages           Message[]
+  password            String?
+  role                String    @default("USER")
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  profile             Profile?
+  messages      Message[]
   
   // New Relations for UI Logic
   administeredGroups StudyGroup[]    @relation("GroupAdmin")
@@ -96,8 +99,9 @@ model Message {
   content    String
   senderId   String
   sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  chatRoomId String
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  chatRoomId String?
+  chatRoom   ChatRoom? @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  roomId     String   @default("global")
   createdAt  DateTime @default(now())
 }
 

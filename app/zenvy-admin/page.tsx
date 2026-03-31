@@ -15,6 +15,10 @@ export default async function AdminDashboardPage() {
     include: { profile: true },
   });
 
+  if (!user || user.role !== 'ADMIN') {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="bg-surface text-on-surface selection:bg-primary-container min-h-screen antialiased">
       {/* SideNavBar Shell */}

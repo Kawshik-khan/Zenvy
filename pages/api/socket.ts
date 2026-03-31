@@ -1,6 +1,8 @@
-import { Server as NetServer } from 'http';
+import { Server as NetServer, IncomingMessage } from 'http';
 import { NextApiRequest } from 'next';
 import { Server as ServerIO } from 'socket.io';
+import { getToken } from 'next-auth/jwt';
+import { prisma } from '../../lib/prisma';
 
 export const config = {
   api: {
@@ -15,17 +17,74 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
     const io = new ServerIO(httpServer, {
       path: '/api/socket',
       addTrailingSlash: false,
+      cors: {
+        origin: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        methods: ["GET", "POST"]
+      }
+    });
+
+    // Authentication Middleware
+    io.use(async (socket, next) => {
+      try {
+        const token = await getToken({
+          req: socket.request as any,
+          secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+          cookieName: process.env.NODE_ENV === 'production' ? '__Secure-authjs.session-token' : 'authjs.session-token'
+        });
+
+        if (!token || !token.sub) {
+          // Attempting fallback to NextAuth v4 cookie name if previous fails
+          const fallbackToken = await getToken({
+              req: socket.request as any,
+              secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+              cookieName: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token'
+          });
+          
+          if (!fallbackToken || !fallbackToken.sub) {
+             console.log('Socket connection rejected: No valid session token');
+             return next(new Error('unauthorized'));
+          } else {
+             socket.data.user = fallbackToken;
+             return next();
+          }
+        }
+        
+        socket.data.user = token;
+        next();
+      } catch (error) {
+        console.error('Socket authentication error:', error);
+        next(new Error('unauthorized'));
+      }
     });
     
     io.on('connection', (socket) => {
-      console.log('Client connected:', socket.id);
+      console.log('Client connected:', socket.id, 'User:', socket.data.user?.email);
       
       socket.on('join_room', (roomId: string) => {
         socket.join(roomId);
-        console.log(`User joined room ${roomId}`);
+        console.log(`User ${socket.data.user?.email} joined room ${roomId}`);
       });
 
-      socket.on('send_message', (data: { roomId: string, message: any }) => {
+      socket.on('send_message', async (data: { roomId: string, message: any }) => {
+        // Enforce sender identity from token to prevent spoofing
+        if (data.message && socket.data.user?.sub) {
+          data.message.senderId = socket.data.user.sub;
+          
+          try {
+            const savedMsg = await prisma.message.create({
+              data: {
+                content: data.message.content,
+                senderId: socket.data.user.sub,
+                roomId: data.roomId,
+              }
+            });
+            // Attach authoritative db id and timestamp
+            data.message.id = savedMsg.id;
+            data.message.timestamp = savedMsg.createdAt;
+          } catch (e) {
+            console.error('Failed to save message to db:', e);
+          }
+        }
         // Broadcast to everyone in the room except the sender
         socket.to(data.roomId).emit('receive_message', data.message);
       });
