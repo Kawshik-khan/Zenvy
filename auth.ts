@@ -60,10 +60,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
            });
         }
 
-        // 3. SEC-005: Enforce Email Verification
-        if (!user.emailVerified) {
-          throw new Error("Please verify your email address to log in.");
-        }
+        // 3. SEC-005: Enforce Email Verification (Temporarily disabled by user request)
+        // if (!user.emailVerified) {
+        //   throw new Error("Please verify your email address to log in.");
+        // }
 
         // console.log("Auth: Login successful for:", credentials.email);
 

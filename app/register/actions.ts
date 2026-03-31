@@ -49,7 +49,7 @@ export async function signUp(prevState: any, formData: FormData) {
         name,
         uniqueId,
         email,
-        emailVerified: null, // SEC-005: Enforce verification
+        emailVerified: new Date(), // Auto-verify (SEC-005 temporarily disabled)
         password: hashedPassword,
         profile: {
           create: {
