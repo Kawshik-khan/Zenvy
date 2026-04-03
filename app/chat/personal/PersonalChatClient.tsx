@@ -47,7 +47,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
     from: string;
     callerName: string;
     callerAvatar: string;
-    signalData: any;
+    signals: any[];
     isVideo: boolean;
     roomId: string;
   } | null>(null);
@@ -80,14 +80,21 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
     // Incoming call handler — received via user ID targeting from server
     socket.on('incoming_call', (data: any) => {
-      console.log('Incoming call received:', data);
-      setIncomingCall({
-        from: data.from,
-        callerName: data.callerName || 'Unknown',
-        callerAvatar: data.callerAvatar || '',
-        signalData: data.signalData,
-        isVideo: data.isVideo || false,
-        roomId: data.roomId || roomId,
+      setIncomingCall((prev) => {
+        if (!prev || prev.from !== data.from) {
+          return {
+            from: data.from,
+            callerName: data.callerName || 'Unknown',
+            callerAvatar: data.callerAvatar || '',
+            signals: [data.signalData],
+            isVideo: data.isVideo || false,
+            roomId: data.roomId || roomId,
+          };
+        }
+        return {
+          ...prev,
+          signals: [...prev.signals, data.signalData],
+        };
       });
     });
 

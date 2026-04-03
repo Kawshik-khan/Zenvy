@@ -100,12 +100,20 @@ export default function CallOverlay({
 
     socket.on('call_ended', handleCallEnded);
     socket.on('call_declined', handleCallDeclined);
+    
+    const handleCallAnswered = (signal: any) => {
+      if (peerRef.current) {
+        peerRef.current.signal(signal);
+      }
+    };
+    socket.on('call_answered', handleCallAnswered);
 
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
       peerRef.current?.destroy();
       socket.off('call_ended', handleCallEnded);
       socket.off('call_declined', handleCallDeclined);
+      socket.off('call_answered', handleCallAnswered);
     };
   }, []);
 
@@ -114,7 +122,7 @@ export default function CallOverlay({
 
     const peer = new Peer({
       initiator: true,
-      trickle: false,
+      trickle: true,
       stream: localStream,
       config: ICE_SERVERS,
     });
@@ -143,21 +151,13 @@ export default function CallOverlay({
       setTimeout(onClose, 2000);
     });
 
-    // Listen for the answer signal
-    const handleCallAnswered = (signal: any) => {
-      setCallStatus('CONNECTED');
-      peer.signal(signal);
-    };
-
-    socket.on('call_answered', handleCallAnswered);
-
     peerRef.current = peer;
   };
 
   const answerCall = (localStream: MediaStream) => {
     const peer = new Peer({
       initiator: false,
-      trickle: false,
+      trickle: true,
       stream: localStream,
       config: ICE_SERVERS,
     });
@@ -182,9 +182,13 @@ export default function CallOverlay({
       setTimeout(onClose, 2000);
     });
 
-    peer.signal(incomingSignal.signalData || incomingSignal);
+    if (incomingSignal.signals && Array.isArray(incomingSignal.signals)) {
+      incomingSignal.signals.forEach((sig: any) => peer.signal(sig));
+    } else if (incomingSignal.signalData || incomingSignal) {
+      peer.signal(incomingSignal.signalData || incomingSignal);
+    }
+    
     peerRef.current = peer;
-    setCallStatus('CONNECTED'); // Optimistic update, or waiting for stream
   };
 
   const toggleMute = () => {
