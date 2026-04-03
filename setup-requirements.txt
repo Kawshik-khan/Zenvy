@@ -1,0 +1,38 @@
+=============================================
+  ZENVY - Install Commands (Copy & Paste)
+=============================================
+
+--- 1. Install Node.js (run in PowerShell as Admin) ---
+winget install OpenJS.NodeJS.LTS
+
+--- 2. After Node.js installed, RESTART your terminal, then run: ---
+npm install
+
+--- 3. Install Prisma CLI globally ---
+npm install -g prisma
+
+--- 4. Push database schema ---
+npx prisma db push
+
+--- 5. Generate Prisma client ---
+npx prisma generate
+
+--- 6. Start the app ---
+npm run dev
+
+
+=============================================
+  ALL PROJECT DEPENDENCIES (auto-installed by npm install)
+=============================================
+next           - React framework
+react          - UI library
+prisma         - Database ORM
+next-auth      - Authentication
+bcryptjs       - Password hashing
+socket.io      - Real-time messaging
+zod            - Input validation
+resend         - Email service
+tailwindcss    - CSS framework
+typescript     - Type safety
+@supabase/supabase-js - Supabase client
+simple-peer    - WebRTC for calls

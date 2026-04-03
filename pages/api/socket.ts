@@ -89,6 +89,50 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         socket.to(data.roomId).emit('receive_message', data.message);
       });
 
+      // Channel messaging
+      socket.on('join_channel_room', (channelId: string) => {
+        socket.join(`channel_${channelId}`);
+        console.log(`User ${socket.data.user?.email} joined channel room ${channelId}`);
+      });
+
+      socket.on('send_channel_message', async (data: { channelId: string, message: any }) => {
+        if (!data.message || !socket.data.user?.sub) return;
+
+        const userId = socket.data.user.sub;
+
+        try {
+          // Verify membership
+          const membership = await prisma.channelMember.findUnique({
+            where: {
+              channelId_userId: { channelId: data.channelId, userId },
+            },
+          });
+
+          if (!membership) {
+            socket.emit('channel_error', { message: 'You must be a member to send messages' });
+            return;
+          }
+
+          data.message.senderId = userId;
+
+          const savedMsg = await prisma.channelMessage.create({
+            data: {
+              content: data.message.content,
+              senderId: userId,
+              channelId: data.channelId,
+            },
+          });
+
+          data.message.id = savedMsg.id;
+          data.message.timestamp = savedMsg.createdAt;
+        } catch (e) {
+          console.error('Failed to save channel message:', e);
+          return;
+        }
+
+        socket.to(`channel_${data.channelId}`).emit('receive_channel_message', data.message);
+      });
+
       // WebRTC Signaling
       socket.on('call_user', (data: { roomId: string, signalData: any, callerName: string, callerAvatar: string, isVideo: boolean }) => {
         socket.to(data.roomId).emit('incoming_call', data);

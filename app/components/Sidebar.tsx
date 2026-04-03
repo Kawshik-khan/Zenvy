@@ -11,6 +11,7 @@ export default function Sidebar() {
   const links = [
     { href: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { href: '/groups', icon: 'group', label: 'Study Groups' },
+    { href: '/channels', icon: 'tag', label: 'Channels' },
     { href: '/chat', icon: 'forum', label: 'Chat Rooms' },
     { href: '/matching', icon: 'person_search', label: 'Partner Matching' },
     { href: '/profile', icon: 'account_circle', label: 'Profile' },
