@@ -93,21 +93,27 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
       <Sidebar />
 
       <main className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative">
-        <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm shrink-0">
-          <div className="flex items-center gap-4 w-1/2 md:w-1/3">
-            <div className="relative w-full max-w-sm">
+        <header className="sticky top-0 z-30 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm shrink-0">
+          <div className="flex items-center gap-2 md:gap-4 w-[60%] md:w-1/3">
+            <button 
+              className="lg:hidden p-2 rounded-xl text-on-surface hover:bg-surface-container shrink-0"
+              onClick={() => setIsSidebarVisible(true)}
+            >
+              <span className="material-symbols-outlined">menu</span>
+            </button>
+            <div className="relative w-full max-w-sm hidden sm:block">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
               <input className="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Search conversations..." type="text" />
             </div>
           </div>
           
           <div className="flex items-center gap-2 md:gap-6">
-             <div className="flex items-center gap-3 border-l pl-6 border-slate-200 dark:border-slate-800">
-              <div className="text-right">
+             <div className="flex items-center gap-3 border-l pl-4 md:pl-6 border-slate-200 dark:border-slate-800">
+              <div className="text-right hidden sm:block">
                 <p className="text-xs font-bold text-on-surface">{user.name || 'Scholar'}</p>
                 <p className="text-[10px] text-on-surface-variant">{user.profile?.major || 'Student'}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-primary/10 ring-offset-2">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-primary/10 ring-offset-2">
                 <img alt="User Avatar" className="w-full h-full object-cover" src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "U")}&background=random`} />
               </div>
             </div>
@@ -115,9 +121,15 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
         </header>
 
         <section className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden p-4 md:p-6 gap-4 md:gap-6 min-h-0 relative">
-          <div className={`w-full lg:w-72 bg-surface-container-low lg:bg-transparent lg:shadow-none lg:border-none shadow-xl border border-outline-variant/10 rounded-lg lg:rounded-none flex flex-col overflow-hidden shrink-0 min-h-[300px] lg:min-h-0 absolute lg:relative z-20 transition-transform duration-300 left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-            <div className="p-5 border-b border-outline-variant/10">
+          <div className={`w-full lg:w-72 bg-surface lg:bg-transparent lg:shadow-none lg:border-none shadow-2xl border border-outline-variant/10 rounded-lg lg:rounded-none flex flex-col overflow-hidden shrink-0 min-h-[300px] lg:min-h-0 absolute lg:relative z-50 transition-transform duration-300 left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-[110%] lg:translate-x-0'}`}>
+            <div className="p-5 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low lg:bg-transparent">
               <h2 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">My Channels</h2>
+              <button 
+                className="lg:hidden p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors"
+                onClick={() => setIsSidebarVisible(false)}
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
