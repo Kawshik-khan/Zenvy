@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
@@ -30,22 +30,32 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
   const userAvatar = targetUser.avatar;
   const userMajor = targetUser.major;
   const firstName = userName.split(' ')[0];
-  const roomId = `room_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+  // FIX: Deterministic, symmetric room ID from both user IDs
+  const roomId = targetUser.id
+    ? `dm_${[currentUser.id, targetUser.id].sort().join('_')}`
+    : `room_${userName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
-  
+
   // Calling State
   const [activeCall, setActiveCall] = useState<{ isVideo: boolean; isIncoming: boolean; signal?: any } | null>(null);
-  const [incomingCall, setIncomingCall] = useState<{ from: string; name: string; signal: any; isVideo: boolean } | null>(null);
-  
+  const [incomingCall, setIncomingCall] = useState<{
+    from: string;
+    callerName: string;
+    callerAvatar: string;
+    signalData: any;
+    isVideo: boolean;
+    roomId: string;
+  } | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // SEC-009: Pre-load message history
+    // Load message history
     fetch(`/api/messages?roomId=${roomId}`)
       .then(res => res.json())
       .then(data => {
@@ -56,33 +66,47 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
       .catch(console.error);
 
     socket.connect();
+
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('join_room', roomId);
     });
-    
+
     socket.on('disconnect', () => setIsConnected(false));
-    
+
     socket.on('receive_message', (msg: Message) => {
       setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
     });
 
-    // Signaling listeners
-    socket.on('incoming_call', (data) => {
-      setIncomingCall(data);
+    // Incoming call handler — received via user ID targeting from server
+    socket.on('incoming_call', (data: any) => {
+      console.log('Incoming call received:', data);
+      setIncomingCall({
+        from: data.from,
+        callerName: data.callerName || 'Unknown',
+        callerAvatar: data.callerAvatar || '',
+        signalData: data.signalData,
+        isVideo: data.isVideo || false,
+        roomId: data.roomId || roomId,
+      });
     });
 
     socket.on('call_ended', () => {
       setActiveCall(null);
       setIncomingCall(null);
     });
-    
+
+    socket.on('call_declined', () => {
+      setActiveCall(null);
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_message');
       socket.off('incoming_call');
       socket.off('call_ended');
+      socket.off('call_declined');
       socket.disconnect();
     };
   }, [roomId]);
@@ -104,7 +128,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
       isSelf: true,
     };
 
-    socket.emit('send_message', { roomId: roomId, message: newMessage });
+    socket.emit('send_message', { roomId, message: newMessage });
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
   };
@@ -115,14 +139,20 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
   const handleAnswerCall = () => {
     if (incomingCall) {
-      setActiveCall({ isVideo: incomingCall.isVideo, isIncoming: true, signal: incomingCall.signal });
+      setActiveCall({
+        isVideo: incomingCall.isVideo,
+        isIncoming: true,
+        signal: incomingCall,
+      });
       setIncomingCall(null);
     }
   };
 
   const handleDeclineCall = () => {
-    socket.emit('decline_call', { roomId });
-    setIncomingCall(null);
+    if (incomingCall) {
+      socket.emit('decline_call', { to: incomingCall.from });
+      setIncomingCall(null);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -137,7 +167,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
       <Sidebar />
 
       {activeCall && (
-        <CallOverlay 
+        <CallOverlay
           currentUser={currentUser}
           targetUser={targetUser}
           roomId={roomId}
@@ -150,25 +180,31 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
       {/* Incoming Call Notification */}
       {incomingCall && (
-        <div className="fixed top-8 right-8 z-[110] bg-slate-900 border border-primary/20 p-6 rounded-2xl shadow-2xl animate-in slide-in-from-top-4 duration-300 min-w-[320px]">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 z-[110] bg-slate-900 border border-primary/20 p-6 rounded-2xl shadow-2xl animate-in slide-in-from-top-4 duration-300 min-w-[300px] md:min-w-[360px]">
           <div className="flex items-center gap-4 mb-6">
             <div className="relative">
-              <img src={userAvatar} className="w-14 h-14 rounded-full border-2 border-emerald-500" alt={userName} />
+              <img
+                src={incomingCall.callerAvatar || userAvatar}
+                className="w-14 h-14 rounded-full border-2 border-emerald-500"
+                alt={incomingCall.callerName}
+              />
               <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full animate-pulse"></span>
             </div>
             <div>
-              <p className="text-white font-black text-lg">{incomingCall.name}</p>
-              <p className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Incoming {incomingCall.isVideo ? 'Video' : 'Voice'} Call...</p>
+              <p className="text-white font-black text-lg">{incomingCall.callerName}</p>
+              <p className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest">
+                Incoming {incomingCall.isVideo ? 'Video' : 'Voice'} Call...
+              </p>
             </div>
           </div>
           <div className="flex gap-3">
-             <button 
+             <button
                onClick={handleAnswerCall}
                className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
              >
                <span className="material-symbols-outlined text-lg">call</span> Answer
              </button>
-             <button 
+             <button
                onClick={handleDeclineCall}
                className="flex-1 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-bold text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
              >
@@ -186,7 +222,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
               <input className="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Search conversations..." type="text" />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 md:gap-6">
             <div className="flex items-center gap-3 border-l pl-6 border-slate-200 dark:border-slate-800">
               <div className="text-right">
@@ -231,17 +267,17 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 sm:gap-4">
                 <div className="flex items-center gap-1 sm:gap-2 mr-2">
-                   <button 
+                   <button
                      onClick={() => initiateCall(false)}
                      className="p-2.5 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
                      title="Voice Call"
                    >
                      <span className="material-symbols-outlined text-xl">call</span>
                    </button>
-                   <button 
+                   <button
                      onClick={() => initiateCall(true)}
                      className="p-2.5 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
                      title="Video Call"
@@ -250,7 +286,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
                    </button>
                 </div>
                 <div className="w-[1px] h-6 bg-outline-variant/20 mx-1 hidden sm:block"></div>
-                <button 
+                <button
                   className={`p-2 rounded-full transition-colors ${isProfileVisible ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container-low text-on-surface-variant'}`}
                   onClick={() => setIsProfileVisible(!isProfileVisible)}
                 >
@@ -306,22 +342,22 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
             <div className="p-6 bg-surface-container-lowest border-t border-outline-variant/10">
               <div className="bg-surface-container-low rounded-2xl p-2">
-                <textarea 
+                <textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="w-full bg-transparent border-none focus:ring-0 text-sm p-3 resize-none outline-none" 
-                  placeholder={`Message ${firstName}...`} 
+                  className="w-full bg-transparent border-none focus:ring-0 text-sm p-3 resize-none outline-none"
+                  placeholder={`Message ${firstName}...`}
                   rows={1}
                 ></textarea>
-                
+
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="flex items-center gap-2">
                     <button className="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg">
                       <span className="material-symbols-outlined text-lg">mood</span>
                     </button>
                   </div>
-                  
+
                   <button onClick={sendMessage} disabled={!inputValue.trim()} className="bg-primary text-on-primary w-10 h-10 flex items-center justify-center rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-50">
                     <span className="material-symbols-outlined text-lg">send</span>
                   </button>
@@ -335,12 +371,12 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
                <h2 className="text-sm font-bold text-on-surface">Profile</h2>
                <button onClick={() => setIsProfileVisible(false)} className="p-1 rounded-full hover:bg-surface-container-low"><span className="material-symbols-outlined">close</span></button>
             </div>
-            
+
             <div className="flex-1 bg-surface-container-low rounded-lg overflow-hidden flex flex-col items-center p-6 text-center">
               <img alt={firstName} className="w-24 h-24 rounded-full mb-4 object-cover" src={userAvatar} />
               <h2 className="text-lg font-bold text-on-surface">{userName}</h2>
               <p className="text-sm text-on-surface-variant mb-4">{userMajor}</p>
-              
+
               <div className="w-full text-left space-y-4 pt-4 border-t border-outline-variant/10">
                 <div>
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Status</h4>

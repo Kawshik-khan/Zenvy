@@ -52,6 +52,7 @@ model User {
   createdChannels    Channel[]        @relation("ChannelCreator")
   channelMemberships ChannelMember[]
   channelMessages    ChannelMessage[]
+  pushSubscriptions  PushSubscription[]
 }
 
 model Profile {
@@ -245,5 +246,19 @@ model ChannelMessage {
   channelId String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// PUSH NOTIFICATIONS
+// ============================================
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
   createdAt DateTime @default(now())
 }
