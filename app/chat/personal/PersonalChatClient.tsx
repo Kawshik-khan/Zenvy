@@ -73,6 +73,11 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
     socket.connect();
 
+    if (socket.connected) {
+      setIsConnected(true);
+      socket.emit('join_room', roomId);
+    }
+
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('join_room', roomId);
@@ -120,13 +125,13 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
     });
 
     return () => {
+      socket.emit('leave_room', roomId);
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_message');
       socket.off('incoming_call');
       socket.off('call_ended');
       socket.off('call_declined');
-      socket.disconnect();
     };
   }, [roomId]);
 

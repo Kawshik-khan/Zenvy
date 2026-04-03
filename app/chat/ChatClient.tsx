@@ -40,6 +40,12 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
       .catch(console.error);
 
     socket.connect();
+    
+    if (socket.connected) {
+      setIsConnected(true);
+      socket.emit('join_room', 'global_lobby');
+    }
+    
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('join_room', 'global_lobby');
@@ -52,10 +58,10 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
     });
     
     return () => {
+      socket.emit('leave_room', 'global_lobby');
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_message');
-      socket.disconnect();
     };
   }, []);
 

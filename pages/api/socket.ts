@@ -144,6 +144,11 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         console.log(`User ${socket.data.user?.email} joined room ${roomId}`);
       });
 
+      socket.on('leave_room', (roomId: string) => {
+        socket.leave(roomId);
+        console.log(`User ${socket.data.user?.email} left room ${roomId}`);
+      });
+
       socket.on('send_message', async (data: { roomId: string, message: any }) => {
         if (data.message && socket.data.user?.sub) {
           data.message.senderId = socket.data.user.sub;
