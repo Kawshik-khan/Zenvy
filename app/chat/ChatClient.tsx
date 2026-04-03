@@ -43,11 +43,13 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
     
     if (socket.connected) {
       setIsConnected(true);
+      socket.emit('authenticate', { userId: user.id });
       socket.emit('join_room', 'global_lobby');
     }
     
     socket.on('connect', () => {
       setIsConnected(true);
+      socket.emit('authenticate', { userId: user.id });
       socket.emit('join_room', 'global_lobby');
     });
     

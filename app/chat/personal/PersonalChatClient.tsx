@@ -75,11 +75,13 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
     if (socket.connected) {
       setIsConnected(true);
+      socket.emit('authenticate', { userId: currentUser.id });
       socket.emit('join_room', roomId);
     }
 
     socket.on('connect', () => {
       setIsConnected(true);
+      socket.emit('authenticate', { userId: currentUser.id });
       socket.emit('join_room', roomId);
     });
 

@@ -1,0 +1,203 @@
+const { createServer } = require('http');
+const { parse } = require('url');
+const next = require('next');
+const { Server: ServerIO } = require('socket.io');
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = 'localhost';
+const port = process.env.PORT || 3000;
+
+// Initialize Next.js
+const app = next({ dev, hostname, port });
+const handle = app.getRequestHandler();
+
+app.prepare().then(() => {
+  const server = createServer(async (req, res) => {
+    try {
+      const parsedUrl = parse(req.url, true);
+      await handle(req, res, parsedUrl);
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err);
+      res.statusCode = 500;
+      res.end('internal server error');
+    }
+  });
+
+  // Attach Socket.io to the persistent HTTP Server!
+  const io = new ServerIO(server, {
+    path: '/api/socket',
+    addTrailingSlash: false,
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+
+  // Track users
+  const userSockets = new Map();
+
+  function addUserSocket(userId, socketId) {
+    if (!userSockets.has(userId)) {
+      userSockets.set(userId, new Set());
+    }
+    userSockets.get(userId).add(socketId);
+  }
+
+  function removeUserSocket(userId, socketId) {
+    const sockets = userSockets.get(userId);
+    if (sockets) {
+      sockets.delete(socketId);
+      if (sockets.size === 0) userSockets.delete(userId);
+    }
+  }
+
+  function getUserSocketIds(userId) {
+    const sockets = userSockets.get(userId);
+    return sockets ? Array.from(sockets) : [];
+  }
+
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    let userId = null;
+
+    // A simple authentication listener since Custom Server doesn't easily natively parse NextAuth JWTs without extra libraries
+    socket.on('authenticate', (data) => {
+      if (data && data.userId) {
+        userId = data.userId;
+        addUserSocket(userId, socket.id);
+        console.log(`Socket ${socket.id} authenticated as User ${userId}`);
+      }
+    });
+
+    // ============================================
+    // CHAT ROOMS (messaging)
+    // ============================================
+    socket.on('join_room', (roomId) => {
+      socket.join(roomId);
+      console.log(`Socket ${socket.id} joined room ${roomId}`);
+    });
+
+    socket.on('leave_room', (roomId) => {
+      socket.leave(roomId);
+    });
+
+    socket.on('send_message', async (data) => {
+      if (data.message && userId) {
+        data.message.senderId = userId;
+        try {
+          const savedMsg = await prisma.message.create({
+            data: {
+              content: data.message.content,
+              senderId: userId,
+              roomId: data.roomId,
+            }
+          });
+          data.message.id = savedMsg.id;
+          data.message.timestamp = savedMsg.createdAt;
+        } catch (e) {
+          console.error('Failed to save message to db:', e);
+        }
+      }
+      socket.to(data.roomId).emit('receive_message', data.message);
+    });
+
+    socket.on('send_channel_message', async (data) => {
+      if (!data.message || !userId) return;
+
+      try {
+        const membership = await prisma.channelMember.findUnique({
+          where: { channelId_userId: { channelId: data.channelId, userId } },
+        });
+
+        if (!membership) {
+          socket.emit('channel_error', { message: 'You must be a member to send messages' });
+          return;
+        }
+
+        data.message.senderId = userId;
+
+        const savedMsg = await prisma.channelMessage.create({
+          data: {
+            content: data.message.content,
+            senderId: userId,
+            channelId: data.channelId,
+          },
+        });
+
+        data.message.id = savedMsg.id;
+        data.message.timestamp = savedMsg.createdAt;
+      } catch (e) {
+        console.error('Failed to save channel message:', e);
+        return;
+      }
+
+      socket.to(`channel_${data.channelId}`).emit('receive_channel_message', data.message);
+    });
+
+    // ============================================
+    // WEBRTC CALL SIGNALING (User ID targeted)
+    // ============================================
+    socket.on('call_user', (data) => {
+      if (!userId) return;
+      const targetSocketIds = getUserSocketIds(data.to);
+
+      const callPayload = {
+        from: userId,
+        signalData: data.signalData,
+        callerName: data.callerName,
+        callerAvatar: data.callerAvatar,
+        isVideo: data.isVideo,
+        roomId: data.roomId,
+      };
+
+      if (targetSocketIds.length > 0) {
+        for (const sid of targetSocketIds) {
+          io.to(sid).emit('incoming_call', callPayload);
+        }
+      }
+    });
+
+    socket.on('answer_call', (data) => {
+      const callerSocketIds = getUserSocketIds(data.to);
+      for (const sid of callerSocketIds) {
+        io.to(sid).emit('call_answered', data.signalData);
+      }
+    });
+
+    socket.on('end_call', (data) => {
+      if (!userId) return;
+      const targetSocketIds = getUserSocketIds(data.to);
+      for (const sid of targetSocketIds) {
+        io.to(sid).emit('call_ended', { from: userId });
+      }
+    });
+
+    socket.on('decline_call', (data) => {
+      if (!userId) return;
+      const targetSocketIds = getUserSocketIds(data.to);
+      for (const sid of targetSocketIds) {
+        io.to(sid).emit('call_declined', { from: userId });
+      }
+    });
+
+    // ============================================
+    // DISCONNECT
+    // ============================================
+    socket.on('disconnect', () => {
+      if (userId) {
+        removeUserSocket(userId, socket.id);
+      }
+      console.log('Client disconnected:', socket.id);
+    });
+  });
+
+  server.listen(port, () => {
+    console.log(`> Custom Next.js socket server ready on http://${hostname}:${port}`);
+  });
+}).catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
