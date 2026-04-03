@@ -114,7 +114,7 @@ export default function CallOverlay({
 
     const peer = new Peer({
       initiator: true,
-      trickle: true,
+      trickle: false,
       stream: localStream,
       config: ICE_SERVERS,
     });
@@ -157,7 +157,7 @@ export default function CallOverlay({
   const answerCall = (localStream: MediaStream) => {
     const peer = new Peer({
       initiator: false,
-      trickle: true,
+      trickle: false,
       stream: localStream,
       config: ICE_SERVERS,
     });
@@ -184,6 +184,7 @@ export default function CallOverlay({
 
     peer.signal(incomingSignal.signalData || incomingSignal);
     peerRef.current = peer;
+    setCallStatus('CONNECTED'); // Optimistic update, or waiting for stream
   };
 
   const toggleMute = () => {
