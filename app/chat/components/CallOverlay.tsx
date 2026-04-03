@@ -4,13 +4,26 @@ import React, { useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import { socket } from '@/lib/socket';
 
+// Public free TURN servers for reliable NAT traversal and mobile networks
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    // Add your TURN server here for reliable mobile NAT traversal:
-    // { urls: 'turn:your-turn-server.com:3478', username: 'user', credential: 'pass' },
+    {
+      urls: 'turn:relay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:relay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:relay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ],
 };
 
@@ -106,7 +119,20 @@ export default function CallOverlay({
         peerRef.current.signal(signal);
       }
     };
+    
+    // Receiver needs to listen for extra late trickle ICE candidates that arrive after answering
+    const handleLateCandidates = (data: any) => {
+      if (isIncoming && peerRef.current && data.signalData) {
+        // Double check this candidate belongs to our current active remote caller
+        if (data.from === (incomingSignal?.from || targetUser.id)) {
+          console.log("Processing late ICE candidate on receiver");
+          peerRef.current.signal(data.signalData);
+        }
+      }
+    };
+
     socket.on('call_answered', handleCallAnswered);
+    socket.on('incoming_call', handleLateCandidates);
 
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
@@ -114,6 +140,7 @@ export default function CallOverlay({
       socket.off('call_ended', handleCallEnded);
       socket.off('call_declined', handleCallDeclined);
       socket.off('call_answered', handleCallAnswered);
+      socket.off('incoming_call', handleLateCandidates);
     };
   }, []);
 
@@ -236,7 +263,7 @@ export default function CallOverlay({
           <div className="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full backdrop-blur-md">
             <span className={`w-2 h-2 rounded-full ${callStatus === 'CONNECTED' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`}></span>
             <span className="text-[10px] font-bold uppercase tracking-widest leading-none">
-              {callStatus === 'CONNECTED' ? 'Connected' : callStatus === 'RINGING' ? 'Ringing' : 'Initializing'}
+              {callStatus === 'CONNECTED' ? 'Connected' : callStatus === 'RINGING' ? (isIncoming ? 'Connecting...' : 'Ringing') : (isIncoming ? 'Connecting...' : 'Initializing')}
             </span>
           </div>
         </div>
@@ -252,7 +279,13 @@ export default function CallOverlay({
                    )}
                 </div>
                 <p className="text-white text-lg font-medium">
-                  {callStatus === 'CONNECTED' ? `In ${isVideoCall ? 'Video' : 'Voice'} Call with ${targetUser.name}` : callStatus === 'ENDED' ? 'Call Ended' : `Calling ${targetUser.name}...`}
+                  {callStatus === 'CONNECTED' 
+                    ? `In ${isVideoCall ? 'Video' : 'Voice'} Call with ${targetUser.name}` 
+                    : callStatus === 'ENDED' 
+                      ? 'Call Ended' 
+                      : isIncoming 
+                        ? `Connecting to ${targetUser.name}...` 
+                        : `Calling ${targetUser.name}...`}
                 </p>
              </div>
           )}

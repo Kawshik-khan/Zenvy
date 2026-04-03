@@ -239,8 +239,9 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
             io.to(sid).emit('incoming_call', callPayload);
           }
           console.log(`Call signal sent from ${userId} to ${data.to} (${targetSocketIds.length} sockets)`);
-        } else {
+        } else if (data.signalData.type === 'offer') {
           // Target is offline or backgrounded — send push notification
+          // We ONLY send this on the initial 'offer', avoiding spam for every trickle ICE candidate
           console.log(`User ${data.to} not connected, sending push notification`);
           await sendPushNotification(data.to, {
             type: 'incoming_call',

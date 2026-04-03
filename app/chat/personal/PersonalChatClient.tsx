@@ -54,6 +54,12 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Keep a ref to activeCall so socket event listeners can read the latest state
+  const activeCallRef = useRef<typeof activeCall>(null);
+  useEffect(() => {
+    activeCallRef.current = activeCall;
+  }, [activeCall]);
+
   useEffect(() => {
     // Load message history
     fetch(`/api/messages?roomId=${roomId}`)
@@ -80,6 +86,12 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
     // Incoming call handler — received via user ID targeting from server
     socket.on('incoming_call', (data: any) => {
+      // If we are already in an active CallOverlay with this user, DO NOT recreate the popup.
+      // The CallOverlay component itself listens to 'incoming_call' to feed these late trickle ICE candidates to simple-peer.
+      if (activeCallRef.current?.signal?.from === data.from) {
+        return;
+      }
+
       setIncomingCall((prev) => {
         if (!prev || prev.from !== data.from) {
           return {
