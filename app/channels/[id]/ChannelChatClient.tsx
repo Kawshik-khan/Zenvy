@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
