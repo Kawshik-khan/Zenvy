@@ -104,6 +104,19 @@ app.prepare().then(() => {
       socket.to(data.roomId).emit('receive_message', data.message);
     });
 
+    socket.on('delete_message', async (data) => {
+      if (!userId) return;
+      try {
+        const msg = await prisma.message.findUnique({ where: { id: data.messageId } });
+        if (msg && msg.senderId === userId) {
+          await prisma.message.delete({ where: { id: data.messageId } });
+          socket.to(data.roomId).emit('message_deleted', { messageId: data.messageId });
+        }
+      } catch (e) {
+        console.error('Failed to delete message:', e);
+      }
+    });
+
     socket.on('send_channel_message', async (data) => {
       if (!data.message || !userId) return;
 
@@ -135,6 +148,75 @@ app.prepare().then(() => {
       }
 
       socket.to(`channel_${data.channelId}`).emit('receive_channel_message', data.message);
+    });
+
+    socket.on('delete_channel_message', async (data) => {
+      if (!userId) return;
+      try {
+        const msg = await prisma.channelMessage.findUnique({ where: { id: data.messageId } });
+        if (msg && msg.senderId === userId) {
+          await prisma.channelMessage.delete({ where: { id: data.messageId } });
+          socket.to(`channel_${data.channelId}`).emit('channel_message_deleted', { messageId: data.messageId });
+        }
+      } catch (e) {
+        console.error('Failed to delete channel message:', e);
+      }
+    });
+
+    // ============================================
+    // GROUP MESSAGING
+    // ============================================
+    socket.on('join_group_room', (groupId) => {
+      socket.join(`group_${groupId}`);
+    });
+
+    socket.on('send_group_message', async (data) => {
+      if (!data.message || !userId) return;
+
+      try {
+        const membership = await prisma.groupMember.findUnique({
+          where: { groupId_userId: { groupId: data.groupId, userId } },
+        });
+
+        if (!membership) {
+          socket.emit('group_error', { message: 'You must be a member to send messages' });
+          return;
+        }
+
+        data.message.senderId = userId;
+
+        const savedMsg = await prisma.groupMessage.create({
+          data: {
+            content: data.message.content,
+            fileUrl: data.message.fileUrl || null,
+            fileType: data.message.fileType || null,
+            fileName: data.message.fileName || null,
+            senderId: userId,
+            groupId: data.groupId,
+          },
+        });
+
+        data.message.id = savedMsg.id;
+        data.message.timestamp = savedMsg.createdAt;
+      } catch (e) {
+        console.error('Failed to save group message:', e);
+        return;
+      }
+
+      socket.to(`group_${data.groupId}`).emit('receive_group_message', data.message);
+    });
+
+    socket.on('delete_group_message', async (data) => {
+      if (!userId) return;
+      try {
+        const msg = await prisma.groupMessage.findUnique({ where: { id: data.messageId } });
+        if (msg && msg.senderId === userId) {
+          await prisma.groupMessage.delete({ where: { id: data.messageId } });
+          socket.to(`group_${data.groupId}`).emit('group_message_deleted', { messageId: data.messageId });
+        }
+      } catch (e) {
+        console.error('Failed to delete group message:', e);
+      }
     });
 
     // ============================================

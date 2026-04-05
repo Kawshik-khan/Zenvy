@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
@@ -16,29 +18,29 @@ type Message = {
   fileName?: string | null;
 };
 
-type ChannelMember = {
+type GroupMember = {
   id: string;
   name: string;
   image: string | null;
   role: string;
 };
 
-type ChannelInfo = {
+type GroupInfo = {
   id: string;
   name: string;
-  tag: string;
+  subject: string | null;
   description: string | null;
-  creatorId: string;
+  adminId: string;
 };
 
-interface ChannelChatClientProps {
+interface GroupChatClientProps {
   user: any;
-  channel: ChannelInfo;
-  members: ChannelMember[];
+  group: GroupInfo;
+  members: GroupMember[];
   isMember: boolean;
 }
 
-export default function ChannelChatClient({ user, channel, members, isMember }: ChannelChatClientProps) {
+export default function GroupChatClient({ user, group, members, isMember }: GroupChatClientProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -54,7 +56,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
     if (!isMember) return;
 
     // Load message history
-    fetch(`/api/channels/messages?channelId=${channel.id}`)
+    fetch(`/api/groups/messages?groupId=${group.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.messages && Array.isArray(data.messages)) {
@@ -66,21 +68,21 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
     socket.connect();
     socket.on('connect', () => {
       setIsConnected(true);
-      socket.emit('join_channel_room', channel.id);
+      socket.emit('join_group_room', group.id);
     });
 
     socket.on('disconnect', () => setIsConnected(false));
 
-    socket.on('receive_channel_message', (msg: Message) => {
+    socket.on('receive_group_message', (msg: Message) => {
       setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
     });
 
-    socket.on('channel_message_deleted', ({ messageId }: { messageId: string }) => {
+    socket.on('group_message_deleted', ({ messageId }: { messageId: string }) => {
       setMessages((prev) => prev.filter(m => m.id !== messageId));
     });
 
-    socket.on('channel_error', (data: { message: string }) => {
-      console.error('Channel error:', data.message);
+    socket.on('group_error', (data: { message: string }) => {
+      console.error('Group error:', data.message);
     });
 
     socket.on('user_typing', ({ senderName }: { senderName: string }) => {
@@ -103,15 +105,15 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
     return () => {
       socket.off('connect');
       socket.off('disconnect');
-      socket.off('receive_channel_message');
-      socket.off('channel_message_deleted');
-      socket.off('channel_error');
+      socket.off('receive_group_message');
+      socket.off('group_message_deleted');
+      socket.off('group_error');
       socket.off('user_typing');
       socket.off('user_stopped_typing');
       socket.disconnect();
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [channel.id, isMember]);
+  }, [group.id, isMember]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -150,7 +152,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
         isSelf: true,
       };
 
-      socket.emit('send_channel_message', { channelId: channel.id, message: newMessage });
+      socket.emit('send_group_message', { groupId: group.id, message: newMessage });
       setMessages((prev) => [...prev, newMessage]);
       setInputValue('');
     } catch (err) {
@@ -175,13 +177,13 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
       isSelf: true,
     };
 
-    socket.emit('send_channel_message', { channelId: channel.id, message: newMessage });
+    socket.emit('send_group_message', { groupId: group.id, message: newMessage });
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
-    
+
     // Stop typing immediately
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    socket.emit('stop_typing', { roomId: channel.id, senderName: user.name || 'Anonymous', type: 'channel' });
+    socket.emit('stop_typing', { roomId: group.id, senderName: user.name || 'Anonymous', type: 'group' });
     setTypingUsers((prev) => {
       const newSet = new Set(prev);
       newSet.delete(user.name || 'Anonymous');
@@ -191,18 +193,18 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
 
   const handleDeleteMessage = (messageId: string) => {
     setMessages((prev) => prev.filter(m => m.id !== messageId));
-    socket.emit('delete_channel_message', { channelId: channel.id, messageId });
+    socket.emit('delete_group_message', { groupId: group.id, messageId });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
     if (!isMember) return;
     
-    socket.emit('typing', { roomId: channel.id, senderName: user.name || 'Anonymous', type: 'channel' });
+    socket.emit('typing', { roomId: group.id, senderName: user.name || 'Anonymous', type: 'group' });
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('stop_typing', { roomId: channel.id, senderName: user.name || 'Anonymous', type: 'channel' });
+      socket.emit('stop_typing', { roomId: group.id, senderName: user.name || 'Anonymous', type: 'group' });
     }, 2000);
   };
 
@@ -215,22 +217,21 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
 
   return (
     <div className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative bg-background">
-      {/* Channel Header */}
+      {/* Group Header */}
       <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none shrink-0">
         <div className="flex items-center gap-4">
           <Link
-            href="/channels"
+            href="/groups"
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
           >
             <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
           </Link>
           <div>
             <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
-              <span className="text-primary">#</span>
-              {channel.tag}
+              {group.name}
             </h3>
             <p className="text-[11px] text-on-surface-variant flex items-center gap-2">
-              {channel.name}
+              <span className="text-primary font-bold">{group.subject || "General"}</span>
               {isMember && (
                 isConnected ? (
                   <span className="text-emerald-500 font-bold text-[10px] uppercase">● connected</span>
@@ -243,6 +244,17 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Call Feature Link (reusing our newly built WebRTC call system) */}
+          {isMember && (
+            <Link
+              href={`/call/active?type=group&id=${group.id}`}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-on-surface-variant rounded-xl transition-colors"
+              title="Start or Join Voice/Video Call"
+            >
+              <span className="material-symbols-outlined text-lg">call</span>
+            </Link>
+          )}
+
           <button
             onClick={() => setShowMembers(!showMembers)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -266,9 +278,12 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
             {/* Welcome Banner */}
             <div className="flex flex-col items-center justify-center py-8 opacity-60">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl text-primary">tag</span>
+                <span className="material-symbols-outlined text-3xl text-primary">school</span>
               </div>
-              <p className="text-sm font-bold text-on-surface">Welcome to #{channel.tag}</p>
+              <p className="text-sm font-bold text-on-surface">Welcome to {group.name}</p>
+              <p className="text-xs text-on-surface-variant mt-1 text-center max-w-md">
+                {group.description || 'This is the beginning of the study group.'}
+              </p>
             </div>
 
             {messages.map((msg) =>
@@ -371,7 +386,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                  {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -384,10 +399,10 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
                   className="w-full bg-transparent border-none focus:ring-0 text-sm p-3 resize-none outline-none"
-                  placeholder={`Message #${channel.tag}...`}
+                  placeholder={`Message ${group.name}...`}
                   rows={1}
                 />
-                <div className="flex items-center justify-between px-3 py-2 border-t border-outline-variant/10">
+                <div className="flex items-center justify-between px-3 py-2 border-t border-outline-variant/10 mt-2">
                   <div className="flex items-center gap-2">
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                     <button 
@@ -415,7 +430,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
               <div className="bg-surface-container-low rounded-2xl p-6 text-center">
                 <span className="material-symbols-outlined text-3xl text-on-surface-variant/50 mb-2 block">lock</span>
                 <p className="text-sm font-medium text-on-surface mb-1">Join to send messages</p>
-                <p className="text-xs text-on-surface-variant">You need to be a member of this channel to participate</p>
+                <p className="text-xs text-on-surface-variant">You need to be a member of this study group to participate</p>
               </div>
             )}
           </div>
@@ -444,9 +459,9 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                     }
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-on-surface truncate">{member.name}</p>
-                    {member.role === 'CREATOR' && (
-                      <p className="text-[10px] text-primary font-bold uppercase">Creator</p>
+                     <p className="text-sm font-medium text-on-surface truncate">{member.name}</p>
+                    {member.role === 'ADMIN' && (
+                      <p className="text-[10px] text-primary font-bold uppercase">Admin</p>
                     )}
                   </div>
                 </div>

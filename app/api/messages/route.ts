@@ -32,6 +32,9 @@ export async function GET(request: Request) {
       senderId: msg.senderId,
       senderName: msg.sender?.name || 'Anonymous',
       content: msg.content,
+      fileUrl: msg.fileUrl || null,
+      fileType: msg.fileType || null,
+      fileName: msg.fileName || null,
       timestamp: msg.createdAt,
       isSelf: msg.senderId === session.user!.id
     }));

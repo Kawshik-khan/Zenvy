@@ -53,6 +53,7 @@ model User {
   channelMemberships ChannelMember[]
   channelMessages    ChannelMessage[]
   pushSubscriptions  PushSubscription[]
+  callParticipations CallParticipant[]
 }
 
 model Profile {
@@ -101,6 +102,9 @@ model ChatRoom {
 model Message {
   id         String   @id @default(cuid())
   content    String
+  fileUrl    String?
+  fileType   String?
+  fileName   String?
   senderId   String
   sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   chatRoomId String?
@@ -169,6 +173,9 @@ model EventAttendee {
 model GroupMessage {
   id        String     @id @default(cuid())
   content   String
+  fileUrl   String?
+  fileType  String?
+  fileName  String?
   senderId  String
   groupId   String
   sender    User       @relation(fields: [senderId], references: [id], onDelete: Cascade)
@@ -242,6 +249,9 @@ model ChannelMember {
 model ChannelMessage {
   id        String   @id @default(cuid())
   content   String
+  fileUrl   String?
+  fileType  String?
+  fileName  String?
   senderId  String
   channelId String
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
@@ -261,4 +271,29 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+}
+
+// ============================================
+// WEBRTC CALLING FEATURE
+// ============================================
+
+model CallSession {
+  id           String            @id @default(cuid())
+  roomId       String            @unique // Either "lobby", groupId, or channelId
+  status       String            @default("ACTIVE") // ACTIVE, ENDED
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  participants CallParticipant[]
+}
+
+model CallParticipant {
+  id        String      @id @default(cuid())
+  callId    String
+  call      CallSession @relation(fields: [callId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime    @default(now())
+  leftAt    DateTime?
+  
+  @@unique([callId, userId])
 }

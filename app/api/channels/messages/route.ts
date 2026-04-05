@@ -44,6 +44,9 @@ export async function GET(request: Request) {
       senderName: msg.sender?.name || 'Anonymous',
       senderImage: msg.sender?.image || null,
       content: msg.content,
+      fileUrl: msg.fileUrl || null,
+      fileType: msg.fileType || null,
+      fileName: msg.fileName || null,
       timestamp: msg.createdAt,
       isSelf: msg.senderId === session.user!.id,
     }));

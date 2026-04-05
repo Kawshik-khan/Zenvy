@@ -138,8 +138,10 @@ export default async function StudyGroupsPage() {
                 </div>
                 <div className="mb-4">
                   <span className="text-xs font-bold text-primary mb-2 block uppercase tracking-tight">{group.subject || "General"}</span>
-                  <h3 className="text-xl font-bold text-on-surface mb-3 leading-tight">{group.name}</h3>
-                  <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3">{group.description || "A study group to collaborate and learn together."}</p>
+                  <Link href={`/groups/${group.id}`} className="block group/link">
+                    <h3 className="text-xl font-bold text-on-surface mb-3 leading-tight group-hover/link:text-primary transition-colors">{group.name}</h3>
+                    <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3">{group.description || "A study group to collaborate and learn together."}</p>
+                  </Link>
                 </div>
                 <div className="mt-auto pt-8 flex items-center justify-between border-t border-outline-variant/10">
                   <div className="flex -space-x-3">
