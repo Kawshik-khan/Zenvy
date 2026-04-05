@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
+import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import CallOverlay from '../components/CallOverlay';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
 
@@ -351,14 +352,8 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
           </div>
 
           <div className="flex items-center gap-2 md:gap-6">
-            <div className="flex items-center gap-3 border-l pl-6 border-slate-200 dark:border-slate-800">
-              <div className="text-right">
-                <p className="text-xs font-bold text-on-surface">{currentUser.name || 'Scholar'}</p>
-                <p className="text-[10px] text-on-surface-variant">{currentUser.profile?.major || 'Student'}</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-primary/10">
-                 <img alt="User Avatar" className="w-full h-full object-cover" src={currentUser.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || "U")}&background=random`} />
-              </div>
+            <div className="flex items-center gap-3 border-l pl-4 md:pl-6 border-slate-200 dark:border-slate-800">
+              <HeaderProfileMenu userName={currentUser.name || 'Scholar'} imageUrl={currentUser.image} />
             </div>
           </div>
         </header>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
+import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 
 type Message = {
   id: string;
@@ -59,11 +60,16 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
       setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
     });
     
+    socket.on('message_deleted', ({ messageId }: { messageId: string }) => {
+      setMessages((prev) => prev.filter(m => m.id !== messageId));
+    });
+    
     return () => {
       socket.emit('leave_room', 'global_lobby');
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_message');
+      socket.off('message_deleted');
     };
   }, []);
 
@@ -87,6 +93,11 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
     socket.emit('send_message', { roomId: 'global_lobby', message: newMessage });
     setMessages((prev) => [...prev, newMessage]);
     setInputValue('');
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages((prev) => prev.filter(m => m.id !== messageId));
+    socket.emit('delete_message', { roomId: 'global_lobby', messageId });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -117,13 +128,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
           
           <div className="flex items-center gap-2 md:gap-6">
              <div className="flex items-center gap-3 border-l pl-4 md:pl-6 border-slate-200 dark:border-slate-800">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-on-surface">{user.name || 'Scholar'}</p>
-                <p className="text-[10px] text-on-surface-variant">{user.profile?.major || 'Student'}</p>
-              </div>
-              <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-primary/10 ring-offset-2">
-                <img alt="User Avatar" className="w-full h-full object-cover" src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "U")}&background=random`} />
-              </div>
+              <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
             </div>
           </div>
         </header>
@@ -194,7 +199,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
 
               {messages.map((msg) => (
                 msg.isSelf ? (
-                  <div key={msg.id} className="flex items-start gap-4 flex-row-reverse animate-in fade-in slide-in-from-bottom-2">
+                  <div key={msg.id} className="flex items-start gap-4 flex-row-reverse animate-in fade-in slide-in-from-bottom-2 group">
                     <img alt={msg.senderName} className="w-10 h-10 rounded-xl" src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "U")}&background=random`} />
                     <div className="space-y-1 text-right">
                       <div className="flex items-center gap-2 justify-end">
@@ -203,8 +208,17 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                         </span>
                         <span className="font-bold text-sm">{msg.senderName}</span>
                       </div>
-                      <div className="bg-primary text-on-primary p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed max-w-md text-left">
-                        {msg.content}
+                      <div className="relative flex items-center justify-end gap-2 text-left">
+                        <button
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-on-surface-variant hover:text-red-500 transition-all rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
+                          title="Delete message"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                        <div className="bg-primary text-on-primary p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed max-w-md">
+                          {msg.content}
+                        </div>
                       </div>
                     </div>
                   </div>

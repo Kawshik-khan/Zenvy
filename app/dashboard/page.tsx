@@ -252,7 +252,7 @@ export default async function DashboardPage() {
                     </div>
                   ) : (
                     user.groupMemberships.slice(0, 4).map((membership) => (
-                      <div key={membership.groupId} className="group bg-[rgb(223,221,221)] p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 animate-slide-up stagger-3">
+                      <Link key={membership.groupId} href={`/groups/${membership.groupId}`} className="block group bg-[rgb(223,221,221)] p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 animate-slide-up stagger-3">
                         <div className="flex justify-between items-start mb-6">
                           <div className="p-3 bg-primary-container/30 rounded-lg text-primary">
                             <span className="material-symbols-outlined">school</span>
@@ -263,9 +263,9 @@ export default async function DashboardPage() {
                         <p className="text-on-surface-variant text-sm mb-6 line-clamp-1">{membership.group.subject || 'General Studies'}</p>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-primary">View Group &rarr;</span>
+                          <span className="text-xs font-bold text-primary group-hover:underline">View Group &rarr;</span>
                         </div>
-                      </div>
+                      </Link>
                     ))
                   )}
                 </div>

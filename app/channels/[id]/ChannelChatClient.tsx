@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
+import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
 
 type Message = {
@@ -256,6 +257,10 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
             <span className="material-symbols-outlined text-lg">group</span>
             <span>{members.length}</span>
           </button>
+          
+          <div className="border-l pl-4 ml-2 border-slate-200 dark:border-slate-800 hidden sm:block">
+            <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
+          </div>
         </div>
       </header>
 

@@ -266,6 +266,48 @@ app.prepare().then(() => {
     });
 
     // ============================================
+    // GROUP WEBRTC (MESH) SIGNALING
+    // ============================================
+
+    socket.on('join_group_call', (roomId) => {
+      socket.join(`call_${roomId}`);
+      if (userId) {
+        socket.to(`call_${roomId}`).emit('user_joined_call', { userId, socketId: socket.id });
+        console.log(`User ${userId} joined group call ${roomId}`);
+      }
+    });
+
+    socket.on('webrtc_offer', (data) => {
+      io.to(data.to).emit('receive_webrtc_offer', {
+        from: socket.id,
+        userId: userId,
+        offer: data.offer
+      });
+    });
+
+    socket.on('webrtc_answer', (data) => {
+      io.to(data.to).emit('receive_webrtc_answer', {
+        from: socket.id,
+        userId: userId,
+        answer: data.answer
+      });
+    });
+
+    socket.on('ice_candidate', (data) => {
+      io.to(data.to).emit('receive_ice_candidate', {
+        from: socket.id,
+        userId: userId,
+        candidate: data.candidate
+      });
+    });
+
+    socket.on('leave_group_call', (roomId) => {
+      socket.leave(`call_${roomId}`);
+      socket.to(`call_${roomId}`).emit('user_left_call', { userId, socketId: socket.id });
+      console.log(`User ${userId} left group call ${roomId}`);
+    });
+
+    // ============================================
     // DISCONNECT
     // ============================================
     socket.on('disconnect', () => {
