@@ -57,7 +57,7 @@ export default function ProfileClient({ user, updateProfile }: { user: any, upda
             <p className="text-on-surface-variant text-base md:text-lg">Manage your digital presence and academic preferences.</p>
           </div>
 
-          <form action={updateProfile}>
+          <form id="account-settings" action={updateProfile} className="scroll-mt-28">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
               <div className="lg:col-span-4 space-y-8">
                 <div className="bg-surface-container-lowest rounded-lg p-8 shadow-[0_20px_40px_rgba(70,71,211,0.06)] flex flex-col items-center text-center">

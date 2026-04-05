@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import QuickJoinButton from './QuickJoinButton';
 import ThreeDotMenu from '@/app/components/ThreeDotMenu';
 import ErrorView from '@/app/components/ErrorView';
+import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 
 export default async function DashboardPage() {
   let session;
@@ -151,21 +152,16 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant">
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant"
+            >
               <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant">
-              <span className="material-symbols-outlined">settings</span>
             </button>
             <div className="h-8 w-[1px] bg-outline-variant/20 mx-2"></div>
 
-            <div className="flex items-center gap-3 group cursor-pointer">
-              <div className="text-right hidden sm:block">
-                <p className="font-bold leading-none">{userName}</p>
-                <p className="text-[10px] text-on-surface-variant font-medium">Logged In</p>
-              </div>
-              <img alt="User Profile Avatar" className="w-10 h-10 rounded-full object-cover ring-2 ring-white ring-offset-2 ring-offset-primary" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEgEYZ81wFhxOgX_dHZ9mUxj-SjdIHtogOiWALKAx_sJpU8YIGOMl1uQ6uB7SL4nD8YSMd48ZMJsGJB3kYw5C-fDiEkcCUqFegSufheOcyBdF4tNbdBgD23V5p1UU20R8R9BcCurXr-1S8zK3E_pydrHWcY1NS7oMzV-7KIle39-7dC0sIMgiodZKFy2aj-5mCEsV2BtPqYYiL7Rses5FOFOonDxif5zei45sNOsUWS_MWeARNqTRc8X3x3schsOy499kNXGFumaY" />
-            </div>
+            <HeaderProfileMenu userName={userName} imageUrl={user.image} />
           </div>
         </header>
 
@@ -256,12 +252,12 @@ export default async function DashboardPage() {
                     </div>
                   ) : (
                     user.groupMemberships.slice(0, 4).map((membership) => (
-                      <div key={membership.groupId} className="group bg-surface-container-lowest p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 animate-slide-up stagger-3">
+                      <div key={membership.groupId} className="group bg-[rgb(223,221,221)] p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 animate-slide-up stagger-3">
                         <div className="flex justify-between items-start mb-6">
                           <div className="p-3 bg-primary-container/30 rounded-lg text-primary">
                             <span className="material-symbols-outlined">school</span>
                           </div>
-                          <span className="px-3 py-1 bg-tertiary-container text-on-tertiary-container text-[10px] font-black uppercase rounded-full tracking-wider">Active Now</span>
+                          <span className="px-3 py-1 border border-[rgb(200,200,200)] bg-[rgb(242,242,242)] text-[rgb(30,131,194)] text-[10px] font-black uppercase rounded-full tracking-wider">Active Now</span>
                         </div>
                         <h4 className="text-lg font-black mb-1 line-clamp-1">{membership.group.name}</h4>
                         <p className="text-on-surface-variant text-sm mb-6 line-clamp-1">{membership.group.subject || 'General Studies'}</p>
@@ -279,7 +275,7 @@ export default async function DashboardPage() {
             {/* Right Column: Sidebar Feeds */}
             <div className="col-span-12 lg:col-span-4 space-y-12">
               {/* Activity Feed */}
-              <section className="bg-surface-container-low p-8 rounded-lg space-y-8 animate-slide-up stagger-4">
+              <section className="bg-[rgb(223,221,221)] p-8 rounded-lg space-y-8 animate-slide-up stagger-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black tracking-tight">Activity Feed</h3>
                   <ThreeDotMenu targetId="system-feed" />
@@ -290,7 +286,7 @@ export default async function DashboardPage() {
                     <p className="text-sm text-on-surface-variant italic">No recent activity found.</p>
                   ) : (
                     activities.map((activity) => (
-                      <div key={activity.id} className="flex gap-4">
+                      <div key={activity.id} className="flex flex-wrap gap-4 border-0 border-transparent bg-transparent shadow-none">
                         <div className={`flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full ${activity.type === 'MESSAGE' ? 'bg-primary ring-primary/10' : 'bg-secondary ring-secondary/10'} ring-4`}></div>
                         <div className="space-y-1">
                           <p className="text-sm font-bold text-on-surface tracking-tight">{activity.title}</p>
