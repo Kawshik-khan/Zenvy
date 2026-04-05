@@ -151,6 +151,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
 
       socket.on('send_message', async (data: { roomId: string, message: any }) => {
         if (data.message && socket.data.user?.sub) {
+          const tempId = data.message.id;
           data.message.senderId = socket.data.user.sub;
 
           try {
@@ -166,6 +167,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
             });
             data.message.id = savedMsg.id;
             data.message.timestamp = savedMsg.createdAt;
+            socket.emit('message_sent_success', { tempId, realId: savedMsg.id });
           } catch (e) {
             console.error('Failed to save message to db:', e);
           }
@@ -199,6 +201,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         if (!data.message || !socket.data.user?.sub) return;
 
         const senderId = socket.data.user.sub;
+        const tempId = data.message.id;
 
         try {
           const membership = await prisma.channelMember.findUnique({
@@ -225,6 +228,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
 
           data.message.id = savedMsg.id;
           data.message.timestamp = savedMsg.createdAt;
+          socket.emit('channel_message_sent_success', { tempId, realId: savedMsg.id });
         } catch (e) {
           console.error('Failed to save channel message:', e);
           return;
@@ -259,6 +263,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         if (!data.message || !socket.data.user?.sub) return;
 
         const senderId = socket.data.user.sub;
+        const tempId = data.message.id;
 
         try {
           const membership = await prisma.groupMember.findUnique({
@@ -285,6 +290,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
 
           data.message.id = savedMsg.id;
           data.message.timestamp = savedMsg.createdAt;
+          socket.emit('group_message_sent_success', { tempId, realId: savedMsg.id });
         } catch (e) {
           console.error('Failed to save group message:', e);
           return;

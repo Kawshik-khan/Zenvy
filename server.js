@@ -86,6 +86,7 @@ app.prepare().then(() => {
 
     socket.on('send_message', async (data) => {
       if (data.message && userId) {
+        const tempId = data.message.id;
         data.message.senderId = userId;
         try {
           const savedMsg = await prisma.message.create({
@@ -97,6 +98,7 @@ app.prepare().then(() => {
           });
           data.message.id = savedMsg.id;
           data.message.timestamp = savedMsg.createdAt;
+          socket.emit('message_sent_success', { tempId, realId: savedMsg.id });
         } catch (e) {
           console.error('Failed to save message to db:', e);
         }
@@ -120,6 +122,8 @@ app.prepare().then(() => {
     socket.on('send_channel_message', async (data) => {
       if (!data.message || !userId) return;
 
+      const tempId = data.message.id;
+
       try {
         const membership = await prisma.channelMember.findUnique({
           where: { channelId_userId: { channelId: data.channelId, userId } },
@@ -142,6 +146,7 @@ app.prepare().then(() => {
 
         data.message.id = savedMsg.id;
         data.message.timestamp = savedMsg.createdAt;
+        socket.emit('channel_message_sent_success', { tempId, realId: savedMsg.id });
       } catch (e) {
         console.error('Failed to save channel message:', e);
         return;
@@ -173,6 +178,8 @@ app.prepare().then(() => {
     socket.on('send_group_message', async (data) => {
       if (!data.message || !userId) return;
 
+      const tempId = data.message.id;
+
       try {
         const membership = await prisma.groupMember.findUnique({
           where: { groupId_userId: { groupId: data.groupId, userId } },
@@ -198,6 +205,7 @@ app.prepare().then(() => {
 
         data.message.id = savedMsg.id;
         data.message.timestamp = savedMsg.createdAt;
+        socket.emit('group_message_sent_success', { tempId, realId: savedMsg.id });
       } catch (e) {
         console.error('Failed to save group message:', e);
         return;

@@ -69,6 +69,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
     socket.connect();
     socket.on('connect', () => {
       setIsConnected(true);
+      socket.emit('authenticate', { userId: user.id });
       socket.emit('join_channel_room', channel.id);
     });
 
@@ -76,6 +77,10 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
 
     socket.on('receive_channel_message', (msg: Message) => {
       setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
+    });
+
+    socket.on('channel_message_sent_success', (data: { tempId: string, realId: string }) => {
+      setMessages((prev) => prev.map(m => m.id === data.tempId ? { ...m, id: data.realId } : m));
     });
 
     socket.on('channel_message_deleted', ({ messageId }: { messageId: string }) => {
@@ -107,6 +112,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_channel_message');
+      socket.off('channel_message_sent_success');
       socket.off('channel_message_deleted');
       socket.off('channel_error');
       socket.off('user_typing');

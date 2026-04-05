@@ -101,6 +101,10 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
       setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
     });
 
+    socket.on('message_sent_success', (data: { tempId: string, realId: string }) => {
+      setMessages((prev) => prev.map(m => m.id === data.tempId ? { ...m, id: data.realId } : m));
+    });
+
     socket.on('message_deleted', ({ messageId }: { messageId: string }) => {
       setMessages((prev) => prev.filter(m => m.id !== messageId));
     });
@@ -162,6 +166,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_message');
+      socket.off('message_sent_success');
       socket.off('message_deleted');
       socket.off('incoming_call');
       socket.off('call_ended');

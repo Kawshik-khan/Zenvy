@@ -70,6 +70,7 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
     socket.connect();
     socket.on('connect', () => {
       setIsConnected(true);
+      socket.emit('authenticate', { userId: user.id });
       socket.emit('join_group_room', group.id);
     });
 
@@ -77,6 +78,10 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
 
     socket.on('receive_group_message', (msg: Message) => {
       setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
+    });
+
+    socket.on('group_message_sent_success', (data: { tempId: string, realId: string }) => {
+      setMessages((prev) => prev.map(m => m.id === data.tempId ? { ...m, id: data.realId } : m));
     });
 
     socket.on('group_message_deleted', ({ messageId }: { messageId: string }) => {
@@ -108,6 +113,7 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_group_message');
+      socket.off('group_message_sent_success');
       socket.off('group_message_deleted');
       socket.off('group_error');
       socket.off('user_typing');
