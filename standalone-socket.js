@@ -3,6 +3,7 @@ const { Server: ServerIO } = require('socket.io');
 const { PrismaClient } = require('@prisma/client');
 const { getToken } = require('next-auth/jwt');
 const { verifySocketToken } = require('./lib/socket-auth');
+const { registerConversationHandlers } = require('./lib/conversation-socket');
 
 // Initialize Prisma
 const prisma = new PrismaClient();
@@ -243,6 +244,8 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   const userId = socket.data.userId;
   addUserSocket(userId, socket.id);
+  socket.join(`user_${userId}`);
+  registerConversationHandlers({ io, socket, prisma, userId });
 
   socket.on('authenticate', () => {
     socket.emit('authenticated', { userId });
