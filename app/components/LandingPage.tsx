@@ -4,8 +4,27 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+interface Particle {
+  id: number;
+  left: number;
+  top: number;
+}
+
 const LandingPage = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [mounted, setMounted] = useState(false);
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+    // Generate particles only on client
+    const generatedParticles = [...Array(20)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+    }));
+    setParticles(generatedParticles);
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -31,7 +50,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-[#F8FAFC] overflow-hidden">
+    <div className="min-h-screen bg-[#070B14] text-[#F8FAFC] overflow-hidden" suppressHydrationWarning>
       {/* Aurora Background Effects */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] rounded-full blur-[150px] bg-gradient-to-b from-[#7C83FF]/20 to-transparent opacity-30 animate-pulse"></div>
@@ -41,9 +60,9 @@ const LandingPage = () => {
 
       {/* Animated Particles */}
       <div className="fixed inset-0 -z-10">
-        {[...Array(20)].map((_, i) => (
+        {mounted && particles.map((particle) => (
           <motion.div
-            key={i}
+            key={particle.id}
             className="absolute w-1 h-1 bg-[#7C83FF]/30 rounded-full"
             animate={{
               y: [0, -100, 0],
@@ -56,8 +75,8 @@ const LandingPage = () => {
               ease: 'easeInOut',
             }}
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
             }}
           />
         ))}
