@@ -40,11 +40,39 @@ Vercel Functions are not a reliable host for long-lived Socket.IO/WebSocket serv
 Recommended production setup:
 
 - Deploy the Next.js app on Vercel.
-- Deploy `standalone-socket.js` or `server.js` on a persistent Node host such as Render, Fly.io, Railway, or a VPS.
+- Deploy `standalone-socket.js` or `server.js` on a persistent Node host such as Render, Fly.io, or a VPS.
 - Set `NEXT_PUBLIC_SOCKET_URL` in Vercel to that socket host URL.
 - Set the socket host CORS origin to the Vercel production URL.
 
 Without a persistent socket host, chat realtime updates and WebRTC call signaling can fail in production.
+
+### Render socket service
+
+This repo includes `render.yaml` for deploying the lightweight Socket.IO signaling server on Render. It runs:
+
+```bash
+npm run start:socket
+```
+
+Set the same auth/database environment variables as Vercel, plus the deployed Vercel app URL:
+
+```env
+DATABASE_URL=
+DIRECT_URL=
+AUTH_SECRET=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=https://your-vercel-app.vercel.app
+NEXT_PUBLIC_SITE_URL=https://your-vercel-app.vercel.app
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_EMAIL=
+```
+
+After Render deploys, set this in Vercel:
+
+```env
+NEXT_PUBLIC_SOCKET_URL=https://your-render-service.onrender.com
+```
 
 ## CI/CD
 
