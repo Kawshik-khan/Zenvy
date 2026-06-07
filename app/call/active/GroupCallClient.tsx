@@ -9,7 +9,15 @@ const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:relay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    ...(process.env.NEXT_PUBLIC_TURN_URL
+      ? [
+          {
+            urls: process.env.NEXT_PUBLIC_TURN_URL,
+            username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+            credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+          },
+        ]
+      : []),
   ],
 };
 
@@ -24,12 +32,21 @@ interface GroupCallClientProps {
 // A sub-component cleanly handles the video ref and avoids rerenders breaking it
 const VideoElement = ({ stream }: { stream: MediaStream }) => {
   const ref = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
     if (ref.current) {
       ref.current.srcObject = stream;
     }
+    if (audioRef.current) {
+      audioRef.current.srcObject = stream;
+    }
   }, [stream]);
-  return <video ref={ref} autoPlay playsInline className="w-full h-full object-cover rounded-2xl" />;
+  return (
+    <>
+      <audio ref={audioRef} autoPlay playsInline />
+      <video ref={ref} autoPlay playsInline muted className="w-full h-full object-cover rounded-2xl" />
+    </>
+  );
 };
 
 export default function GroupCallClient({ currentUser, roomId, roomName, roomAvatar, type }: GroupCallClientProps) {

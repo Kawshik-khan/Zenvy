@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
         joinedAt: new Date(),
         lastSeenAt: new Date(),
         status: 'JOINED',
+        audioEnabled: true,
+        videoEnabled: callSession.mediaType === 'VIDEO',
       },
       create: {
         callId: callSession.id,

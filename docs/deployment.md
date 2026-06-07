@@ -76,6 +76,24 @@ NEXT_PUBLIC_SOCKET_URL=https://your-render-service.onrender.com
 
 The Render socket service must use the same `AUTH_SECRET` / `NEXTAUTH_SECRET` as Vercel. The browser gets a short-lived socket token from the Vercel app and sends it to Render during the Socket.IO handshake, so mismatched auth secrets will keep chat stuck in the connecting state.
 
+For production audio/video calls, configure a TURN server in Vercel. STUN-only calls can fail on mobile networks, strict NATs, and some Wi-Fi networks:
+
+```env
+NEXT_PUBLIC_TURN_URL=turns:your-turn-host:5349
+NEXT_PUBLIC_TURN_USERNAME=
+NEXT_PUBLIC_TURN_CREDENTIAL=
+```
+
+If using LiveKit for calls, set these in Vercel:
+
+```env
+NEXT_PUBLIC_LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+```
+
+Render remains responsible for chat and call notifications. LiveKit handles the actual audio/video media rooms.
+
 ## CI/CD
 
 The included GitHub Actions workflow runs:
