@@ -183,7 +183,7 @@ export default async function DashboardPage() {
     ];
 
     return (
-      <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex min-h-screen relative overflow-hidden font-sans">
+      <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex min-h-screen relative overflow-x-hidden font-sans">
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
           <div className="absolute top-[-20%] right-[-10%] h-[70vw] w-[70vw] rounded-full bg-[#A855F7]/15 blur-[120px] mix-blend-screen opacity-60" />
           <div className="absolute bottom-[-10%] left-[-10%] h-[50vw] w-[50vw] rounded-full bg-[#22D3EE]/10 blur-[100px] mix-blend-screen opacity-50" />
@@ -199,22 +199,22 @@ export default async function DashboardPage() {
 
         <Sidebar />
 
-        <main className="ml-[280px] min-h-screen w-full max-w-full px-4 py-6 pr-8 relative z-10">
-          <header className="mb-8 flex items-center justify-between gap-6">
-            <div className="group relative max-w-xl flex-1">
+        <main className="mobile-safe-bottom min-h-screen w-full max-w-full px-4 py-4 relative z-10 md:ml-[280px] md:px-4 md:py-6 md:pr-8">
+          <header className="mb-6 flex items-center justify-between gap-3 md:mb-8 md:gap-6">
+            <div className="group relative min-w-0 flex-1 md:max-w-xl">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#94A3B8] transition-colors group-focus-within:text-[#7C83FF]">search</span>
               <input
                 className="w-full rounded-2xl border border-white/5 bg-[#0E1525]/80 py-3.5 pl-12 pr-12 text-sm text-[#F8FAFC] shadow-[0_4px_20px_rgba(0,0,0,0.2)] outline-none backdrop-blur-md transition-all placeholder:text-[#94A3B8] focus:border-[#7C83FF]/50 focus:ring-1 focus:ring-[#7C83FF]/50"
                 placeholder="Search groups, people, messages..."
                 type="text"
               />
-              <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1 opacity-50">
+              <div className="absolute right-4 top-1/2 hidden -translate-y-1/2 items-center gap-1 opacity-50 sm:flex">
                 <span className="rounded border border-white/10 bg-[#141C30] px-1.5 py-0.5 font-mono text-[10px] font-bold">Ctrl</span>
                 <span className="rounded border border-white/10 bg-[#141C30] px-1.5 py-0.5 font-mono text-[10px] font-bold">K</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex shrink-0 items-center gap-2 md:gap-4">
               <Link
                 href="/events"
                 className="hidden items-center gap-2 rounded-xl border border-white/10 bg-transparent px-4 py-2.5 text-sm font-semibold text-[#F8FAFC] transition-all hover:border-white/20 hover:bg-[#141C30] md:flex"
@@ -232,7 +232,7 @@ export default async function DashboardPage() {
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                 <div>
                   <p className="mb-3 text-[11px] font-black uppercase tracking-[0.24em] text-[#22D3EE]">Welcome Hero</p>
-                  <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] md:text-5xl">Good evening, {firstName}</h1>
+                  <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] sm:text-4xl md:text-5xl">Good evening, {firstName}</h1>
                   <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#94A3B8] md:text-base">
                     Keep your study momentum visible across sessions, groups, streaks, and daily activity.
                   </p>

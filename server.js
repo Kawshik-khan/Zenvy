@@ -4,6 +4,7 @@ const next = require('next');
 const { Server: ServerIO } = require('socket.io');
 const { PrismaClient } = require('@prisma/client');
 const { getToken } = require('next-auth/jwt');
+const { verifySocketToken } = require('./lib/socket-auth');
 
 const prisma = new PrismaClient();
 
@@ -29,6 +30,13 @@ app.prepare().then(() => {
 
   io.use(async (socket, nextMiddleware) => {
     try {
+      const socketToken = verifySocketToken(socket.handshake.auth && socket.handshake.auth.token);
+      if (socketToken && socketToken.sub) {
+        socket.data.userId = socketToken.sub;
+        socket.data.user = socketToken;
+        return nextMiddleware();
+      }
+
       const token = await getToken({
         req: socket.request,
         secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -46,6 +54,7 @@ app.prepare().then(() => {
       }
 
       socket.data.userId = fallbackToken.sub;
+      socket.data.user = fallbackToken;
       nextMiddleware();
     } catch (error) {
       console.error('Socket authentication error:', error);

@@ -243,7 +243,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
 
   if (hasPermissions === false) {
     return (
-      <div className="app-aurora h-screen flex flex-col items-center justify-center p-6 text-center">
+      <div className="app-aurora h-dvh flex flex-col items-center justify-center p-6 text-center">
         <span className="material-symbols-outlined text-error text-6xl mb-4">cancel</span>
         <h2 className="text-xl font-bold mb-2">Camera/Mic Access Denied</h2>
         <p className="text-on-surface-variant max-w-md mx-auto mb-6">You must allow camera and microphone access to join the group call.</p>
@@ -253,7 +253,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
   }
 
   return (
-    <div className="app-aurora flex flex-col h-screen overflow-hidden">
+    <div className="app-aurora flex h-dvh flex-col overflow-hidden">
       {/* Header */}
       <div className="app-topbar shrink-0">
         <div className="flex items-center gap-4">
@@ -315,7 +315,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
       </div>
 
       {/* Footer Controls */}
-      <div className="h-24 glass-panel-subtle flex items-center justify-center gap-4 md:gap-8 px-6 border-t glass-divider shrink-0 z-20">
+      <div className="min-h-24 glass-panel-subtle flex items-center justify-center gap-3 md:gap-8 px-3 md:px-6 border-t glass-divider shrink-0 z-20 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 md:pb-3">
         <button
           onClick={toggleMute}
           className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${isMuted ? 'bg-error text-on-error shadow-error/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}

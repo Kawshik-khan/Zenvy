@@ -103,7 +103,7 @@ export default async function GroupChatPage({ params }: { params: Promise<{ id: 
   }));
 
   return (
-    <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-screen">
+    <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-dvh">
       <Sidebar />
       <GroupChatClient
         user={user}

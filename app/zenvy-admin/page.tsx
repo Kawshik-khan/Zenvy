@@ -25,7 +25,7 @@ export default async function AdminDashboardPage() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="md:ml-20 pb-20 md:pb-0 min-h-screen">
+      <main className="app-main min-h-screen">
         {/* TopNavBar */}
         <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
           <div className="flex items-center gap-6 w-full max-w-sm md:w-1/2 md:max-w-md">

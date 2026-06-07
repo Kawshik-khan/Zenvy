@@ -60,7 +60,8 @@ export default function Sidebar() {
   const recentDays = metrics.heatmapDays.slice(-7);
 
   return (
-    <aside className="fixed left-4 top-4 bottom-4 w-[250px] z-[100] glass-panel rounded-[28px] flex flex-col hide-scrollbar">
+    <>
+    <aside className="fixed left-4 top-4 bottom-4 z-[100] hidden w-[250px] flex-col rounded-[28px] glass-panel hide-scrollbar md:flex">
       {/* Logo */}
       <div className="p-6 flex items-center gap-4 cursor-pointer">
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(124,131,255,0.5)]">
@@ -129,5 +130,10 @@ export default function Sidebar() {
         {/* Upgrade Button removed per request */}
       </div>
     </aside>
+
+    <div className="fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-[#090A12]/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-16px_40px_rgba(0,0,0,0.36)] backdrop-blur-2xl md:hidden">
+      <SidebarNav variant="bottom" />
+    </div>
+    </>
   );
 }

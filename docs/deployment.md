@@ -74,6 +74,8 @@ After Render deploys, set this in Vercel:
 NEXT_PUBLIC_SOCKET_URL=https://your-render-service.onrender.com
 ```
 
+The Render socket service must use the same `AUTH_SECRET` / `NEXTAUTH_SECRET` as Vercel. The browser gets a short-lived socket token from the Vercel app and sends it to Render during the Socket.IO handshake, so mismatched auth secrets will keep chat stuck in the connecting state.
+
 ## CI/CD
 
 The included GitHub Actions workflow runs:

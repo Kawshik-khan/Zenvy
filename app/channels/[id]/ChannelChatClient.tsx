@@ -223,22 +223,22 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen min-w-0 ml-[280px] relative bg-transparent">
+    <div className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col bg-transparent relative md:ml-[280px]">
       {/* Channel Header */}
       <header className="app-topbar shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 md:gap-4">
           <Link
             href="/channels"
             className="p-2 hover:bg-surface-container rounded-xl transition-colors"
           >
             <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
           </Link>
-          <div>
-            <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-2 truncate text-base font-bold text-on-surface md:text-lg">
               <span className="text-primary">#</span>
               {channel.tag}
             </h3>
-            <p className="text-[11px] text-on-surface-variant flex items-center gap-2">
+            <p className="flex items-center gap-2 truncate text-[11px] text-on-surface-variant">
               {channel.name}
               {isMember && (
                 isConnected ? (
@@ -251,7 +251,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 md:gap-2">
           <button
             onClick={() => setShowMembers(!showMembers)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -275,7 +275,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-3 md:p-8 space-y-5 md:space-y-6">
             {/* Welcome Banner */}
             <div className="flex flex-col items-center justify-center py-8 opacity-60">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
@@ -295,7 +295,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                       `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
                     }
                   />
-                  <div className="space-y-1 text-right max-w-md">
+                  <div className="max-w-[82vw] space-y-1 text-right sm:max-w-md">
                     <div className="flex items-center gap-2 justify-end">
                       <span className="text-[10px] text-on-surface-variant">
                         {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -344,7 +344,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                       msg.senderName.charAt(0)
                     )}
                   </div>
-                  <div className="space-y-1 max-w-md">
+                  <div className="max-w-[82vw] space-y-1 sm:max-w-md">
                     <div className="flex items-center gap-2">
                        <span className="font-bold text-xs">{msg.senderName}</span>
                       <span className="text-[10px] text-on-surface-variant">
@@ -389,7 +389,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
           </div>
 
           {/* Input Area */}
-          <div className="p-4 md:p-6 glass-panel-subtle border-t glass-divider">
+          <div className="border-t p-3 glass-panel-subtle glass-divider md:p-6">
             {isMember ? (
               <div className="rounded-2xl border border-outline-variant/30 bg-surface/60 p-2">
                 <textarea

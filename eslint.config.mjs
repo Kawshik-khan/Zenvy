@@ -28,7 +28,7 @@ const eslintConfig = [
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    files: ["*.js", "scripts/**/*.js", "scripts/**/*.mjs", "server.js", "standalone-socket.js", "test-db.js", "update_sidebars.js"],
+    files: ["*.js", "lib/**/*.js", "scripts/**/*.js", "scripts/**/*.mjs", "server.js", "standalone-socket.js", "test-db.js", "update_sidebars.js"],
     rules: {
       "@typescript-eslint/no-require-imports": "off"
     }

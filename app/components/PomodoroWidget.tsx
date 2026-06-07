@@ -413,7 +413,7 @@ export default function PomodoroWidget() {
           setIsMusicOn(false);
         }}
       />
-      <div className="fixed bottom-4 right-4 z-[120] w-[calc(100vw-2rem)] max-w-[380px] md:bottom-6 md:right-6">
+      <div className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-[120] w-[calc(100vw-2rem)] max-w-[380px] md:bottom-6 md:right-6">
         {!expanded ? (
           <button
             type="button"
@@ -426,7 +426,7 @@ export default function PomodoroWidget() {
             <span className="font-mono text-[#94A3B8]">{formatTime(remainingSeconds)}</span>
           </button>
         ) : (
-          <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#0E1525]/95 p-4 text-[#F8FAFC] shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+          <section className="max-h-[calc(100dvh-7rem-env(safe-area-inset-bottom))] overflow-y-auto rounded-[24px] border border-white/10 bg-[#0E1525]/95 p-4 text-[#F8FAFC] shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl md:max-h-none md:overflow-hidden md:rounded-[28px]">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#22D3EE]">Focus Timer</p>
@@ -443,7 +443,7 @@ export default function PomodoroWidget() {
             </div>
 
             <div className="rounded-3xl border border-white/5 bg-[#070B14]/70 p-5 text-center">
-              <p className="font-mono text-5xl font-black tracking-tight md:text-6xl">{formatTime(remainingSeconds)}</p>
+              <p className="font-mono text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">{formatTime(remainingSeconds)}</p>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#141C30]">
                 <div className="h-full rounded-full bg-gradient-to-r from-[#7C83FF] to-[#22D3EE]" style={{ width: `${progress}%` }} />
               </div>

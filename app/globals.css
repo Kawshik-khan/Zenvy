@@ -120,12 +120,22 @@
 
   .app-main {
     min-height: 100vh;
-    padding-bottom: 6rem;
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
   }
 
   @media (min-width: 768px) {
     .app-main {
       margin-left: 280px;
+      padding-bottom: 0;
+    }
+  }
+
+  .mobile-safe-bottom {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .mobile-safe-bottom {
       padding-bottom: 0;
     }
   }

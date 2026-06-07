@@ -303,21 +303,21 @@ export default function GroupChatClient({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen min-w-0 ml-[280px] relative bg-transparent">
+    <div className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col bg-transparent relative md:ml-[280px]">
       {/* Group Header */}
       <header className="app-topbar shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 md:gap-4">
           <Link
             href="/groups"
             className="p-2 hover:bg-surface-container rounded-xl transition-colors"
           >
             <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
           </Link>
-          <div>
-            <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-2 truncate text-base font-bold text-on-surface md:text-lg">
               {group.name}
             </h3>
-            <p className="text-[11px] text-on-surface-variant flex items-center gap-2">
+            <p className="flex items-center gap-2 truncate text-[11px] text-on-surface-variant">
               <span className="text-primary font-bold">{group.subject || "General"}</span>
               {isMember && (
                 isConnected ? (
@@ -330,19 +330,19 @@ export default function GroupChatClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:flex bg-surface-container rounded-full p-1">
+        <div className="flex shrink-0 items-center gap-1 md:gap-2">
+          <div className="flex rounded-full bg-surface-container p-1">
             <button
               type="button"
               onClick={() => setActiveTab('chat')}
-              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'chat' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}
+              className={`rounded-full px-3 py-2 text-xs font-bold sm:px-4 ${activeTab === 'chat' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}
             >
               Chat
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('resources')}
-              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'resources' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}
+              className={`rounded-full px-3 py-2 text-xs font-bold sm:px-4 ${activeTab === 'resources' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}
             >
               Resources
             </button>
@@ -383,7 +383,7 @@ export default function GroupChatClient({
         {activeTab === 'chat' ? (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-3 md:p-8 space-y-5 md:space-y-6">
             {activeCall && (
               <div className="rounded-2xl border border-accent-green/20 bg-accent-green/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -425,7 +425,7 @@ export default function GroupChatClient({
                       `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
                     }
                   />
-                  <div className="space-y-1 text-right max-w-md">
+                  <div className="max-w-[82vw] space-y-1 text-right sm:max-w-md">
                     <div className="flex items-center gap-2 justify-end">
                       <span className="text-[10px] text-on-surface-variant">
                         {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -474,7 +474,7 @@ export default function GroupChatClient({
                       msg.senderName.charAt(0)
                     )}
                   </div>
-                  <div className="space-y-1 max-w-md">
+                  <div className="max-w-[82vw] space-y-1 sm:max-w-md">
                     <div className="flex items-center gap-2">
                        <span className="font-bold text-xs">{msg.senderName}</span>
                       <span className="text-[10px] text-on-surface-variant">
@@ -519,7 +519,7 @@ export default function GroupChatClient({
           </div>
 
           {/* Input Area */}
-          <div className="p-4 md:p-6 glass-panel-subtle border-t glass-divider">
+          <div className="border-t p-3 glass-panel-subtle glass-divider md:p-6">
             {isMember ? (
               <div className="rounded-2xl border border-outline-variant/30 bg-surface/60 p-2">
                 <textarea

@@ -264,7 +264,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
         </div>
       </div>
 
-      <div className="fixed bottom-24 md:bottom-10 right-6 md:right-10 z-50">
+      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 z-50 md:bottom-10 md:right-10">
         <button className="flex items-center gap-2 md:gap-3 app-primary-button px-6 md:px-8 py-4 md:py-5 rounded-full">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>add</span>
           <span className="font-bold tracking-tight hidden md:inline-block">Post Your Study Ad</span>

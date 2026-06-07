@@ -3,6 +3,7 @@ import { NextApiRequest } from 'next';
 import { Server as ServerIO } from 'socket.io';
 import { getToken } from 'next-auth/jwt';
 import webpush from 'web-push';
+import { verifySocketToken } from '../../lib/socket-auth';
 import { prisma } from '../../lib/prisma';
 import { canAccessChannel, canAccessGroup, canAccessMessageRoom, canSignalUser } from '../../lib/room-auth';
 import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '../../lib/calls';
@@ -100,6 +101,13 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
     // Authentication Middleware
     io.use(async (socket, next) => {
       try {
+        const socketToken = verifySocketToken(socket.handshake.auth?.token);
+        if (socketToken?.sub) {
+          socket.data.user = socketToken;
+          socket.data.userId = socketToken.sub;
+          return next();
+        }
+
         const token = await getToken({
           req: socket.request as any,
           secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -118,11 +126,13 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
              return next(new Error('unauthorized'));
           } else {
              socket.data.user = fallbackToken;
+             socket.data.userId = fallbackToken.sub;
              return next();
           }
         }
 
         socket.data.user = token;
+        socket.data.userId = token.sub;
         next();
       } catch (error) {
         console.error('Socket authentication error:', error);

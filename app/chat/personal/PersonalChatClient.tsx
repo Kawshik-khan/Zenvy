@@ -296,7 +296,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
   };
 
   return (
-    <div className="bg-background text-on-surface antialiased overflow-hidden flex h-screen">
+    <div className="bg-background text-on-surface antialiased overflow-hidden flex h-dvh">
       <Sidebar />
 
       {activeCall && (
@@ -313,7 +313,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
       {/* Incoming Call Notification */}
       {incomingCall && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 z-[110] bg-slate-900 border border-primary/20 p-6 rounded-2xl shadow-2xl animate-in slide-in-from-top-4 duration-300 min-w-[300px] md:min-w-[360px]">
+        <div className="fixed left-4 right-4 top-4 z-[120] rounded-2xl border border-primary/20 bg-slate-900 p-4 shadow-2xl animate-in slide-in-from-top-4 duration-300 md:left-auto md:right-8 md:top-8 md:min-w-[360px] md:p-6">
           <div className="flex items-center gap-4 mb-6">
             <div className="relative">
               <img
@@ -347,7 +347,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
         </div>
       )}
 
-      <main className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative">
+      <main className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col relative md:ml-[280px]">
         <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm shrink-0">
           <div className="flex items-center gap-4 w-1/2 md:w-1/3">
             <div className="relative w-full max-w-sm">
@@ -363,7 +363,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
           </div>
         </header>
 
-        <section className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden p-4 md:p-6 gap-4 md:gap-6 min-h-0 relative">
+        <section className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden p-3 md:p-6 gap-3 md:gap-6 min-h-0 relative">
           
           <div className="hidden lg:flex w-72 flex-col shrink-0">
             <div className="p-5 border-b border-outline-variant/10">
@@ -374,7 +374,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
             <div className="mt-6 px-5 italic text-[10px] text-on-surface-variant">Active direct message session</div>
           </div>
 
-          <div className="flex-1 bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/5 flex flex-col overflow-hidden relative min-h-[500px] lg:min-h-0">
+          <div className="flex-1 bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/5 flex flex-col overflow-hidden relative min-h-0">
             <div className="px-4 md:px-8 py-4 md:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-lowest border-b border-outline-variant/10">
               <div className="flex items-center gap-3">
                 <div className="relative">

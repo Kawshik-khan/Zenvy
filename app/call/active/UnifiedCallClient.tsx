@@ -384,7 +384,7 @@ export default function UnifiedCallClient({
 
   if (error) {
     return (
-      <div className="app-aurora flex h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="app-aurora flex h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
         <span className="material-symbols-outlined text-5xl text-error">error</span>
         <p className="text-lg font-bold">{error}</p>
         <button onClick={() => router.back()} className="rounded-full bg-primary text-on-primary px-5 py-3 font-bold">
@@ -395,7 +395,7 @@ export default function UnifiedCallClient({
   }
 
   return (
-    <div className="app-aurora h-screen flex flex-col overflow-hidden">
+    <div className="app-aurora h-dvh flex flex-col overflow-hidden">
       {selectedCallTrack && (
         <audio
           ref={callMusicRef}
@@ -474,7 +474,7 @@ export default function UnifiedCallClient({
         </div>
       )}
 
-      <footer className="h-24 glass-panel-subtle border-t glass-divider flex items-center justify-center gap-4 shrink-0">
+      <footer className="min-h-24 glass-panel-subtle border-t glass-divider flex items-center justify-center gap-3 px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 shrink-0 md:gap-4 md:pb-3">
         <button
           onClick={toggleMute}
           className={`w-14 h-14 rounded-full flex items-center justify-center ${isMuted ? 'bg-error text-on-error' : 'bg-surface-container hover:bg-surface-container-high'}`}

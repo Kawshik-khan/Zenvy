@@ -381,7 +381,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   };
 
   return (
-    <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex h-screen relative overflow-hidden font-sans">
+    <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex h-dvh relative overflow-hidden font-sans">
       {/* Aurora Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-[#A855F7]/15 blur-[120px] mix-blend-screen opacity-60"></div>
@@ -427,9 +427,9 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
         </div>
       )}
 
-      <main className="ml-[280px] pl-4 pr-8 py-6 h-screen w-full relative z-10 max-w-full flex flex-col gap-6">
+      <main className="mobile-safe-bottom h-dvh w-full relative z-10 max-w-full flex flex-col gap-3 p-3 md:ml-[280px] md:gap-6 md:py-6 md:pl-4 md:pr-8">
         {/* Top Header */}
-        <header className="flex justify-between items-center shrink-0 h-14">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-3">
           <div className="flex items-center gap-4">
             <button
               className="lg:hidden p-2 rounded-xl text-[#F8FAFC] hover:bg-[#141C30]"
@@ -438,7 +438,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
               <span className="material-symbols-outlined">menu</span>
             </button>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-[#F8FAFC]">Messages</h1>
+              <h1 className="text-xl font-bold tracking-tight text-[#F8FAFC] md:text-2xl">Messages</h1>
               <p className="text-[10px] text-[#A855F7] font-bold uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-[#F59E0B] shadow-[0_0_8px_rgba(245,158,11,0.8)]'}`}></span>
                 {isConnected ? 'Connected' : 'Connecting...'}
@@ -449,9 +449,9 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
         </header>
 
         {/* Main Content: Inbox & Active Chat */}
-        <section className="flex-1 flex min-h-0 gap-6">
+        <section className="flex-1 flex min-h-0 gap-3 md:gap-6">
           {/* Inbox Sidebar Panel */}
-          <aside className={`w-[320px] bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[28px] shadow-xl flex flex-col overflow-hidden shrink-0 transition-transform duration-300 z-50 absolute lg:relative left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-[120%] lg:translate-x-0'}`}>
+          <aside className={`w-[min(22rem,calc(100vw-1.5rem))] bg-[#0E1525]/95 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl flex flex-col overflow-hidden shrink-0 transition-transform duration-300 z-50 absolute lg:relative left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-[120%] lg:translate-x-0'}`}>
             <div className="p-5 border-b border-white/5 flex justify-between items-center shrink-0">
               <h2 className="text-xs font-black uppercase tracking-widest text-[#94A3B8]">Inbox</h2>
               <button className="lg:hidden p-1.5 rounded-full bg-[#141C30] hover:bg-white/10 transition-colors" onClick={() => setIsSidebarVisible(false)}>
@@ -531,24 +531,24 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
           </aside>
 
           {/* Active Chat Window */}
-          <div className="flex-1 flex flex-col min-h-0 bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[28px] shadow-xl overflow-hidden relative">
+          <div className="flex-1 flex flex-col min-h-0 bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl overflow-hidden relative">
             {activeConversation ? (
               <>
                 {/* Chat Header */}
-                <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-[#141C30]/50 backdrop-blur-xl shrink-0">
-                  <div className="flex items-center gap-4 min-w-0">
+                <div className="px-3 py-3 md:px-6 md:py-4 flex items-center justify-between gap-3 border-b border-white/5 bg-[#141C30]/50 backdrop-blur-xl shrink-0">
+                  <div className="flex items-center gap-3 md:gap-4 min-w-0">
                     <img
                       alt=""
-                      className="w-12 h-12 rounded-full object-cover shadow-[0_4px_10px_rgba(0,0,0,0.3)]"
+                      className="h-10 w-10 rounded-full object-cover shadow-[0_4px_10px_rgba(0,0,0,0.3)] md:h-12 md:w-12"
                       src={activeConversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeConversation.title)}&background=random`}
                     />
                     <div className="min-w-0">
-                      <h2 className="text-lg font-bold text-[#F8FAFC] truncate">{activeConversation.title}</h2>
+                      <h2 className="truncate text-base font-bold text-[#F8FAFC] md:text-lg">{activeConversation.title}</h2>
                       <p className="text-xs font-medium text-[#22D3EE] uppercase tracking-wider">{activeConversation.type}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2 md:gap-3">
                     {activeCall && (
                       <Link
                         href={`/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
@@ -576,7 +576,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto hide-scrollbar p-6 space-y-6 flex flex-col relative z-10">
+                <div className="flex-1 overflow-y-auto hide-scrollbar p-3 md:p-6 space-y-4 md:space-y-6 flex flex-col relative z-10">
                   {nextCursor && (
                     <button onClick={loadOlder} className="mx-auto block px-4 py-1.5 rounded-full bg-[#141C30] border border-white/5 hover:border-white/10 hover:text-white transition-colors text-[11px] font-bold text-[#94A3B8] shadow-md">
                       Load earlier messages
@@ -594,7 +594,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                             src={message.senderImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(message.senderName)}&background=random`}
                           />
                         )}
-                        <div className={`space-y-1 max-w-[70%] xl:max-w-[60%] ${isSelf ? 'text-right' : ''}`}>
+                        <div className={`space-y-1 max-w-[86%] sm:max-w-[76%] xl:max-w-[60%] ${isSelf ? 'text-right' : ''}`}>
                           <div className={`flex items-baseline gap-2 ${isSelf ? 'justify-end' : ''} px-1`}>
                             {!isSelf && <span className="text-[11px] font-bold text-[#94A3B8]">{message.senderName}</span>}
                             <span className="text-[9px] text-[#94A3B8]/60 font-medium">
@@ -658,7 +658,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                 </div>
 
                 {/* Input Area */}
-                <form onSubmit={sendMessage} className="p-4 bg-[#141C30]/40 backdrop-blur-xl border-t border-white/5 shrink-0 relative z-20">
+                <form onSubmit={sendMessage} className="p-3 md:p-4 bg-[#141C30]/40 backdrop-blur-xl border-t border-white/5 shrink-0 relative z-20">
                   <div className="bg-[#0E1525] border border-white/10 rounded-[20px] p-2 flex flex-col focus-within:border-[#7C83FF]/50 focus-within:shadow-[0_0_15px_rgba(124,131,255,0.15)] transition-all">
                     <textarea
                       value={inputValue}
