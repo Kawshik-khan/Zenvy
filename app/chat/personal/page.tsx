@@ -1,9 +1,8 @@
-import React from 'react';
-export const runtime = 'nodejs';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import PersonalChatClient from './PersonalChatClient';
+import { resolveDmConversation } from '@/lib/conversations';
+
+export const runtime = 'nodejs';
 
 export default async function PersonalInboxPage({
   searchParams,
@@ -11,29 +10,15 @@ export default async function PersonalInboxPage({
   searchParams: Promise<{ id?: string }>;
 }) {
   const session = await auth();
-  if (!session?.user?.email) redirect('/login');
+  if (!session?.user?.id) redirect('/login');
 
   const resolvedParams = await searchParams;
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { profile: true },
-  });
-
-  if (!user) redirect('/login');
   if (!resolvedParams.id) redirect('/chat');
 
-  const targetDbUser = await prisma.user.findUnique({
-    where: { id: resolvedParams.id },
-    include: { profile: true }
-  });
-
-  const targetUser = {
-    id: resolvedParams.id,
-    name: targetDbUser?.name || 'Anonymous',
-    avatar: targetDbUser?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(targetDbUser?.name || "U")}&background=random`,
-    major: targetDbUser?.profile?.major || 'Scholar',
-  };
-
-  return <PersonalChatClient currentUser={user} targetUser={targetUser} />;
+  try {
+    const conversation = await resolveDmConversation(session.user.id, resolvedParams.id);
+    redirect(`/chat?conversation=${conversation.id}`);
+  } catch {
+    redirect('/chat');
+  }
 }

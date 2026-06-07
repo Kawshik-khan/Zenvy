@@ -27,12 +27,37 @@ export default async function GroupChatPage({ params }: { params: Promise<{ id: 
         },
       },
       admin: { select: { id: true, name: true } },
+      invites: {
+        where: { status: "PENDING" },
+        include: { invitee: { select: { id: true, name: true, email: true, image: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      resources: {
+        include: { creator: { select: { id: true, name: true, image: true } } },
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+      },
     },
   });
 
   if (!group) redirect('/groups');
 
   const isMember = group.members.some((m) => m.userId === user.id);
+  const isAdmin = group.adminId === user.id || group.members.some((m) => m.userId === user.id && m.role === "ADMIN");
+
+  if (!isMember) redirect('/groups');
+
+  const memberIds = group.members.map((m) => m.userId);
+  const pendingInviteeIds = group.invites.map((invite) => invite.inviteeId);
+  const inviteCandidates = isAdmin
+    ? await prisma.user.findMany({
+        where: {
+          id: { notIn: [...memberIds, ...pendingInviteeIds, user.id] },
+        },
+        select: { id: true, name: true, email: true, image: true, profile: { select: { major: true } } },
+        orderBy: { name: "asc" },
+        take: 50,
+      })
+    : [];
 
   const groupInfo = {
     id: group.id,
@@ -49,6 +74,34 @@ export default async function GroupChatPage({ params }: { params: Promise<{ id: 
     role: m.role,
   }));
 
+  const resourcesData = group.resources.map((resource) => ({
+    id: resource.id,
+    title: resource.title,
+    description: resource.description,
+    resourceType: resource.resourceType,
+    url: resource.url,
+    fileName: resource.fileName,
+    fileType: resource.fileType,
+    pinned: resource.pinned,
+    createdAt: resource.createdAt.toISOString(),
+    creatorName: resource.creator.name || "Unknown",
+  }));
+
+  const pendingInvitesData = group.invites.map((invite) => ({
+    id: invite.id,
+    inviteeName: invite.invitee.name || invite.invitee.email || "Unknown",
+    inviteeImage: invite.invitee.image,
+    createdAt: invite.createdAt.toISOString(),
+  }));
+
+  const inviteCandidatesData = inviteCandidates.map((candidate) => ({
+    id: candidate.id,
+    name: candidate.name || candidate.email || "Unknown",
+    email: candidate.email,
+    image: candidate.image,
+    major: candidate.profile?.major,
+  }));
+
   return (
     <div className="bg-background text-on-surface antialiased overflow-hidden flex h-screen">
       <Sidebar />
@@ -57,6 +110,10 @@ export default async function GroupChatPage({ params }: { params: Promise<{ id: 
         group={groupInfo}
         members={membersData}
         isMember={isMember}
+        isAdmin={isAdmin}
+        resources={resourcesData}
+        pendingInvites={pendingInvitesData}
+        inviteCandidates={inviteCandidatesData}
       />
     </div>
   );

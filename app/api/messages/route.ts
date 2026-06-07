@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { canAccessMessageRoom } from '@/lib/room-auth';
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -16,6 +17,11 @@ export async function GET(request: Request) {
   }
 
   try {
+    const allowed = await canAccessMessageRoom(session.user.id, roomId);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const messages = await prisma.message.findMany({
       where: { roomId },
       orderBy: { createdAt: 'asc' },

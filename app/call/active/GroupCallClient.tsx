@@ -84,6 +84,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
         // -- Event Listeners --
         
         socket.on('user_joined_call', (data: { userId: string, socketId: string }) => {
+          if (!socket.id) return;
           // Send an offer to the newly joined peer!
           const peer = createPeer(data.socketId, socket.id, localStream!, data.userId);
           peersRef.current.set(data.socketId, { peer, userId: data.userId });
@@ -159,7 +160,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
     peer.on('signal', signal => {
       if (signal.type === 'offer') {
         socket.emit('webrtc_offer', { to: userToSignal, roomId, offer: signal });
-      } else if (signal.candidate) {
+      } else if ((signal as any).candidate) {
         socket.emit('ice_candidate', { to: userToSignal, roomId, candidate: signal });
       }
     });
@@ -184,7 +185,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
     peer.on('signal', signal => {
       if (signal.type === 'answer') {
         socket.emit('webrtc_answer', { to: callerSocketId, roomId, answer: signal });
-      } else if (signal.candidate) {
+      } else if ((signal as any).candidate) {
         socket.emit('ice_candidate', { to: callerSocketId, roomId, candidate: signal });
       }
     });

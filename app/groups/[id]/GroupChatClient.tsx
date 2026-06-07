@@ -6,6 +6,13 @@ import Sidebar from '@/app/components/Sidebar';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import Link from 'next/link';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
+import {
+  cancelGroupInvite,
+  createGroupResource,
+  deleteGroupResource,
+  sendGroupInvite,
+  toggleGroupResourcePinned,
+} from '@/app/actions/group-collaboration';
 
 type Message = {
   id: string;
@@ -35,19 +42,71 @@ type GroupInfo = {
   adminId: string;
 };
 
+type GroupResource = {
+  id: string;
+  title: string;
+  description: string | null;
+  resourceType: string;
+  url: string | null;
+  fileName: string | null;
+  fileType: string | null;
+  pinned: boolean;
+  createdAt: string;
+  creatorName: string;
+};
+
+type PendingInvite = {
+  id: string;
+  inviteeName: string;
+  inviteeImage: string | null;
+  createdAt: string;
+};
+
+type InviteCandidate = {
+  id: string;
+  name: string;
+  email: string | null;
+  image: string | null;
+  major: string | null | undefined;
+};
+
+type ActiveCall = {
+  id: string;
+  mediaType: string;
+  status: string;
+  groupId: string | null;
+  participants: { userId: string; status: string }[];
+};
+
 interface GroupChatClientProps {
   user: any;
   group: GroupInfo;
   members: GroupMember[];
   isMember: boolean;
+  isAdmin: boolean;
+  resources: GroupResource[];
+  pendingInvites: PendingInvite[];
+  inviteCandidates: InviteCandidate[];
 }
 
-export default function GroupChatClient({ user, group, members, isMember }: GroupChatClientProps) {
+export default function GroupChatClient({
+  user,
+  group,
+  members,
+  isMember,
+  isAdmin,
+  resources,
+  pendingInvites,
+  inviteCandidates,
+}: GroupChatClientProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'resources'>('chat');
+  const [resourceType, setResourceType] = useState<'LINK' | 'FILE' | 'NOTE'>('LINK');
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -65,6 +124,11 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
           setMessages(data.messages);
         }
       })
+      .catch(console.error);
+
+    fetch(`/api/calls/active?groupId=${group.id}`)
+      .then((res) => res.json())
+      .then((data) => setActiveCall(data.call || null))
       .catch(console.error);
 
     socket.connect();
@@ -109,6 +173,15 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
       });
     });
 
+    socket.on('call:state', (payload: ActiveCall) => {
+      if (payload.groupId !== group.id) return;
+      if (payload.status === 'ENDED' || payload.status === 'MISSED') {
+        setActiveCall(null);
+      } else {
+        setActiveCall(payload);
+      }
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
@@ -118,6 +191,7 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
       socket.off('group_error');
       socket.off('user_typing');
       socket.off('user_stopped_typing');
+      socket.off('call:state');
       socket.disconnect();
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
@@ -223,6 +297,12 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
     }
   };
 
+  const handleInviteAction = async (formData: FormData) => {
+    const inviteeId = formData.get('inviteeId') as string;
+    if (!inviteeId) return;
+    await sendGroupInvite(group.id, inviteeId);
+  };
+
   return (
     <div className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative bg-background">
       {/* Group Header */}
@@ -252,14 +332,31 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="hidden sm:flex bg-surface-container rounded-full p-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('chat')}
+              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'chat' ? 'bg-white text-primary shadow-sm dark:bg-slate-800' : 'text-on-surface-variant'}`}
+            >
+              Chat
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('resources')}
+              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'resources' ? 'bg-white text-primary shadow-sm dark:bg-slate-800' : 'text-on-surface-variant'}`}
+            >
+              Resources
+            </button>
+          </div>
+
           {/* Call Feature Link (reusing our newly built WebRTC call system) */}
           {isMember && (
             <Link
-              href={`/call/active?type=group&id=${group.id}`}
+              href={activeCall ? `/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}` : `/call/active?type=group&id=${group.id}&media=audio`}
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-on-surface-variant rounded-xl transition-colors"
-              title="Start or Join Voice/Video Call"
+              title={activeCall ? 'Join Live Call' : 'Start Voice Call'}
             >
-              <span className="material-symbols-outlined text-lg">call</span>
+              <span className="material-symbols-outlined text-lg">{activeCall ? 'sensors' : 'call'}</span>
             </Link>
           )}
 
@@ -284,9 +381,29 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
       {/* Content */}
       <section className="flex-1 flex overflow-hidden min-h-0">
         {/* Chat Area */}
+        {activeTab === 'chat' ? (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
+            {activeCall && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-emerald-600">sensors</span>
+                  <div>
+                    <p className="text-sm font-black text-on-surface">Live {activeCall.mediaType === 'VIDEO' ? 'video' : 'voice'} call</p>
+                    <p className="text-xs text-on-surface-variant">
+                      {activeCall.participants.filter((participant) => participant.status === 'JOINED').length} joined
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
+                  className="rounded-full bg-emerald-600 text-white px-4 py-2 text-xs font-black text-center"
+                >
+                  Join
+                </Link>
+              </div>
+            )}
             {/* Welcome Banner */}
             <div className="flex flex-col items-center justify-center py-8 opacity-60">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
@@ -447,6 +564,159 @@ export default function GroupChatClient({ user, group, members, isMember }: Grou
             )}
           </div>
         </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black tracking-tight">Study Resources</h2>
+                <p className="text-sm text-on-surface-variant mt-1">Pinned links, notes, and files for {group.name}.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('chat')}
+                className="sm:hidden px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold"
+              >
+                Back to Chat
+              </button>
+            </div>
+
+            {isAdmin && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <section className="rounded-xl bg-surface-container-lowest border border-outline-variant/10 p-6">
+                  <h3 className="text-lg font-black mb-4">Add Resource</h3>
+                  <form action={createGroupResource} className="space-y-4">
+                    <input type="hidden" name="groupId" value={group.id} />
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['LINK', 'FILE', 'NOTE'] as const).map((type) => (
+                        <label key={type} className={`text-center rounded-xl border px-3 py-2 text-xs font-black cursor-pointer ${resourceType === type ? 'border-primary bg-primary/10 text-primary' : 'border-outline-variant/20 bg-surface-container text-on-surface-variant'}`}>
+                          <input
+                            className="sr-only"
+                            type="radio"
+                            name="resourceType"
+                            value={type}
+                            checked={resourceType === type}
+                            onChange={() => setResourceType(type)}
+                          />
+                          {type}
+                        </label>
+                      ))}
+                    </div>
+                    <input name="title" required maxLength={140} className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" placeholder="Resource title" />
+                    {resourceType === 'LINK' && (
+                      <input name="url" type="url" required className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" placeholder="https://..." />
+                    )}
+                    {resourceType === 'FILE' && (
+                      <input name="file" type="file" required className="w-full rounded-xl bg-surface-container px-4 py-3 text-sm" />
+                    )}
+                    <textarea
+                      name="description"
+                      required={resourceType === 'NOTE'}
+                      maxLength={500}
+                      className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 resize-none h-24"
+                      placeholder={resourceType === 'NOTE' ? 'Write the note...' : 'Optional description'}
+                    />
+                    <button className="w-full rounded-full bg-primary text-on-primary py-3 font-black active:scale-95 transition-transform">
+                      Add Resource
+                    </button>
+                  </form>
+                </section>
+
+                <section className="rounded-xl bg-surface-container-lowest border border-outline-variant/10 p-6">
+                  <h3 className="text-lg font-black mb-4">Invite Members</h3>
+                  <form action={handleInviteAction} className="flex gap-2">
+                    <select name="inviteeId" required className="min-w-0 flex-1 rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20">
+                      <option value="">Select a student</option>
+                      {inviteCandidates.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.name}{candidate.major ? ` - ${candidate.major}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="px-5 py-3 rounded-xl bg-primary text-on-primary text-sm font-black">
+                      Invite
+                    </button>
+                  </form>
+
+                  <div className="mt-6 space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Pending Invites</p>
+                    {pendingInvites.length === 0 ? (
+                      <p className="text-sm text-on-surface-variant">No pending invites.</p>
+                    ) : (
+                      pendingInvites.map((invite) => (
+                        <div key={invite.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface-container p-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              alt=""
+                              className="w-8 h-8 rounded-full object-cover bg-slate-200"
+                              src={invite.inviteeImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(invite.inviteeName)}&background=random&size=32`}
+                            />
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold truncate">{invite.inviteeName}</p>
+                              <p className="text-[10px] text-on-surface-variant">{new Date(invite.createdAt).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <form action={cancelGroupInvite.bind(null, invite.id)}>
+                            <button className="px-3 py-1.5 rounded-full bg-red-50 text-red-600 text-[10px] font-black">Cancel</button>
+                          </form>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              </div>
+            )}
+
+            <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {resources.length === 0 ? (
+                <div className="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest p-10 text-center">
+                  <span className="material-symbols-outlined text-5xl text-on-surface-variant/50">folder_open</span>
+                  <p className="mt-4 text-sm text-on-surface-variant">No resources have been added yet.</p>
+                </div>
+              ) : (
+                resources.map((resource) => (
+                  <article key={resource.id} className={`rounded-xl bg-surface-container-lowest border p-5 shadow-sm ${resource.pinned ? 'border-primary/30 ring-4 ring-primary/5' : 'border-outline-variant/10'}`}>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary">
+                          {resource.resourceType === 'FILE' ? 'description' : resource.resourceType === 'NOTE' ? 'sticky_note_2' : 'link'}
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{resource.resourceType}</span>
+                      </div>
+                      {resource.pinned && <span className="text-[10px] font-black uppercase tracking-widest text-primary">Pinned</span>}
+                    </div>
+                    <h3 className="text-lg font-black leading-tight">{resource.title}</h3>
+                    {resource.description && <p className="text-sm text-on-surface-variant mt-2 line-clamp-4">{resource.description}</p>}
+                    {resource.url && (
+                      <a href={resource.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-primary hover:underline">
+                        {resource.resourceType === 'FILE' ? (resource.fileName || 'Open file') : 'Open resource'}
+                        <span className="material-symbols-outlined text-sm">open_in_new</span>
+                      </a>
+                    )}
+                    <div className="mt-5 pt-4 border-t border-outline-variant/10 flex items-center justify-between gap-3">
+                      <p className="text-[10px] text-on-surface-variant">
+                        Added by {resource.creatorName} on {new Date(resource.createdAt).toLocaleDateString()}
+                      </p>
+                      {isAdmin && (
+                        <div className="flex gap-2">
+                          <form action={toggleGroupResourcePinned.bind(null, resource.id)}>
+                            <button className="p-1.5 rounded-full hover:bg-surface-container text-on-surface-variant" title={resource.pinned ? 'Unpin' : 'Pin'}>
+                              <span className="material-symbols-outlined text-sm">{resource.pinned ? 'keep_off' : 'keep'}</span>
+                            </button>
+                          </form>
+                          <form action={deleteGroupResource.bind(null, resource.id)}>
+                            <button className="p-1.5 rounded-full hover:bg-red-50 text-red-500" title="Delete">
+                              <span className="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                ))
+              )}
+            </section>
+          </div>
+        )}
 
         {/* Members Sidebar */}
         {showMembers && (

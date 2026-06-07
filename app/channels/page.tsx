@@ -8,6 +8,7 @@ import CreateChannelModal from '@/app/components/CreateChannelModal';
 import JoinChannelButton from '@/app/components/JoinChannelButton';
 import Link from 'next/link';
 import ChannelSearch from './ChannelSearch';
+import NotificationBell from '@/app/components/NotificationBell';
 
 export default async function ChannelsPage() {
   const session = await auth();
@@ -70,6 +71,7 @@ export default async function ChannelsPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <NotificationBell />
           <div className="w-8 h-8 rounded-full overflow-hidden ml-2 ring-2 ring-primary/10">
             <img
               alt="User Profile Avatar"

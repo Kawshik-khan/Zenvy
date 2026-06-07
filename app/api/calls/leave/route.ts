@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
+import { assertCanAccessCall } from '@/lib/calls';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,32 +10,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { roomId } = await req.json();
+    const { callId, roomId } = await req.json();
     const userId = session.user.id;
 
-    if (!roomId) {
-      return NextResponse.json({ error: 'Missing roomId' }, { status: 400 });
+    if (!callId && !roomId) {
+      return NextResponse.json({ error: 'Missing callId' }, { status: 400 });
     }
 
-    const callSession = await prisma.callSession.findUnique({
-      where: { roomId }
-    });
+    const callSession = callId
+      ? await assertCanAccessCall(userId, callId)
+      : await prisma.callSession.findUnique({ where: { roomId } });
 
     if (!callSession) {
-      return NextResponse.json({ success: true }, { status: 200 }); // Nothing to do
+      return NextResponse.json({ success: true }, { status: 200 });
     }
 
-    // Update participant to show they left
+    await assertCanAccessCall(userId, callSession.id);
+
     try {
       await prisma.callParticipant.update({
         where: { callId_userId: { callId: callSession.id, userId } },
-        data: { leftAt: new Date() }
+        data: {
+          leftAt: new Date(),
+          lastSeenAt: new Date(),
+          status: 'LEFT',
+          audioEnabled: false,
+          videoEnabled: false,
+          screenSharing: false,
+        }
       });
     } catch (e) {
       // Ignore if not found
     }
 
-    // Check if there are any active participants left
     const activeParticipants = await prisma.callParticipant.count({
       where: {
         callId: callSession.id,
@@ -45,13 +53,13 @@ export async function POST(req: NextRequest) {
     if (activeParticipants === 0) {
       await prisma.callSession.update({
         where: { id: callSession.id },
-        data: { status: 'ENDED' }
+        data: { status: 'ENDED', endedAt: new Date() }
       });
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true, ended: activeParticipants === 0 }, { status: 200 });
   } catch (error) {
     console.error('Error leaving call:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal server error' }, { status: 500 });
   }
 }

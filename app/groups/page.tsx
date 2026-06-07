@@ -8,6 +8,7 @@ import Sidebar from '@/app/components/Sidebar';
 import JoinGroupButton from '@/app/components/JoinGroupButton';
 import CreateGroupModal from '@/app/components/CreateGroupModal';
 import ErrorView from '@/app/components/ErrorView';
+import NotificationBell from '@/app/components/NotificationBell';
 
 export default async function StudyGroupsPage() {
   const session = await auth();
@@ -51,9 +52,7 @@ export default async function StudyGroupsPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95">
-            <span className="material-symbols-outlined text-slate-500">notifications</span>
-          </button>
+          <NotificationBell />
           <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95">
             <span className="material-symbols-outlined text-slate-500">settings</span>
           </button>

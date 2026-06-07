@@ -3,22 +3,45 @@
 import { useTransition, useState } from "react";
 import { sendMatchRequest } from "@/app/actions/connection";
 
-export default function ConnectButton({ partnerId, buttonText }: { partnerId: string, buttonText: string }) {
+export default function ConnectButton({
+  partnerId,
+  buttonText,
+  initialStatus,
+}: {
+  partnerId: string;
+  buttonText: string;
+  initialStatus?: string | null;
+}) {
   const [isPending, startTransition] = useTransition();
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState(initialStatus || null);
 
   const handleConnect = () => {
     startTransition(async () => {
-      // Simulate/Trigger match request
-      await sendMatchRequest(partnerId);
-      setSent(true);
+      const result = await sendMatchRequest(partnerId);
+      setStatus(result.status || "PENDING");
     });
   };
 
-  if (sent) {
+  if (status === "ACCEPTED") {
+    return (
+      <button disabled className="flex-1 py-3 bg-green-50 text-green-700 rounded-full font-bold text-xs text-center inline-block cursor-not-allowed">
+        Matched
+      </button>
+    );
+  }
+
+  if (status === "PENDING") {
     return (
       <button disabled className="flex-1 py-3 bg-green-50 text-green-600 rounded-full font-bold text-xs text-center inline-block cursor-not-allowed">
-        Request Sent!
+        Pending
+      </button>
+    );
+  }
+
+  if (status === "REJECTED") {
+    return (
+      <button disabled className="flex-1 py-3 bg-surface-container text-on-surface-variant rounded-full font-bold text-xs text-center inline-block cursor-not-allowed">
+        Rejected
       </button>
     );
   }

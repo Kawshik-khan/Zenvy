@@ -2,6 +2,7 @@
 
 import { auth } from '@/auth';
 import { supabase } from '@/lib/supabase';
+import { getSafeFileExtension, validateChatAttachment } from '@/lib/upload-validation';
 
 export async function uploadChatAttachment(formData: FormData) {
   try {
@@ -15,12 +16,10 @@ export async function uploadChatAttachment(formData: FormData) {
       return { error: 'No file provided' };
     }
 
-    // Server-side check for 10MB limit as well
-    if (file.size > 10 * 1024 * 1024) {
-      return { error: 'File exceeds 10MB limit' };
-    }
+    const validationError = validateChatAttachment(file);
+    if (validationError) return { error: validationError };
 
-    const fileExt = file.name.split('.').pop();
+    const fileExt = getSafeFileExtension(file.name);
     const fileName = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     const arrayBuffer = await file.arrayBuffer();
@@ -49,7 +48,7 @@ export async function uploadChatAttachment(formData: FormData) {
     return { 
       success: true, 
       url: publicUrl,
-      fileName: file.name,
+      fileName: file.name.replace(/[^\w.\- ]/g, '').slice(0, 120) || 'attachment',
       fileType: fileType
     };
   } catch (error: any) {

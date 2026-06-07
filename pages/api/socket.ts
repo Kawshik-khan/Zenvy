@@ -3,6 +3,13 @@ import { NextApiRequest } from 'next';
 import { Server as ServerIO } from 'socket.io';
 import { getToken } from 'next-auth/jwt';
 import { prisma } from '../../lib/prisma';
+import { canAccessChannel, canAccessGroup, canAccessMessageRoom, canSignalUser } from '../../lib/room-auth';
+import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '../../lib/calls';
+import {
+  assertCanAccessConversation,
+  createConversationMessage,
+  serializeConversation,
+} from '../../lib/conversations';
 
 // Conditionally import web-push (server-side only)
 let webpush: any = null;
@@ -27,12 +34,14 @@ export const config = {
 
 // Map of userId -> Set of socket IDs (a user can have multiple tabs)
 const userSockets = new Map<string, Set<string>>();
+const socketUsers = new Map<string, string>();
 
 function addUserSocket(userId: string, socketId: string) {
   if (!userSockets.has(userId)) {
     userSockets.set(userId, new Set());
   }
   userSockets.get(userId)!.add(socketId);
+  socketUsers.set(socketId, userId);
 }
 
 function removeUserSocket(userId: string,socketId: string) {
@@ -41,6 +50,7 @@ function removeUserSocket(userId: string,socketId: string) {
     sockets.delete(socketId);
     if (sockets.size === 0) userSockets.delete(userId);
   }
+  socketUsers.delete(socketId);
 }
 
 function getUserSocketIds(userId: string): string[] {
@@ -133,13 +143,140 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       // Register user for targeted signaling
       if (userId) {
         addUserSocket(userId, socket.id);
+        socket.join(`user_${userId}`);
       }
+
+      async function emitConversationUpdated(conversationId: string) {
+        const conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          include: {
+            participants: {
+              include: {
+                user: { select: { id: true, name: true, image: true, email: true } },
+              },
+            },
+            messages: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              include: { sender: { select: { name: true } } },
+            },
+          },
+        });
+
+        if (!conversation) return;
+
+        for (const participant of conversation.participants) {
+          const payload = await serializeConversation(conversation, participant.userId);
+          io.to(`user_${participant.userId}`).emit('conversation:updated', payload);
+        }
+      }
+
+      // ============================================
+      // UNIFIED CONVERSATION MESSAGING
+      // ============================================
+
+      socket.on('conversation:join', async (data: { conversationId: string }) => {
+        if (!userId) return;
+        try {
+          await assertCanAccessConversation(userId, data.conversationId);
+          socket.join(`conversation_${data.conversationId}`);
+        } catch {
+          socket.emit('conversation:error', { message: 'You are not allowed to join this conversation' });
+        }
+      });
+
+      socket.on('conversation:leave', (data: { conversationId: string }) => {
+        socket.leave(`conversation_${data.conversationId}`);
+      });
+
+      socket.on('message:send', async (data: { conversationId: string; tempId: string; message: any }) => {
+        if (!userId || !data?.conversationId || !data?.message) return;
+
+        const content = String(data.message.content || '').trim();
+        if (!content && !data.message.fileUrl) {
+          socket.emit('conversation:error', { message: 'Message content is required' });
+          return;
+        }
+
+        try {
+          const savedMessage = await createConversationMessage({
+            conversationId: data.conversationId,
+            senderId: userId,
+            content,
+            fileUrl: data.message.fileUrl || null,
+            fileType: data.message.fileType || null,
+            fileName: data.message.fileName || null,
+          });
+
+          const payload = { ...savedMessage, tempId: data.tempId };
+          socket.emit('message:ack', payload);
+          socket.to(`conversation_${data.conversationId}`).emit('message:new', savedMessage);
+          await emitConversationUpdated(data.conversationId);
+        } catch (error: any) {
+          socket.emit('conversation:error', { message: error.message || 'Unable to send message' });
+        }
+      });
+
+      socket.on('message:delete', async (data: { conversationId: string; messageId: string }) => {
+        if (!userId) return;
+
+        try {
+          await assertCanAccessConversation(userId, data.conversationId);
+          const message = await prisma.conversationMessage.findUnique({ where: { id: data.messageId } });
+          if (!message || message.conversationId !== data.conversationId || message.senderId !== userId) return;
+
+          await prisma.conversationMessage.update({
+            where: { id: data.messageId },
+            data: { status: 'DELETED', content: '' },
+          });
+
+          io.to(`conversation_${data.conversationId}`).emit('message:deleted', { messageId: data.messageId });
+          await emitConversationUpdated(data.conversationId);
+        } catch (error: any) {
+          socket.emit('conversation:error', { message: error.message || 'Unable to delete message' });
+        }
+      });
+
+      socket.on('conversation:read', async (data: { conversationId: string }) => {
+        if (!userId) return;
+        await prisma.conversationParticipant.updateMany({
+          where: { conversationId: data.conversationId, userId },
+          data: { lastReadAt: new Date() },
+        });
+        await emitConversationUpdated(data.conversationId);
+      });
+
+      socket.on('typing:start', async (data: { conversationId: string; senderName: string }) => {
+        if (!userId) return;
+        try {
+          await assertCanAccessConversation(userId, data.conversationId);
+          socket.to(`conversation_${data.conversationId}`).emit('typing:start', {
+            conversationId: data.conversationId,
+            senderName: data.senderName,
+          });
+        } catch {}
+      });
+
+      socket.on('typing:stop', async (data: { conversationId: string; senderName: string }) => {
+        if (!userId) return;
+        try {
+          await assertCanAccessConversation(userId, data.conversationId);
+          socket.to(`conversation_${data.conversationId}`).emit('typing:stop', {
+            conversationId: data.conversationId,
+            senderName: data.senderName,
+          });
+        } catch {}
+      });
 
       // ============================================
       // CHAT ROOMS (messaging)
       // ============================================
 
-      socket.on('join_room', (roomId: string) => {
+      socket.on('join_room', async (roomId: string) => {
+        if (!userId || !(await canAccessMessageRoom(userId, roomId))) {
+          socket.emit('room_error', { message: 'You are not allowed to join this room' });
+          return;
+        }
         socket.join(roomId);
         console.log(`User ${socket.data.user?.email} joined room ${roomId}`);
       });
@@ -152,7 +289,14 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       socket.on('send_message', async (data: { roomId: string, message: any }) => {
         if (data.message && socket.data.user?.sub) {
           const tempId = data.message.id;
-          data.message.senderId = socket.data.user.sub;
+          const senderId = socket.data.user.sub;
+
+          if (!(await canAccessMessageRoom(senderId, data.roomId))) {
+            socket.emit('room_error', { message: 'You are not allowed to send messages in this room' });
+            return;
+          }
+
+          data.message.senderId = senderId;
 
           try {
             const savedMsg = await prisma.message.create({
@@ -161,7 +305,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
                 fileUrl: data.message.fileUrl || null,
                 fileType: data.message.fileType || null,
                 fileName: data.message.fileName || null,
-                senderId: socket.data.user.sub,
+                senderId,
                 roomId: data.roomId,
               }
             });
@@ -179,8 +323,13 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         if (!socket.data.user?.sub) return;
 
         try {
+          if (!(await canAccessMessageRoom(socket.data.user.sub, data.roomId))) {
+            socket.emit('room_error', { message: 'You are not allowed to delete messages in this room' });
+            return;
+          }
+
           const msg = await prisma.message.findUnique({ where: { id: data.messageId } });
-          if (msg && msg.senderId === socket.data.user.sub) {
+          if (msg && msg.senderId === socket.data.user.sub && msg.roomId === data.roomId) {
             await prisma.message.delete({ where: { id: data.messageId } });
             socket.to(data.roomId).emit('message_deleted', { messageId: data.messageId });
           }
@@ -193,7 +342,11 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       // CHANNEL MESSAGING
       // ============================================
 
-      socket.on('join_channel_room', (channelId: string) => {
+      socket.on('join_channel_room', async (channelId: string) => {
+        if (!userId || !(await canAccessChannel(userId, channelId))) {
+          socket.emit('channel_error', { message: 'You must be a member to join this channel' });
+          return;
+        }
         socket.join(`channel_${channelId}`);
       });
 
@@ -255,7 +408,11 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       // GROUP MESSAGING
       // ============================================
 
-      socket.on('join_group_room', (groupId: string) => {
+      socket.on('join_group_room', async (groupId: string) => {
+        if (!userId || !(await canAccessGroup(userId, groupId))) {
+          socket.emit('group_error', { message: 'You must be a member to join this group' });
+          return;
+        }
         socket.join(`group_${groupId}`);
       });
 
@@ -337,7 +494,131 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       // WEBRTC CALL SIGNALING (User ID based, not room based)
       // ============================================
 
-      socket.on('call_user', async (data: {
+      const emitCallState = async (callId: string) => {
+        const call = await getCallWithParticipants(callId);
+        if (!call) return;
+        const payload = serializeCall(call);
+        io.to(`call_${call.id}`).emit('call:state', payload);
+        if (call.groupId) io.to(`group_${call.groupId}`).emit('call:state', payload);
+        if (call.channelId) io.to(`channel_${call.channelId}`).emit('call:state', payload);
+        if (call.conversationId) io.to(`conversation_${call.conversationId}`).emit('call:state', payload);
+      };
+
+      socket.on('call:start', async (data: { callId: string }) => {
+        if (!userId) return;
+        try {
+          const call = await assertCanAccessCall(userId, data.callId);
+          const payload = serializeCall(call);
+          socket.join(`call_${call.id}`);
+
+          if (call.type === 'DM') {
+            const invitees = call.participants.filter((participant: any) => participant.userId !== userId);
+            for (const participant of invitees) {
+              for (const sid of getUserSocketIds(participant.userId)) {
+                io.to(sid).emit('call:incoming', payload);
+              }
+              await sendPushNotification(participant.userId, {
+                type: 'incoming_call',
+                title: 'Incoming call',
+                body: call.mediaType === 'VIDEO' ? 'Incoming video call...' : 'Incoming voice call...',
+                callId: call.id,
+                mediaType: call.mediaType,
+              });
+            }
+          }
+
+          await emitCallState(call.id);
+        } catch (error: any) {
+          socket.emit('call:error', { message: error.message || 'Unable to start call' });
+        }
+      });
+
+      socket.on('call:join', async (data: { callId: string }) => {
+        if (!userId) return;
+        try {
+          const call = await assertCanAccessCall(userId, data.callId);
+          socket.join(`call_${call.id}`);
+          socket.to(`call_${call.id}`).emit('call:peer-joined', {
+            callId: call.id,
+            userId,
+            socketId: socket.id,
+          });
+          await emitCallState(call.id);
+        } catch (error: any) {
+          socket.emit('call:error', { message: error.message || 'Unable to join call' });
+        }
+      });
+
+      socket.on('call:signal', async (data: { callId: string; toSocketId: string; signal: any }) => {
+        if (!userId || !data.toSocketId) return;
+        try {
+          await assertCanAccessCall(userId, data.callId);
+          const targetUserId = socketUsers.get(data.toSocketId);
+          if (!targetUserId) return;
+          await assertCanAccessCall(targetUserId, data.callId);
+          io.to(data.toSocketId).emit('call:signal', {
+            callId: data.callId,
+            fromSocketId: socket.id,
+            fromUserId: userId,
+            signal: data.signal,
+          });
+        } catch (error: any) {
+          socket.emit('call:error', { message: error.message || 'Unable to send call signal' });
+        }
+      });
+
+      socket.on('call:media-state', async (data: { callId: string; audioEnabled?: boolean; videoEnabled?: boolean; screenSharing?: boolean }) => {
+        if (!userId) return;
+        try {
+          await assertCanAccessCall(userId, data.callId);
+          await prisma.callParticipant.update({
+            where: { callId_userId: { callId: data.callId, userId } },
+            data: {
+              ...(typeof data.audioEnabled === 'boolean' ? { audioEnabled: data.audioEnabled } : {}),
+              ...(typeof data.videoEnabled === 'boolean' ? { videoEnabled: data.videoEnabled } : {}),
+              ...(typeof data.screenSharing === 'boolean' ? { screenSharing: data.screenSharing } : {}),
+              lastSeenAt: new Date(),
+            },
+          });
+          await emitCallState(data.callId);
+        } catch (error: any) {
+          socket.emit('call:error', { message: error.message || 'Unable to update call state' });
+        }
+      });
+
+      socket.on('call:leave', async (data: { callId: string }) => {
+        if (!userId) return;
+        try {
+          const call = await assertCanAccessCall(userId, data.callId);
+          socket.leave(`call_${call.id}`);
+          socket.to(`call_${call.id}`).emit('call:peer-left', {
+            callId: call.id,
+            userId,
+            socketId: socket.id,
+          });
+          await emitCallState(call.id);
+        } catch (error: any) {
+          socket.emit('call:error', { message: error.message || 'Unable to leave call' });
+        }
+      });
+
+      socket.on('call:decline', async (data: { callId: string }) => {
+        if (!userId) return;
+        try {
+          const call = await assertCanAccessCall(userId, data.callId);
+          for (const participant of call.participants) {
+            if (participant.userId === userId) continue;
+            for (const sid of getUserSocketIds(participant.userId)) {
+              io.to(sid).emit('call:declined', { callId: call.id, fromUserId: userId });
+            }
+          }
+          await emitCallState(call.id);
+        } catch (error: any) {
+          socket.emit('call:error', { message: error.message || 'Unable to decline call' });
+        }
+      });
+
+      socket.on('call_user_legacy_disabled', async (data: {
         to: string,
         signalData: any,
         callerName: string,
@@ -346,6 +627,10 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         roomId: string
       }) => {
         if (!userId) return;
+        if (!(await canSignalUser(userId, data.to, data.roomId))) {
+          socket.emit('call_error', { message: 'You are not allowed to call this user' });
+          return;
+        }
 
         const targetSocketIds = getUserSocketIds(data.to);
 
@@ -381,7 +666,8 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         }
       });
 
-      socket.on('answer_call', (data: { to: string, signalData: any }) => {
+      socket.on('answer_call', async (data: { to: string, signalData: any, roomId?: string }) => {
+        if (!userId || !(await canSignalUser(userId, data.to, data.roomId))) return;
         // Send answer signal directly to the caller
         const callerSocketIds = getUserSocketIds(data.to);
         for (const sid of callerSocketIds) {
@@ -391,13 +677,15 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       });
 
       socket.on('end_call', (data: { to: string, roomId: string }) => {
+        if (!userId) return;
         const targetSocketIds = getUserSocketIds(data.to);
         for (const sid of targetSocketIds) {
           io.to(sid).emit('call_ended', { from: userId });
         }
       });
 
-      socket.on('decline_call', (data: { to: string }) => {
+      socket.on('decline_call', async (data: { to: string, roomId?: string }) => {
+        if (!userId || !(await canSignalUser(userId, data.to, data.roomId))) return;
         const targetSocketIds = getUserSocketIds(data.to);
         for (const sid of targetSocketIds) {
           io.to(sid).emit('call_declined', { from: userId });
@@ -408,7 +696,11 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       // GROUP WEBRTC (MESH) SIGNALING
       // ============================================
 
-      socket.on('join_group_call', (roomId: string) => {
+      socket.on('join_group_call', async (roomId: string) => {
+        if (!userId || !(await canAccessGroup(userId, roomId))) {
+          socket.emit('call_error', { message: 'You must be a group member to join this call' });
+          return;
+        }
         socket.join(`call_${roomId}`);
         // Notify others in the group call that a user joined
         if (userId) {

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWebRTC } from '@/app/hooks/useWebRTC';
 import { useRouter } from 'next/navigation';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Volume2, Volume1 } from 'lucide-react';
 
 interface CallRoomProps {
   roomId: string;
@@ -171,7 +170,7 @@ export const CallRoom = ({ roomId, roomType, currentUserId, onLeaveCall }: CallR
           className={`p-4 rounded-full transition-colors ${isAudioEnabled ? 'bg-gray-800 hover:bg-gray-700' : 'bg-red-500 hover:bg-red-600'}`}
           title={isAudioEnabled ? "Mute" : "Unmute"}
         >
-          {isAudioEnabled ? <Mic size={24} /> : <MicOff size={24} />}
+          <span className="material-symbols-outlined">{isAudioEnabled ? 'mic' : 'mic_off'}</span>
         </button>
 
         {/* Video Toggle */}
@@ -180,7 +179,7 @@ export const CallRoom = ({ roomId, roomType, currentUserId, onLeaveCall }: CallR
           className={`p-4 rounded-full transition-colors ${isVideoEnabled ? 'bg-gray-800 hover:bg-gray-700' : 'bg-red-500 hover:bg-red-600'}`}
           title={isVideoEnabled ? "Stop Video" : "Start Video"}
         >
-          {isVideoEnabled ? <Video size={24} /> : <VideoOff size={24} />}
+          <span className="material-symbols-outlined">{isVideoEnabled ? 'videocam' : 'videocam_off'}</span>
         </button>
 
         {/* Loudspeaker Toggle (Only if supported by the device context) */}
@@ -190,7 +189,7 @@ export const CallRoom = ({ roomId, roomType, currentUserId, onLeaveCall }: CallR
                 className={`p-4 rounded-full transition-colors ${isLoudspeakerOn ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-800 hover:bg-gray-700'}`}
                 title={isLoudspeakerOn ? "Speaker ON" : "Speaker OFF"}
             >
-            {isLoudspeakerOn ? <Volume2 size={24} /> : <Volume1 size={24} />}
+            <span className="material-symbols-outlined">{isLoudspeakerOn ? 'volume_up' : 'volume_down'}</span>
             </button>
         )}
 
@@ -200,7 +199,7 @@ export const CallRoom = ({ roomId, roomType, currentUserId, onLeaveCall }: CallR
           className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition-colors"
           title="Leave Call"
         >
-          <PhoneOff size={24} />
+          <span className="material-symbols-outlined">call_end</span>
         </button>
       </div>
     </div>

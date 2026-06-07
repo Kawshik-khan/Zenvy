@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
+import { getSafeFileExtension, validateProfileImage } from '@/lib/upload-validation';
 
 export async function uploadProfilePicture(formData: FormData) {
   try {
@@ -18,7 +19,10 @@ export async function uploadProfilePicture(formData: FormData) {
     }
 
     const userId = session.user.id;
-    const fileExt = file.name.split('.').pop();
+    const validationError = validateProfileImage(file);
+    if (validationError) return { error: validationError };
+
+    const fileExt = getSafeFileExtension(file.name);
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 

@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 import React from 'react';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
@@ -9,6 +10,7 @@ import QuickJoinButton from './QuickJoinButton';
 import ThreeDotMenu from '@/app/components/ThreeDotMenu';
 import ErrorView from '@/app/components/ErrorView';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
+import NotificationBell from '@/app/components/NotificationBell';
 
 export default async function DashboardPage() {
   let session;
@@ -31,7 +33,7 @@ export default async function DashboardPage() {
   let nextEvent;
   let activities: any[] = [];
   let popularGroups: any[] = [];
-  let stats = {
+  const stats = {
     activeGroups: 0,
     attendanceRate: 98,
     totalSessions: 0
@@ -152,13 +154,7 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
+            <NotificationBell />
             <div className="h-8 w-[1px] bg-outline-variant/20 mx-2"></div>
 
             <HeaderProfileMenu userName={userName} imageUrl={user.image} />
@@ -252,12 +248,12 @@ export default async function DashboardPage() {
                     </div>
                   ) : (
                     user.groupMemberships.slice(0, 4).map((membership) => (
-                      <Link key={membership.groupId} href={`/groups/${membership.groupId}`} className="block group bg-[rgb(223,221,221)] p-6 rounded-lg shadow-sm hover-lift transition-all duration-300 animate-slide-up stagger-3">
+                      <Link key={membership.groupId} href={`/groups/${membership.groupId}`} className="block group glass-panel-subtle glass-interactive p-6 rounded-lg transition-all duration-300 animate-slide-up stagger-3">
                         <div className="flex justify-between items-start mb-6">
                           <div className="p-3 bg-primary-container/30 rounded-lg text-primary">
                             <span className="material-symbols-outlined">school</span>
                           </div>
-                          <span className="px-3 py-1 border border-[rgb(200,200,200)] bg-[rgb(242,242,242)] text-[rgb(30,131,194)] text-[10px] font-black uppercase rounded-full tracking-wider">Active Now</span>
+                          <span className="px-3 py-1 border border-accent-green/25 bg-accent-green/10 text-accent-green text-[10px] font-black uppercase rounded-full tracking-wider">Active Now</span>
                         </div>
                         <h4 className="text-lg font-black mb-1 line-clamp-1">{membership.group.name}</h4>
                         <p className="text-on-surface-variant text-sm mb-6 line-clamp-1">{membership.group.subject || 'General Studies'}</p>
@@ -275,7 +271,7 @@ export default async function DashboardPage() {
             {/* Right Column: Sidebar Feeds */}
             <div className="col-span-12 lg:col-span-4 space-y-12">
               {/* Activity Feed */}
-              <section className="bg-[rgb(223,221,221)] p-8 rounded-lg space-y-8 animate-slide-up stagger-4">
+              <section className="glass-panel-subtle p-8 rounded-lg space-y-8 animate-slide-up stagger-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black tracking-tight">Activity Feed</h3>
                   <ThreeDotMenu targetId="system-feed" />

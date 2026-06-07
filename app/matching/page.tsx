@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
 import SearchInput from '@/app/components/SearchInput';
 import ConnectButton from './ConnectButton';
+import NotificationBell from '@/app/components/NotificationBell';
 
 // Dynamic Partner fetching logic
 
@@ -56,7 +57,7 @@ function PartnerCard({ partner }: { partner: any }) {
         ) : (
           <>
             <Link href={`/chat/personal?id=${partner.id}`} className="flex-1 py-3 bg-primary-container text-on-primary-container rounded-full font-bold text-xs hover:bg-primary hover:text-white transition-colors text-center inline-block">DM</Link>
-            <ConnectButton partnerId={partner.id} buttonText="Add to Group" />
+            <ConnectButton partnerId={partner.id} buttonText="Connect" initialStatus={partner.connectionStatus} />
           </>
         )}
       </div>
@@ -80,20 +81,52 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
   if (!user) redirect('/login');
 
   const otherUsers = await prisma.user.findMany({
-    where: { NOT: { id: user.id } },
+    where: {
+      NOT: { id: user.id },
+      blockedBy: { none: { blockerId: user.id } },
+      blocks: { none: { blockedId: user.id } },
+    },
     include: { profile: true },
     take: 20
   });
 
+  const profileIds = [
+    user.profile?.id,
+    ...otherUsers.map((otherUser) => otherUser.profile?.id),
+  ].filter(Boolean) as string[];
+
+  const existingMatches = user.profile
+    ? await prisma.match.findMany({
+        where: {
+          OR: [
+            { profileId: user.profile.id, matchedProfileId: { in: profileIds } },
+            { matchedProfileId: user.profile.id, profileId: { in: profileIds } },
+          ],
+        },
+      })
+    : [];
+
+  const statusByProfileId = new Map<string, string>();
+  for (const matchRecord of existingMatches) {
+    const otherProfileId = matchRecord.profileId === user.profile?.id ? matchRecord.matchedProfileId : matchRecord.profileId;
+    statusByProfileId.set(otherProfileId, matchRecord.status);
+  }
+
   const processedPartners = otherUsers.map(u => {
-    // Logic for match %
-    let match = 60 + Math.floor(Math.random() * 20);
+    let match = 60;
     if (u.profile?.major === user.profile?.major) match += 15;
+    if (u.profile?.college === user.profile?.college) match += 15;
+    if (u.profile?.semester && user.profile?.semester && Math.abs(u.profile.semester - user.profile.semester) <= 1) match += 5;
+
+    const currentInterests = user.profile?.interests?.split(',').map((interest) => interest.trim().toLowerCase()).filter(Boolean) || [];
+    const otherInterests = u.profile?.interests?.split(',').map((interest) => interest.trim().toLowerCase()).filter(Boolean) || [];
+    const overlap = otherInterests.filter((interest) => currentInterests.includes(interest)).length;
+    match += Math.min(overlap * 5, 20);
     
     // Logic for category
     let category = 'overlap';
     if (match > 85) category = 'top';
-    if (Math.random() > 0.8) category = 'active';
+    if (u.profile?.matchingAvailable && u.profile?.availability) category = 'active';
 
     return {
       id: u.id,
@@ -102,6 +135,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
       avatar: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "U")}&background=random`,
       match: Math.min(match, 100),
       category: category,
+      connectionStatus: u.profile?.id ? statusByProfileId.get(u.profile.id) : null,
       skills: u.profile?.interests?.split(',').slice(0, 3) || ['Study Partner'],
       schedule: u.profile?.availability || 'TBD'
     };
@@ -144,9 +178,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 mr-4">
-            <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-all active:scale-95">
-              <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-            </button>
+            <NotificationBell />
             <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-all active:scale-95">
               <span className="material-symbols-outlined text-on-surface-variant">settings</span>
             </button>

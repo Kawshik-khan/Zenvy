@@ -3,14 +3,14 @@ export const runtime = 'nodejs';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import GroupCallClient from './GroupCallClient';
+import UnifiedCallClient from './UnifiedCallClient';
 
 export default async function ActiveCallPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; id?: string }>;
+  searchParams: Promise<{ type?: string; id?: string; callId?: string; media?: string }>;
 }) {
-  const { type, id } = await searchParams;
+  const { type, id, callId, media } = await searchParams;
   const session = await auth();
   if (!session?.user?.email) redirect('/login');
 
@@ -20,24 +20,72 @@ export default async function ActiveCallPage({
 
   if (!user) return redirect('/login');
 
-  if (!id || !type) {
+  if (!callId && (!id || !type)) {
     redirect('/chat');
   }
 
-  let title = 'Group Call';
+  let title = 'Call';
   let avatar = '';
+  let scope: { type: 'dm' | 'group' | 'channel'; id: string } | undefined;
+  let resolvedMediaType: 'AUDIO' | 'VIDEO' = media === 'video' ? 'VIDEO' : 'AUDIO';
 
-  if (type === 'group') {
+  if (callId) {
+    const call = await prisma.callSession.findUnique({
+      where: { id: callId },
+      include: {
+        participants: {
+          include: { user: { select: { id: true, name: true, image: true } } },
+        },
+      },
+    });
+    if (!call) redirect('/chat');
+    resolvedMediaType = call.mediaType === 'VIDEO' ? 'VIDEO' : 'AUDIO';
+
+    if (call.type === 'DM' && call.conversationId) {
+      const peer = call.participants.find((participant) => participant.userId !== user.id)?.user;
+      title = peer?.name || 'Direct Call';
+      avatar = peer?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+      scope = { type: 'dm', id: call.conversationId };
+    } else if (call.type === 'GROUP' && call.groupId) {
+      const group = await prisma.studyGroup.findUnique({ where: { id: call.groupId } });
+      title = group?.name || 'Group Call';
+      avatar = group?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+      scope = { type: 'group', id: call.groupId };
+    } else if (call.type === 'CHANNEL' && call.channelId) {
+      const channel = await prisma.channel.findUnique({ where: { id: call.channelId } });
+      title = channel?.name || 'Channel Call';
+      avatar = channel?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+      scope = { type: 'channel', id: call.channelId };
+    }
+  } else if (type === 'dm' && id) {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+      include: {
+        participants: {
+          include: { user: { select: { id: true, name: true, image: true } } },
+        },
+      },
+    });
+    if (!conversation || !conversation.participants.some((participant) => participant.userId === user.id)) {
+      redirect('/chat');
+    }
+    const peer = conversation.participants.find((participant) => participant.userId !== user.id)?.user;
+    title = peer?.name || 'Direct Call';
+    avatar = peer?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+    scope = { type: 'dm', id };
+  } else if (type === 'group' && id) {
     const group = await prisma.studyGroup.findUnique({ where: { id } });
     if (group) {
         title = group.name;
         avatar = group.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(group.name)}&background=random`;
+        scope = { type: 'group', id };
     }
-  } else if (type === 'channel') {
+  } else if (type === 'channel' && id) {
     const channel = await prisma.channel.findUnique({ where: { id } });
     if (channel) {
         title = channel.name;
         avatar = channel.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&background=random`;
+        scope = { type: 'channel', id };
     }
   }
 
@@ -48,12 +96,13 @@ export default async function ActiveCallPage({
   };
 
   return (
-    <GroupCallClient 
-      currentUser={currentUser} 
-      roomId={`${id}`} 
-      roomName={title} 
-      roomAvatar={avatar} 
-      type={type}
+    <UnifiedCallClient
+      currentUser={currentUser}
+      initialCallId={callId}
+      scope={scope}
+      title={title}
+      avatar={avatar}
+      mediaType={resolvedMediaType}
     />
   );
 }
