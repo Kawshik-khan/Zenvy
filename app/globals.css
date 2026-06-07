@@ -101,6 +101,102 @@
     border-color: rgba(244, 247, 251, 0.1);
   }
 
+  .app-aurora {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 85% -10%, rgba(168, 85, 247, 0.16), transparent 32rem),
+      radial-gradient(circle at 4% 28%, rgba(34, 211, 238, 0.1), transparent 28rem),
+      radial-gradient(circle at 55% 110%, rgba(124, 131, 255, 0.12), transparent 30rem),
+      #090a12;
+    color: #e6eaf2;
+  }
+
+  .app-content {
+    position: relative;
+    z-index: 10;
+  }
+
+  .app-main {
+    min-height: 100vh;
+    padding-bottom: 6rem;
+  }
+
+  @media (min-width: 768px) {
+    .app-main {
+      margin-left: 280px;
+      padding-bottom: 0;
+    }
+  }
+
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    min-height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(244, 247, 251, 0.08);
+    background: rgba(9, 10, 18, 0.72);
+    padding: 0.75rem 1rem;
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+  }
+
+  @media (min-width: 768px) {
+    .app-topbar {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  .app-card {
+    background: rgba(14, 21, 37, 0.78);
+    border: 1px solid rgba(244, 247, 251, 0.08);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+  }
+
+  .app-input {
+    width: 100%;
+    border-radius: 0.875rem;
+    border: 1px solid rgba(244, 247, 251, 0.1);
+    background: rgba(9, 10, 18, 0.68);
+    color: #e6eaf2;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .app-input::placeholder {
+    color: rgba(167, 176, 192, 0.58);
+  }
+
+  .app-input:focus {
+    border-color: rgba(124, 131, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(124, 131, 255, 0.16);
+    background: rgba(12, 14, 24, 0.9);
+  }
+
+  .app-primary-button {
+    background: linear-gradient(135deg, #7c83ff 0%, #a855f7 100%);
+    color: white;
+    box-shadow: 0 14px 36px rgba(124, 131, 255, 0.24);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+
+  .app-primary-button:hover {
+    box-shadow: 0 18px 48px rgba(168, 85, 247, 0.34);
+    transform: translateY(-1px);
+  }
+
+  .app-primary-button:active {
+    transform: scale(0.98);
+  }
+
   .text-gradient {
     background: linear-gradient(135deg, #7c83ff 0%, #a855f7 55%, #22d3ee 100%);
     -webkit-background-clip: text;
@@ -205,4 +301,3 @@
     color: #e6eaf2;
   }
 }
-

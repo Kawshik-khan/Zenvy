@@ -50,7 +50,7 @@ export default async function ChannelChatPage({ params }: { params: Promise<{ id
   }));
 
   return (
-    <div className="bg-background text-on-surface antialiased overflow-hidden flex h-screen">
+    <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-screen">
       <Sidebar />
       <ChannelChatClient
         user={user}

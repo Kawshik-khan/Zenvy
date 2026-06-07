@@ -40,7 +40,7 @@ export default function JoinChannelButton({
       <button
         onClick={handleToggle}
         disabled={isPending}
-        className="px-6 py-2 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 rounded-full text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 disabled:opacity-50"
+        className="px-6 py-2 border border-outline-variant/50 text-on-surface-variant rounded-full text-xs font-bold hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 disabled:opacity-50"
       >
         {isPending ? "Updating..." : "Leave"}
       </button>
@@ -51,8 +51,7 @@ export default function JoinChannelButton({
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className="px-6 py-2 text-white rounded-full text-xs font-bold hover:scale-105 transition-transform active:scale-95 shadow-md disabled:opacity-50"
-      style={{ background: "linear-gradient(135deg, #4647d3 0%, #6a37d4 100%)" }}
+      className="px-6 py-2 text-white rounded-full text-xs font-bold app-primary-button disabled:opacity-50"
     >
       {isPending ? "Joining..." : "Join Channel"}
     </button>

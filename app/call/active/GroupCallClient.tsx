@@ -243,44 +243,44 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
 
   if (hasPermissions === false) {
     return (
-      <div className="h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-white">
-        <span className="material-symbols-outlined text-red-500 text-6xl mb-4">cancel</span>
+      <div className="app-aurora h-screen flex flex-col items-center justify-center p-6 text-center">
+        <span className="material-symbols-outlined text-error text-6xl mb-4">cancel</span>
         <h2 className="text-xl font-bold mb-2">Camera/Mic Access Denied</h2>
-        <p className="text-slate-400 max-w-md mx-auto mb-6">You must allow camera and microphone access to join the group call.</p>
+        <p className="text-on-surface-variant max-w-md mx-auto mb-6">You must allow camera and microphone access to join the group call.</p>
         <Link href={`/${type === 'group' ? 'groups' : 'channels'}/${roomId}`} className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold">Go Back</Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="app-aurora flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 z-10 bg-slate-900/50 backdrop-blur-md shrink-0">
+      <div className="app-topbar shrink-0">
         <div className="flex items-center gap-4">
-          <Link href={`/${type === 'group' ? 'groups' : 'channels'}/${roomId}`} className="p-2 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center -ml-2">
+          <Link href={`/${type === 'group' ? 'groups' : 'channels'}/${roomId}`} className="p-2 hover:bg-surface-container rounded-full transition-colors flex items-center justify-center -ml-2">
             <span className="material-symbols-outlined text-xl">arrow_back</span>
           </Link>
-          <img src={roomAvatar} alt={roomName} className="w-10 h-10 rounded-xl object-cover border border-white/20"/>
+          <img src={roomAvatar} alt={roomName} className="w-10 h-10 rounded-xl object-cover border border-outline-variant/30"/>
           <div>
             <h1 className="font-bold text-lg leading-tight">{roomName}</h1>
-            <p className="text-xs text-slate-400 font-medium tracking-wide">
+            <p className="text-xs text-on-surface-variant font-medium tracking-wide">
               {totalParticipants} Participant{totalParticipants !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/30">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div className="flex items-center gap-2 bg-accent-green/20 text-accent-green px-3 py-1.5 rounded-full border border-accent-green/30">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse"></span>
           <span className="text-[10px] font-black uppercase tracking-widest hidden md:inline">Live Call</span>
         </div>
       </div>
 
       {/* Grid Canvas */}
-      <div className="flex-1 p-2 md:p-6 overflow-hidden flex items-center justify-center relative min-h-0 bg-slate-950">
+      <div className="flex-1 p-2 md:p-6 overflow-hidden flex items-center justify-center relative min-h-0">
         <div className={`w-full h-full grid gap-2 md:gap-4 place-items-center ${getGridClass()}`}>
           
           {/* User's Local Video Block */}
-          <div className="relative w-full h-full max-h-full rounded-2xl overflow-hidden bg-slate-900 border border-white/5 shadow-2xl group flex items-center justify-center">
+          <div className="relative w-full h-full max-h-full rounded-2xl overflow-hidden glass-panel-subtle group flex items-center justify-center">
             <video 
               ref={localVideoRef} 
               autoPlay 
@@ -289,9 +289,9 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
               className={`w-full h-full object-cover transition-opacity duration-300 ${isVideoOff ? 'opacity-0' : 'opacity-100'}`} 
             />
             {isVideoOff && (
-               <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-                 <div className="w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center">
-                   <span className="material-symbols-outlined text-5xl text-slate-400">videocam_off</span>
+               <div className="absolute inset-0 flex items-center justify-center bg-surface-container">
+                 <div className="w-24 h-24 rounded-full bg-surface-container-high flex items-center justify-center">
+                   <span className="material-symbols-outlined text-5xl text-on-surface-variant">videocam_off</span>
                  </div>
                </div>
             )}
@@ -303,7 +303,7 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
 
           {/* Remote Participants */}
           {remoteParticipants.map((p) => (
-            <div key={p.socketId} className="relative w-full h-full max-h-full rounded-2xl overflow-hidden bg-slate-900 border border-white/5 shadow-2xl flex items-center justify-center">
+            <div key={p.socketId} className="relative w-full h-full max-h-full rounded-2xl overflow-hidden glass-panel-subtle flex items-center justify-center">
               <VideoElement stream={p.stream} />
               <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold flex items-center gap-2 z-10">
                 <span className="tracking-wide text-white capitalize">{p.userId.substring(0, 6)}...</span>
@@ -315,24 +315,24 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
       </div>
 
       {/* Footer Controls */}
-      <div className="h-24 bg-slate-900/50 backdrop-blur-xl flex items-center justify-center gap-4 md:gap-8 px-6 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] shrink-0 z-20">
+      <div className="h-24 glass-panel-subtle flex items-center justify-center gap-4 md:gap-8 px-6 border-t glass-divider shrink-0 z-20">
         <button
           onClick={toggleMute}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${isMuted ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${isMuted ? 'bg-error text-on-error shadow-error/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
         >
           <span className="material-symbols-outlined text-xl">{isMuted ? 'mic_off' : 'mic'}</span>
         </button>
 
         <button
           onClick={toggleVideo}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${isVideoOff ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 ${isVideoOff ? 'bg-error text-on-error shadow-error/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
         >
           <span className="material-symbols-outlined text-xl">{isVideoOff ? 'videocam_off' : 'videocam'}</span>
         </button>
 
         <Link
           href={`/${type === 'group' ? 'groups' : 'channels'}/${roomId}`}
-          className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-xl shadow-red-600/30 hover:scale-110 active:scale-95 transition-all mx-2"
+          className="w-16 h-16 rounded-full bg-error text-on-error flex items-center justify-center shadow-xl shadow-error/30 hover:scale-110 active:scale-95 transition-all mx-2"
           title="Leave Call"
         >
           <span className="material-symbols-outlined text-2xl">call_end</span>

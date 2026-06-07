@@ -22,23 +22,23 @@ export default async function NotificationsPage() {
   const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   return (
-    <div className="bg-surface text-on-surface antialiased min-h-screen">
+    <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
       <Sidebar />
-      <main className="md:ml-20 p-4 md:p-12 pb-24 min-h-screen">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <main className="app-main p-4 md:p-12">
+        <div className="relative z-10 max-w-4xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <Link href="/dashboard" className="text-xs font-black uppercase tracking-widest text-primary">
                 Back to dashboard
               </Link>
-              <h1 className="text-3xl md:text-5xl font-black tracking-tighter mt-3">Notifications</h1>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter mt-3 text-on-surface">Notifications</h1>
               <p className="text-on-surface-variant mt-2">
                 {unreadCount > 0 ? `${unreadCount} unread update${unreadCount === 1 ? "" : "s"}.` : "You are all caught up."}
               </p>
             </div>
             {unreadCount > 0 && (
               <form action={markAllNotificationsRead}>
-                <button className="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant text-sm font-bold">
+                <button className="px-5 py-2.5 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/30 text-sm font-bold hover:bg-surface-container-high transition-colors">
                   Mark all read
                 </button>
               </form>
@@ -47,7 +47,7 @@ export default async function NotificationsPage() {
 
           <section className="space-y-3">
             {notifications.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest p-10 text-center">
+              <div className="glass-panel-subtle rounded-[28px] border border-dashed border-primary/30 p-10 text-center">
                 <span className="material-symbols-outlined text-5xl text-on-surface-variant/50">notifications_off</span>
                 <p className="mt-4 text-sm text-on-surface-variant">No notifications yet.</p>
               </div>
@@ -55,20 +55,20 @@ export default async function NotificationsPage() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`rounded-xl border p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
+                  className={`rounded-[28px] border p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 backdrop-blur-md transition-colors ${
                     notification.read
-                      ? "bg-surface-container-lowest border-outline-variant/10"
-                      : "bg-primary-container/10 border-primary/20"
+                      ? "glass-panel-subtle border-outline-variant/20"
+                      : "bg-primary/10 border-primary/20"
                   }`}
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      {!notification.read && <span className="h-2 w-2 rounded-full bg-primary" />}
+                      {!notification.read && <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(124,131,255,0.8)]" />}
                       <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
                         {notification.type.replace(/_/g, " ")}
                       </p>
                     </div>
-                    <p className="mt-2 text-sm font-semibold">{notification.content}</p>
+                    <p className="mt-2 text-sm font-semibold text-on-surface">{notification.content}</p>
                     <p className="mt-1 text-xs text-on-surface-variant">
                       {notification.createdAt.toLocaleString()}
                     </p>

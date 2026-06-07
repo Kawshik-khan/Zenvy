@@ -381,220 +381,260 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   };
 
   return (
-    <div className="bg-background text-on-surface antialiased overflow-hidden flex h-screen">
+    <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex h-screen relative overflow-hidden font-sans">
+      {/* Aurora Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-[#A855F7]/15 blur-[120px] mix-blend-screen opacity-60"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#22D3EE]/10 blur-[100px] mix-blend-screen opacity-50"></div>
+        <div className="absolute top-[30%] left-[20%] w-[40vw] h-[40vw] rounded-full bg-[#7C83FF]/10 blur-[90px] mix-blend-screen opacity-40"></div>
+        {/* Subtle noise texture */}
+        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
+      </div>
+
       <Sidebar />
+
       {incomingCall && (
-        <div className="fixed inset-x-4 top-4 z-[120] mx-auto max-w-md rounded-2xl bg-slate-950 text-white border border-white/10 shadow-2xl p-4">
+        <div className="fixed inset-x-4 top-4 z-[120] mx-auto max-w-md rounded-[28px] bg-[#141C30]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.4)] p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               alt=""
-              className="w-12 h-12 rounded-full object-cover bg-slate-800"
+              className="w-12 h-12 rounded-full object-cover bg-[#0E1525]"
               src={incomingCall.participants.find((participant) => participant.userId !== user.id)?.user?.image || `https://ui-avatars.com/api/?name=Call&background=random`}
             />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-black truncate">
+              <p className="text-sm font-bold text-[#F8FAFC] truncate">
                 {incomingCall.participants.find((participant) => participant.userId !== user.id)?.user?.name || 'Someone'} is calling
               </p>
-              <p className="text-xs text-slate-400">{incomingCall.mediaType === 'VIDEO' ? 'Video' : 'Voice'} call</p>
+              <p className="text-xs text-[#94A3B8]">{incomingCall.mediaType === 'VIDEO' ? 'Video' : 'Voice'} call</p>
             </div>
-            <Link
-              href={`/call/active?callId=${incomingCall.id}&media=${incomingCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
-              className="w-11 h-11 rounded-full bg-emerald-500 text-white flex items-center justify-center"
-              title="Accept"
-            >
-              <span className="material-symbols-outlined">call</span>
-            </Link>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               onClick={declineIncomingCall}
-              className="w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center"
+              className="w-10 h-10 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center"
               title="Decline"
             >
-              <span className="material-symbols-outlined">call_end</span>
+              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>call_end</span>
             </button>
+            <Link
+              href={`/call/active?callId=${incomingCall.id}&media=${incomingCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
+              className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors flex items-center justify-center"
+              title="Accept"
+            >
+              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>call</span>
+            </Link>
           </div>
         </div>
       )}
 
-      <main className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative">
-        <header className="sticky top-0 z-30 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none shrink-0">
-          <div className="flex items-center gap-2 md:gap-4 min-w-0">
+      <main className="ml-[280px] pl-4 pr-8 py-6 h-screen w-full relative z-10 max-w-full flex flex-col gap-6">
+        {/* Top Header */}
+        <header className="flex justify-between items-center shrink-0 h-14">
+          <div className="flex items-center gap-4">
             <button
-              className="lg:hidden p-2 rounded-xl text-on-surface hover:bg-surface-container shrink-0"
+              className="lg:hidden p-2 rounded-xl text-[#F8FAFC] hover:bg-[#141C30]"
               onClick={() => setIsSidebarVisible(true)}
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
             <div>
-              <h1 className="text-lg font-black tracking-tight">Messages</h1>
-              <p className="text-[10px] text-on-surface-variant font-bold uppercase">
-                {isConnected ? 'Connected' : 'Connecting'}
+              <h1 className="text-2xl font-bold tracking-tight text-[#F8FAFC]">Messages</h1>
+              <p className="text-[10px] text-[#A855F7] font-bold uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-[#F59E0B] shadow-[0_0_8px_rgba(245,158,11,0.8)]'}`}></span>
+                {isConnected ? 'Connected' : 'Connecting...'}
               </p>
             </div>
           </div>
-
           <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
         </header>
 
-        <section className="flex-1 flex overflow-hidden min-h-0 p-4 md:p-6 gap-4 md:gap-6 relative">
-          <aside className={`w-full lg:w-80 bg-surface lg:bg-transparent shadow-2xl lg:shadow-none border lg:border-none border-outline-variant/10 rounded-lg lg:rounded-none flex flex-col overflow-hidden shrink-0 absolute lg:relative z-50 transition-transform duration-300 left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-[110%] lg:translate-x-0'}`}>
-            <div className="p-4 border-b border-outline-variant/10 flex justify-between items-center">
-              <h2 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Inbox</h2>
-              <button className="lg:hidden p-1.5 rounded-lg bg-surface-container" onClick={() => setIsSidebarVisible(false)}>
-                <span className="material-symbols-outlined text-sm">close</span>
+        {/* Main Content: Inbox & Active Chat */}
+        <section className="flex-1 flex min-h-0 gap-6">
+          {/* Inbox Sidebar Panel */}
+          <aside className={`w-[320px] bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[28px] shadow-xl flex flex-col overflow-hidden shrink-0 transition-transform duration-300 z-50 absolute lg:relative left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-[120%] lg:translate-x-0'}`}>
+            <div className="p-5 border-b border-white/5 flex justify-between items-center shrink-0">
+              <h2 className="text-xs font-black uppercase tracking-widest text-[#94A3B8]">Inbox</h2>
+              <button className="lg:hidden p-1.5 rounded-full bg-[#141C30] hover:bg-white/10 transition-colors" onClick={() => setIsSidebarVisible(false)}>
+                <span className="material-symbols-outlined text-[14px]">close</span>
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {conversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => openConversation(conversation.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${conversation.id === activeConversationId ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container text-on-surface'}`}
-                >
-                  <img
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover bg-surface-container shrink-0"
-                    src={conversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.title)}&background=random`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-bold truncate">{conversation.title}</p>
+            <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-1">
+              {conversations.map((conversation) => {
+                const isActive = conversation.id === activeConversationId;
+                return (
+                  <button
+                    key={conversation.id}
+                    onClick={() => openConversation(conversation.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all ${
+                      isActive 
+                        ? 'bg-gradient-to-r from-[#7C83FF]/15 to-transparent border border-[#7C83FF]/20 shadow-[inset_4px_0_0_#7C83FF]' 
+                        : 'hover:bg-[#141C30] border border-transparent'
+                    }`}
+                  >
+                    <div className="relative">
+                      <img
+                        alt=""
+                        className="w-11 h-11 rounded-full object-cover bg-[#070B14]"
+                        src={conversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.title)}&background=random`}
+                      />
                       {conversation.unreadCount > 0 && (
-                        <span className="min-w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] font-black leading-5 text-center">
+                        <div className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-[#A855F7] shadow-[0_0_10px_rgba(168,85,247,0.5)] border-2 border-[#0E1525] flex items-center justify-center text-white text-[9px] font-bold">
                           {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                        </span>
+                        </div>
                       )}
                     </div>
-                    <p className="text-xs text-on-surface-variant truncate">
-                      {conversation.lastMessage ? `${conversation.lastMessage.senderName}: ${conversation.lastMessage.content}` : 'No messages yet'}
-                    </p>
-                  </div>
-                </button>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className={`text-sm font-bold truncate ${isActive ? 'text-[#F8FAFC]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'}`}>{conversation.title}</p>
+                      </div>
+                      <p className={`text-[11px] truncate mt-0.5 ${isActive ? 'text-[#7C83FF]' : 'text-[#94A3B8]/60'}`}>
+                        {conversation.lastMessage ? `${conversation.lastMessage.senderName.split(' ')[0]}: ${conversation.lastMessage.content}` : 'No messages yet'}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
 
-              <div className="pt-5 px-3 pb-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Start a DM</p>
+              {/* Partners (DMs) */}
+              <div className="pt-6 px-3 pb-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Start a DM</p>
               </div>
               {partners.map((partner) => (
                 <button
                   key={partner.id}
                   onClick={() => startDm(partner.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-surface-container"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left hover:bg-[#141C30] transition-colors border border-transparent hover:border-white/5"
                 >
                   <img alt="" className="w-8 h-8 rounded-full object-cover" src={partner.avatar} />
-                  <span className="text-sm font-medium truncate">{partner.name}</span>
+                  <span className="text-[13px] font-bold text-[#94A3B8] truncate hover:text-[#F8FAFC]">{partner.name}</span>
                 </button>
               ))}
 
-              <div className="pt-5 px-3 pb-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Groups</p>
+              {/* Groups */}
+              <div className="pt-6 px-3 pb-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Study Groups</p>
               </div>
               {groups.map((group) => (
                 <Link
                   key={group.id}
                   href={`/groups/${group.id}`}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-surface-container text-sm"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left hover:bg-[#141C30] transition-colors border border-transparent hover:border-white/5 group"
                 >
-                  <span className="text-primary">#</span>
-                  <span className="truncate">{group.name}</span>
+                  <div className="w-8 h-8 rounded-lg bg-[#070B14] flex items-center justify-center border border-white/5 text-[#7C83FF] group-hover:bg-[#7C83FF]/10 transition-colors">
+                    <span className="text-lg font-black">#</span>
+                  </div>
+                  <span className="text-[13px] font-bold text-[#94A3B8] truncate group-hover:text-[#F8FAFC]">{group.name}</span>
                 </Link>
               ))}
             </div>
           </aside>
 
-          <div className="flex-1 bg-surface-container-lowest rounded-lg shadow-sm border border-outline-variant/5 flex flex-col overflow-hidden min-h-0">
+          {/* Active Chat Window */}
+          <div className="flex-1 flex flex-col min-h-0 bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[28px] shadow-xl overflow-hidden relative">
             {activeConversation ? (
               <>
-                <div className="px-4 md:px-8 py-4 flex items-center justify-between border-b border-outline-variant/10">
-                  <div className="flex items-center gap-3 min-w-0">
+                {/* Chat Header */}
+                <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-[#141C30]/50 backdrop-blur-xl shrink-0">
+                  <div className="flex items-center gap-4 min-w-0">
                     <img
                       alt=""
-                      className="w-10 h-10 rounded-full object-cover bg-surface-container"
+                      className="w-12 h-12 rounded-full object-cover shadow-[0_4px_10px_rgba(0,0,0,0.3)]"
                       src={activeConversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeConversation.title)}&background=random`}
                     />
                     <div className="min-w-0">
-                      <h2 className="text-lg font-black truncate">{activeConversation.title}</h2>
-                      <p className="text-xs text-on-surface-variant">{activeConversation.type}</p>
+                      <h2 className="text-lg font-bold text-[#F8FAFC] truncate">{activeConversation.title}</h2>
+                      <p className="text-xs font-medium text-[#22D3EE] uppercase tracking-wider">{activeConversation.type}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  
+                  <div className="flex items-center gap-3">
                     {activeCall && (
                       <Link
                         href={`/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
-                        className="hidden sm:inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-600 px-3 py-2 text-xs font-black"
+                        className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#34D399]/10 text-[#34D399] border border-[#34D399]/20 text-xs font-bold animate-pulse"
                       >
-                        <span className="material-symbols-outlined text-base">sensors</span>
-                        Live
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#34D399]"></span>
+                        Live Session
                       </Link>
                     )}
                     <Link
                       href={`/call/active?type=dm&id=${activeConversation.id}&media=audio`}
-                      className="p-2 rounded-xl hover:bg-surface-container text-on-surface-variant"
-                      title="Start voice call"
+                      className="w-10 h-10 rounded-full bg-[#141C30] border border-white/5 flex items-center justify-center hover:bg-[#7C83FF]/20 hover:text-[#7C83FF] hover:border-[#7C83FF]/30 transition-all text-[#94A3B8]"
+                      title="Voice Call"
                     >
-                      <span className="material-symbols-outlined text-lg">call</span>
+                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>call</span>
                     </Link>
                     <Link
                       href={`/call/active?type=dm&id=${activeConversation.id}&media=video`}
-                      className="p-2 rounded-xl hover:bg-surface-container text-on-surface-variant"
-                      title="Start video call"
+                      className="w-10 h-10 rounded-full bg-[#141C30] border border-white/5 flex items-center justify-center hover:bg-[#7C83FF]/20 hover:text-[#7C83FF] hover:border-[#7C83FF]/30 transition-all text-[#94A3B8]"
+                      title="Video Call"
                     >
-                      <span className="material-symbols-outlined text-lg">videocam</span>
+                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>videocam</span>
                     </Link>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-5">
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto hide-scrollbar p-6 space-y-6 flex flex-col relative z-10">
                   {nextCursor && (
-                    <button onClick={loadOlder} className="mx-auto block px-4 py-2 rounded-full bg-surface-container text-xs font-bold text-on-surface-variant">
-                      Load older
+                    <button onClick={loadOlder} className="mx-auto block px-4 py-1.5 rounded-full bg-[#141C30] border border-white/5 hover:border-white/10 hover:text-white transition-colors text-[11px] font-bold text-[#94A3B8] shadow-md">
+                      Load earlier messages
                     </button>
                   )}
                   {messages.map((message) => {
                     const isSelf = message.senderId === user.id || message.isSelf;
                     const isDeleted = message.status === 'DELETED';
                     return (
-                      <div key={message.id} className={`flex items-start gap-3 ${isSelf ? 'flex-row-reverse' : ''} group`}>
-                        <img
-                          alt=""
-                          className="w-9 h-9 rounded-xl object-cover bg-surface-container"
-                          src={message.senderImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(message.senderName)}&background=random`}
-                        />
-                        <div className={`space-y-1 max-w-xl ${isSelf ? 'text-right' : ''}`}>
-                          <div className={`flex items-center gap-2 ${isSelf ? 'justify-end' : ''}`}>
-                            <span className="text-xs font-bold">{message.senderName}</span>
-                            <span className="text-[10px] text-on-surface-variant">
+                      <div key={message.id} className={`flex items-end gap-3 ${isSelf ? 'flex-row-reverse' : ''} group`}>
+                        {!isSelf && (
+                          <img
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover shadow-md mb-1 shrink-0"
+                            src={message.senderImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(message.senderName)}&background=random`}
+                          />
+                        )}
+                        <div className={`space-y-1 max-w-[70%] xl:max-w-[60%] ${isSelf ? 'text-right' : ''}`}>
+                          <div className={`flex items-baseline gap-2 ${isSelf ? 'justify-end' : ''} px-1`}>
+                            {!isSelf && <span className="text-[11px] font-bold text-[#94A3B8]">{message.senderName}</span>}
+                            <span className="text-[9px] text-[#94A3B8]/60 font-medium">
                               {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
-                            {message.pending && <span className="text-[10px] text-on-surface-variant">Sending</span>}
+                            {message.pending && <span className="text-[9px] text-[#7C83FF] font-medium animate-pulse">Sending...</span>}
                           </div>
+                          
                           <div className={`relative flex items-center gap-2 ${isSelf ? 'justify-end' : ''}`}>
                             {isSelf && !message.pending && !isDeleted && (
                               <button
                                 onClick={() => deleteMessage(message.id)}
-                                className="opacity-0 group-hover:opacity-100 p-2 text-on-surface-variant hover:text-red-500 transition-all rounded-full hover:bg-red-50 shrink-0"
+                                className="opacity-0 group-hover:opacity-100 p-1.5 text-[#94A3B8] hover:text-red-400 transition-all rounded-full hover:bg-red-500/10 shrink-0"
                               >
-                                <span className="material-symbols-outlined text-sm">delete</span>
+                                <span className="material-symbols-outlined text-[14px]">delete</span>
                               </button>
                             )}
-                            <div className={`${isSelf ? 'bg-primary text-on-primary rounded-l-2xl rounded-br-2xl' : 'bg-secondary/10 text-on-surface rounded-r-2xl rounded-bl-2xl'} p-3 md:p-4 text-sm leading-relaxed text-left flex flex-col gap-2`}>
+                            <div className={`
+                              ${isSelf 
+                                ? 'bg-gradient-to-br from-[#7C83FF] to-[#A855F7] text-white rounded-[20px] rounded-br-sm shadow-[0_4px_15px_rgba(124,131,255,0.3)]' 
+                                : 'bg-[#141C30]/90 backdrop-blur-md border border-white/5 text-[#F8FAFC] rounded-[20px] rounded-bl-sm shadow-[0_4px_15px_rgba(0,0,0,0.2)]'
+                              } p-3.5 text-sm leading-relaxed text-left flex flex-col gap-2`}>
+                              
                               {isDeleted ? (
-                                <p className="italic opacity-70">Message deleted</p>
+                                <p className="italic opacity-60 text-xs">This message was deleted.</p>
                               ) : (
                                 <>
                                   {message.fileUrl && (
-                                    <div>
-                                      {message.fileType === 'image' && <img src={message.fileUrl} alt={message.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
-                                      {message.fileType === 'video' && <video src={message.fileUrl} controls className="max-h-64 rounded-xl" />}
+                                    <div className="mb-1">
+                                      {message.fileType === 'image' && <img src={message.fileUrl} alt={message.fileName || 'Image'} className="max-h-64 rounded-xl object-cover border border-white/10" />}
+                                      {message.fileType === 'video' && <video src={message.fileUrl} controls className="max-h-64 rounded-xl border border-white/10" />}
                                       {message.fileType !== 'image' && message.fileType !== 'video' && (
-                                        <a href={message.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline">
-                                          <span className="material-symbols-outlined text-xl">description</span>
-                                          <span className="truncate">{message.fileName || 'Download File'}</span>
+                                        <a href={message.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/20 hover:bg-black/30 transition-colors border border-white/10 w-fit">
+                                          <span className="material-symbols-outlined text-[20px]">description</span>
+                                          <span className="truncate text-xs font-bold">{message.fileName || 'Download File'}</span>
                                         </a>
                                       )}
                                     </div>
                                   )}
-                                  <p>{message.content}</p>
+                                  <p className="break-words">{message.content}</p>
                                 </>
                               )}
                             </div>
@@ -603,48 +643,61 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                       </div>
                     );
                   })}
+                  
                   {typingUsers.size > 0 && (
-                    <p className="text-xs italic text-on-surface-variant px-4">
-                      {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
-                    </p>
+                    <div className="flex items-center gap-2 px-2 text-[#94A3B8]">
+                      <div className="flex gap-1 py-2 px-3 bg-[#141C30]/80 rounded-full border border-white/5 w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#7C83FF] animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#7C83FF] animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#7C83FF] animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                      <span className="text-[10px] font-bold">{Array.from(typingUsers).join(', ')} is typing</span>
+                    </div>
                   )}
-                  <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} className="h-2" />
                 </div>
 
-                <form onSubmit={sendMessage} className="p-4 md:p-6 bg-surface-container-lowest border-t border-outline-variant/10">
-                  <div className="bg-surface-container-low rounded-2xl p-2">
+                {/* Input Area */}
+                <form onSubmit={sendMessage} className="p-4 bg-[#141C30]/40 backdrop-blur-xl border-t border-white/5 shrink-0 relative z-20">
+                  <div className="bg-[#0E1525] border border-white/10 rounded-[20px] p-2 flex flex-col focus-within:border-[#7C83FF]/50 focus-within:shadow-[0_0_15px_rgba(124,131,255,0.15)] transition-all">
                     <textarea
                       value={inputValue}
                       onChange={handleInputChange}
                       onKeyDown={handleKeyDown}
-                      className="w-full bg-transparent border-none focus:ring-0 text-sm p-3 resize-none outline-none"
+                      className="w-full bg-transparent border-none focus:ring-0 text-sm text-[#F8FAFC] placeholder-[#94A3B8]/50 p-3 resize-none outline-none max-h-32 hide-scrollbar"
                       placeholder={`Message ${activeConversation.title}...`}
                       rows={1}
                     />
-                    <div className="flex items-center justify-between px-3 py-2 border-t border-outline-variant/10">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-2 py-1 mt-1">
+                      <div className="flex items-center gap-1">
                         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isUploading}
-                          className="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg disabled:opacity-50 transition-colors"
+                          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#141C30] text-[#94A3B8] hover:text-[#F8FAFC] disabled:opacity-50 transition-colors"
+                          title="Attach file"
                         >
-                          <span className="material-symbols-outlined text-lg">{isUploading ? 'hourglass_empty' : 'attach_file'}</span>
+                          <span className="material-symbols-outlined text-[18px]">{isUploading ? 'hourglass_empty' : 'attach_file'}</span>
                         </button>
                       </div>
-                      <button disabled={!inputValue.trim()} className="bg-primary text-on-primary w-10 h-10 flex items-center justify-center rounded-xl disabled:opacity-50">
-                        <span className="material-symbols-outlined text-lg">send</span>
+                      <button 
+                        disabled={!inputValue.trim()} 
+                        className="bg-gradient-to-r from-[#7C83FF] to-[#A855F7] text-white w-9 h-9 flex items-center justify-center rounded-full disabled:opacity-50 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">send</span>
                       </button>
                     </div>
                   </div>
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                <span className="material-symbols-outlined text-6xl text-on-surface-variant/50">forum</span>
-                <h2 className="text-2xl font-black mt-4">Choose a conversation</h2>
-                <p className="text-on-surface-variant mt-2 max-w-sm">Open a DM from the inbox or start a new conversation with a study partner.</p>
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 relative z-10">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#7C83FF]/20 to-[#A855F7]/20 border border-[#7C83FF]/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(124,131,255,0.2)]">
+                  <span className="material-symbols-outlined text-4xl text-[#7C83FF]" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
+                </div>
+                <h2 className="text-2xl font-bold text-[#F8FAFC] mb-2">Select a Conversation</h2>
+                <p className="text-sm text-[#94A3B8] max-w-sm">Choose a chat from the inbox to start messaging, or start a new DM with a study partner.</p>
               </div>
             )}
           </div>

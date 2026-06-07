@@ -16,7 +16,7 @@ export default async function NotificationBell() {
     <Link
       href="/notifications"
       aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"}
-      className="relative hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant inline-flex"
+      className="relative hover:bg-surface-container rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant hover:text-on-surface inline-flex"
     >
       <span className="material-symbols-outlined">notifications</span>
       {unreadCount > 0 && (

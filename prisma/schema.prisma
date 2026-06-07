@@ -59,6 +59,7 @@ model User {
   channelMessages    ChannelMessage[]
   pushSubscriptions  PushSubscription[]
   callParticipations CallParticipant[]
+  pomodoroSessions   PomodoroSession[]
 }
 
 model Profile {
@@ -362,6 +363,27 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+}
+
+// ============================================
+// FOCUS / POMODORO
+// ============================================
+
+model PomodoroSession {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode             String   @default("FOCUS") // FOCUS, SHORT_BREAK, LONG_BREAK
+  plannedMinutes   Int
+  completedMinutes Int
+  startedAt        DateTime
+  endedAt          DateTime
+  status           String   @default("COMPLETED") // COMPLETED, SKIPPED, CANCELED
+  trackId          String?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, endedAt])
+  @@index([status])
 }
 
 // ============================================

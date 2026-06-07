@@ -45,10 +45,10 @@ export default async function SchedulingPage() {
   const pastEvents = events.filter((event) => event.endTime < now).slice(-5).reverse();
 
   return (
-    <div className="bg-surface text-on-surface antialiased min-h-screen">
+    <div className="app-aurora antialiased">
       <Sidebar />
-      <main className="md:ml-20 pb-24 md:pb-0 min-h-screen">
-        <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
+      <main className="app-main">
+        <header className="app-topbar">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Academic Calendar</p>
             <h1 className="text-lg font-black">Scheduling</h1>
@@ -71,16 +71,16 @@ export default async function SchedulingPage() {
                 Schedule study sessions, attach them to groups, and track RSVPs.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-3 min-w-[260px]">
-              <div className="rounded-xl bg-surface-container-low p-4 text-center">
+          <div className="grid grid-cols-3 gap-3 min-w-[260px]">
+              <div className="glass-panel-subtle rounded-2xl p-4 text-center">
                 <p className="text-2xl font-black text-primary">{upcomingEvents.length}</p>
                 <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Upcoming</p>
               </div>
-              <div className="rounded-xl bg-surface-container-low p-4 text-center">
+              <div className="glass-panel-subtle rounded-2xl p-4 text-center">
                 <p className="text-2xl font-black text-secondary">{groupIds.length}</p>
                 <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Groups</p>
               </div>
-              <div className="rounded-xl bg-surface-container-low p-4 text-center">
+              <div className="glass-panel-subtle rounded-2xl p-4 text-center">
                 <p className="text-2xl font-black text-tertiary">{user.eventRSVPs.length}</p>
                 <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">RSVPs</p>
               </div>
@@ -88,16 +88,16 @@ export default async function SchedulingPage() {
           </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <section className="lg:col-span-4 bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-sm border border-outline-variant/10">
+            <section className="lg:col-span-4 glass-panel-subtle rounded-[28px] p-6 md:p-8">
               <h3 className="text-xl font-black mb-6">Schedule Session</h3>
               <form action={createEvent} className="space-y-4">
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Title</label>
-                  <input name="title" required maxLength={120} className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" placeholder="Calculus midterm prep" />
+                  <input name="title" required maxLength={120} className="app-input px-4 py-3" placeholder="Calculus midterm prep" />
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Group</label>
-                  <select name="groupId" className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20">
+                  <select name="groupId" className="app-input px-4 py-3">
                     <option value="">Personal session</option>
                     {user.groupMemberships.map((membership) => (
                       <option key={membership.groupId} value={membership.groupId}>
@@ -109,22 +109,22 @@ export default async function SchedulingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Start</label>
-                    <input name="startTime" required type="datetime-local" className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input name="startTime" required type="datetime-local" className="app-input px-4 py-3" />
                   </div>
                   <div>
                     <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">End</label>
-                    <input name="endTime" required type="datetime-local" className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" />
+                    <input name="endTime" required type="datetime-local" className="app-input px-4 py-3" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Location</label>
-                  <input name="location" maxLength={160} className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" placeholder="Virtual, library room, or URL" />
+                  <input name="location" maxLength={160} className="app-input px-4 py-3" placeholder="Virtual, library room, or URL" />
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Description</label>
-                  <textarea name="description" maxLength={500} className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 resize-none h-24" placeholder="Agenda, goals, or prep notes" />
+                  <textarea name="description" maxLength={500} className="app-input px-4 py-3 resize-none h-24" placeholder="Agenda, goals, or prep notes" />
                 </div>
-                <button className="w-full rounded-full bg-primary text-on-primary py-3 font-black active:scale-95 transition-transform">
+                <button className="w-full rounded-full app-primary-button py-3 font-black">
                   Create Session
                 </button>
               </form>
@@ -133,7 +133,7 @@ export default async function SchedulingPage() {
             <section className="lg:col-span-8 space-y-6">
               <h3 className="text-xl font-black">Upcoming Sessions</h3>
               {upcomingEvents.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest p-10 text-center text-on-surface-variant">
+                <div className="glass-panel-subtle rounded-[28px] border border-dashed border-outline-variant/30 p-10 text-center text-on-surface-variant">
                   No upcoming sessions yet.
                 </div>
               ) : (
@@ -142,7 +142,7 @@ export default async function SchedulingPage() {
                   const canCancel = event.creatorId === user.id || user.groupMemberships.some((membership) => membership.groupId === event.groupId && membership.role === "ADMIN");
 
                   return (
-                    <article key={event.id} className="rounded-xl bg-surface-container-lowest border border-outline-variant/10 p-6 shadow-sm">
+                    <article key={event.id} className="glass-panel-subtle rounded-[28px] p-6">
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                         <div>
                           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -166,14 +166,14 @@ export default async function SchedulingPage() {
                         <div className="flex flex-wrap gap-2 md:justify-end">
                           {(["GOING", "MAYBE", "DECLINED"] as const).map((status) => (
                             <form key={status} action={rsvpEvent.bind(null, event.id, status)}>
-                              <button className={`px-4 py-2 rounded-full text-xs font-black ${myRsvp === status ? "bg-primary text-on-primary" : "bg-surface-container text-on-surface-variant"}`}>
+                              <button className={`px-4 py-2 rounded-full text-xs font-black ${myRsvp === status ? "bg-primary text-on-primary" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}>
                                 {status}
                               </button>
                             </form>
                           ))}
                           {canCancel && (
                             <form action={cancelEvent.bind(null, event.id)}>
-                              <button className="px-4 py-2 rounded-full bg-red-50 text-red-600 text-xs font-black">
+                              <button className="px-4 py-2 rounded-full bg-error-container text-on-error-container text-xs font-black">
                                 Cancel
                               </button>
                             </form>
@@ -189,7 +189,7 @@ export default async function SchedulingPage() {
                 <section className="pt-6 space-y-3">
                   <h3 className="text-xl font-black">Recent Past Sessions</h3>
                   {pastEvents.map((event) => (
-                    <div key={event.id} className="rounded-xl bg-surface-container-low p-4 flex items-center justify-between gap-4 opacity-80">
+                    <div key={event.id} className="glass-panel-subtle rounded-2xl p-4 flex items-center justify-between gap-4 opacity-80">
                       <div>
                         <p className="font-bold">{event.title}</p>
                         <p className="text-xs text-on-surface-variant">{event.startTime.toLocaleString()}</p>

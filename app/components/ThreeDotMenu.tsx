@@ -39,10 +39,10 @@ export default function ThreeDotMenu({ targetId = "general" }: { targetId?: stri
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-outline-variant/10 py-2 z-50 overflow-hidden text-sm">
+        <div className="absolute right-0 mt-2 w-48 glass-panel rounded-2xl py-2 z-50 overflow-hidden text-sm">
           <button 
             onClick={handleDismiss} 
-            className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex items-center gap-3 text-on-surface font-medium"
+            className="w-full text-left px-4 py-3 hover:bg-surface-container transition-colors flex items-center gap-3 text-on-surface font-medium"
           >
             <span className="material-symbols-outlined text-[18px]">visibility_off</span>
             Hide Activity
@@ -50,7 +50,7 @@ export default function ThreeDotMenu({ targetId = "general" }: { targetId?: stri
           <div className="h-[1px] bg-outline-variant/10 my-1 w-full"></div>
           <button 
             onClick={handleReport} 
-            className="w-full text-left px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors flex items-center gap-3 font-bold"
+            className="w-full text-left px-4 py-3 hover:bg-error-container/50 text-error transition-colors flex items-center gap-3 font-bold"
           >
             <span className="material-symbols-outlined text-[18px]">flag</span>
             Report

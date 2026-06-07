@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { socket } from '@/lib/socket';
+import { focusTracks } from '@/lib/focus-audio';
 
 type CallParticipant = {
   userId: string;
@@ -66,17 +67,17 @@ function VideoTile({
   }, [stream]);
 
   return (
-    <div className="relative min-h-52 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 flex items-center justify-center">
+    <div className="relative min-h-52 rounded-2xl overflow-hidden glass-panel-subtle flex items-center justify-center">
       {stream && !videoOff ? (
         <video ref={ref} autoPlay playsInline muted={muted} className="w-full h-full object-cover" />
       ) : (
         <div className="flex flex-col items-center gap-3">
           <img
             alt=""
-            className="w-20 h-20 rounded-full object-cover bg-slate-800"
+            className="w-20 h-20 rounded-full object-cover bg-surface-container"
             src={avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(label)}&background=random`}
           />
-          <span className="material-symbols-outlined text-slate-500 text-4xl">videocam_off</span>
+          <span className="material-symbols-outlined text-on-surface-variant text-4xl">videocam_off</span>
         </div>
       )}
       <div className="absolute left-3 bottom-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-bold text-white backdrop-blur">
@@ -101,9 +102,14 @@ export default function UnifiedCallClient({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(mediaType !== 'VIDEO');
   const [error, setError] = useState<string | null>(null);
+  const [callMusicOn, setCallMusicOn] = useState(false);
+  const [callMusicAutoStarted, setCallMusicAutoStarted] = useState(false);
+  const [callMusicBlocked, setCallMusicBlocked] = useState(false);
+  const [callMusicManuallyControlled, setCallMusicManuallyControlled] = useState(false);
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
   const streamRef = useRef<MediaStream | null>(null);
   const callIdRef = useRef<string | null>(initialCallId || null);
+  const callMusicRef = useRef<HTMLAudioElement | null>(null);
 
   const activeParticipants = useMemo(
     () => call?.participants.filter((participant) => participant.status === 'JOINED') || [],
@@ -328,11 +334,58 @@ export default function UnifiedCallClient({
   };
 
   const remoteTiles = Object.entries(remoteStreams);
+  const isAloneInCall = remoteTiles.length === 0;
+  const selectedCallTrack = focusTracks[0];
+
+  const playCallMusic = useCallback(async (manual = false) => {
+    const audio = callMusicRef.current;
+    if (!audio || callMusicOn) return;
+
+    if (manual) setCallMusicManuallyControlled(true);
+    setCallMusicBlocked(false);
+
+    try {
+      audio.volume = 0.75;
+      audio.loop = true;
+      await audio.play();
+      setCallMusicOn(true);
+      setCallMusicAutoStarted(!manual);
+    } catch {
+      setCallMusicOn(false);
+      setCallMusicAutoStarted(false);
+      setCallMusicBlocked(true);
+    }
+  }, [callMusicOn]);
+
+  const pauseCallMusic = useCallback((manual = false) => {
+    callMusicRef.current?.pause();
+    setCallMusicOn(false);
+    setCallMusicAutoStarted(false);
+    setCallMusicBlocked(false);
+    if (manual) setCallMusicManuallyControlled(true);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCallTrack) return;
+
+    if (!isAloneInCall) {
+      if (callMusicAutoStarted) pauseCallMusic();
+      return;
+    }
+
+    if (callMusicOn || callMusicBlocked || callMusicManuallyControlled) return;
+
+    const timer = window.setTimeout(() => {
+      playCallMusic(false);
+    }, 30_000);
+
+    return () => window.clearTimeout(timer);
+  }, [callMusicAutoStarted, callMusicBlocked, callMusicManuallyControlled, callMusicOn, isAloneInCall, pauseCallMusic, playCallMusic, selectedCallTrack]);
 
   if (error) {
     return (
-      <div className="h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <span className="material-symbols-outlined text-5xl text-red-500">error</span>
+      <div className="app-aurora flex h-screen flex-col items-center justify-center gap-4 p-6 text-center">
+        <span className="material-symbols-outlined text-5xl text-error">error</span>
         <p className="text-lg font-bold">{error}</p>
         <button onClick={() => router.back()} className="rounded-full bg-primary text-on-primary px-5 py-3 font-bold">
           Go Back
@@ -342,22 +395,35 @@ export default function UnifiedCallClient({
   }
 
   return (
-    <div className="h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
-      <header className="h-16 px-4 md:px-8 flex items-center justify-between bg-slate-900/80 border-b border-white/10 shrink-0">
+    <div className="app-aurora h-screen flex flex-col overflow-hidden">
+      {selectedCallTrack && (
+        <audio
+          ref={callMusicRef}
+          src={selectedCallTrack.src}
+          preload="metadata"
+          loop
+          onEnded={() => setCallMusicOn(false)}
+          onError={() => {
+            setCallMusicOn(false);
+            setCallMusicBlocked(true);
+          }}
+        />
+      )}
+      <header className="app-topbar shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-white/10">
+          <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-surface-container">
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <img alt="" src={avatar} className="w-10 h-10 rounded-xl object-cover bg-slate-800" />
+          <img alt="" src={avatar} className="w-10 h-10 rounded-xl object-cover bg-surface-container" />
           <div className="min-w-0">
             <h1 className="font-black truncate">{title}</h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-on-surface-variant">
               {call?.mediaType || mediaType} call - {activeParticipants.length || 1} active
             </p>
           </div>
         </div>
         {call?.status && (
-          <span className="rounded-full bg-emerald-500/15 text-emerald-300 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+          <span className="rounded-full bg-accent-green/15 text-accent-green px-3 py-1 text-[10px] font-black uppercase tracking-widest">
             {call.status}
           </span>
         )}
@@ -385,10 +451,33 @@ export default function UnifiedCallClient({
         })}
       </main>
 
-      <footer className="h-24 bg-slate-900/90 border-t border-white/10 flex items-center justify-center gap-4 shrink-0">
+      {(isAloneInCall || callMusicOn || callMusicBlocked) && selectedCallTrack && (
+        <div className="glass-panel-subtle border-t glass-divider flex flex-wrap items-center justify-center gap-3 px-4 py-3 shrink-0">
+          <div className="min-w-0 text-center md:text-left">
+            <p className="truncate text-xs font-black text-on-surface">{selectedCallTrack.title}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+              {callMusicBlocked ? 'Autoplay blocked' : isAloneInCall ? 'Waiting alone in call' : 'Local music'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => (callMusicOn ? pauseCallMusic(true) : playCallMusic(true))}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black transition-colors ${
+              callMusicOn
+                ? 'bg-tertiary/15 text-tertiary ring-1 ring-tertiary/30'
+                : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">{callMusicOn ? 'pause' : 'music_note'}</span>
+            {callMusicOn ? 'Pause Music' : callMusicBlocked ? 'Music blocked - tap to play' : 'Play Music'}
+          </button>
+        </div>
+      )}
+
+      <footer className="h-24 glass-panel-subtle border-t glass-divider flex items-center justify-center gap-4 shrink-0">
         <button
           onClick={toggleMute}
-          className={`w-14 h-14 rounded-full flex items-center justify-center ${isMuted ? 'bg-red-600' : 'bg-slate-800 hover:bg-slate-700'}`}
+          className={`w-14 h-14 rounded-full flex items-center justify-center ${isMuted ? 'bg-error text-on-error' : 'bg-surface-container hover:bg-surface-container-high'}`}
           title={isMuted ? 'Unmute' : 'Mute'}
         >
           <span className="material-symbols-outlined">{isMuted ? 'mic_off' : 'mic'}</span>
@@ -396,7 +485,7 @@ export default function UnifiedCallClient({
         {mediaType === 'VIDEO' && (
           <button
             onClick={toggleVideo}
-            className={`w-14 h-14 rounded-full flex items-center justify-center ${isVideoOff ? 'bg-red-600' : 'bg-slate-800 hover:bg-slate-700'}`}
+            className={`w-14 h-14 rounded-full flex items-center justify-center ${isVideoOff ? 'bg-error text-on-error' : 'bg-surface-container hover:bg-surface-container-high'}`}
             title={isVideoOff ? 'Start Video' : 'Stop Video'}
           >
             <span className="material-symbols-outlined">{isVideoOff ? 'videocam_off' : 'videocam'}</span>
@@ -404,13 +493,13 @@ export default function UnifiedCallClient({
         )}
         <button
           onClick={leaveCall}
-          className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center"
+          className="w-16 h-16 rounded-full bg-error hover:bg-error-dim flex items-center justify-center text-on-error"
           title="Leave Call"
         >
           <span className="material-symbols-outlined text-3xl">call_end</span>
         </button>
         {scope?.type === 'group' && (
-          <Link href={`/groups/${scope.id}`} className="hidden md:inline-flex px-4 py-2 rounded-full bg-slate-800 text-sm font-bold">
+          <Link href={`/groups/${scope.id}`} className="hidden md:inline-flex px-4 py-2 rounded-full bg-surface-container text-sm font-bold">
             Back to Group
           </Link>
         )}

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
-import Sidebar from '@/app/components/Sidebar';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import Link from 'next/link';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
@@ -304,13 +303,13 @@ export default function GroupChatClient({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative bg-background">
+    <div className="flex-1 flex flex-col h-screen min-w-0 ml-[280px] relative bg-transparent">
       {/* Group Header */}
-      <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none shrink-0">
+      <header className="app-topbar shrink-0">
         <div className="flex items-center gap-4">
           <Link
             href="/groups"
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            className="p-2 hover:bg-surface-container rounded-xl transition-colors"
           >
             <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
           </Link>
@@ -336,14 +335,14 @@ export default function GroupChatClient({
             <button
               type="button"
               onClick={() => setActiveTab('chat')}
-              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'chat' ? 'bg-white text-primary shadow-sm dark:bg-slate-800' : 'text-on-surface-variant'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'chat' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}
             >
               Chat
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('resources')}
-              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'resources' ? 'bg-white text-primary shadow-sm dark:bg-slate-800' : 'text-on-surface-variant'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold ${activeTab === 'resources' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'}`}
             >
               Resources
             </button>
@@ -353,7 +352,7 @@ export default function GroupChatClient({
           {isMember && (
             <Link
               href={activeCall ? `/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}` : `/call/active?type=group&id=${group.id}&media=audio`}
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-on-surface-variant rounded-xl transition-colors"
+              className="p-2 hover:bg-surface-container text-on-surface-variant rounded-xl transition-colors"
               title={activeCall ? 'Join Live Call' : 'Start Voice Call'}
             >
               <span className="material-symbols-outlined text-lg">{activeCall ? 'sensors' : 'call'}</span>
@@ -365,14 +364,14 @@ export default function GroupChatClient({
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               showMembers
                 ? 'bg-primary/10 text-primary'
-                : 'text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-on-surface-variant hover:bg-surface-container'
             }`}
           >
             <span className="material-symbols-outlined text-lg">group</span>
             <span>{members.length}</span>
           </button>
           
-          <div className="border-l pl-4 ml-2 border-slate-200 dark:border-slate-800 hidden sm:block">
+          <div className="border-l pl-4 ml-2 glass-divider hidden sm:block">
             <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
           </div>
         </div>
@@ -386,9 +385,9 @@ export default function GroupChatClient({
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
             {activeCall && (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="rounded-2xl border border-accent-green/20 bg-accent-green/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-emerald-600">sensors</span>
+                  <span className="material-symbols-outlined text-accent-green">sensors</span>
                   <div>
                     <p className="text-sm font-black text-on-surface">Live {activeCall.mediaType === 'VIDEO' ? 'video' : 'voice'} call</p>
                     <p className="text-xs text-on-surface-variant">
@@ -398,7 +397,7 @@ export default function GroupChatClient({
                 </div>
                 <Link
                   href={`/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
-                  className="rounded-full bg-emerald-600 text-white px-4 py-2 text-xs font-black text-center"
+                  className="rounded-full bg-accent-green text-background px-4 py-2 text-xs font-black text-center"
                 >
                   Join
                 </Link>
@@ -444,7 +443,7 @@ export default function GroupChatClient({
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                       </button>
-                      <div className="bg-primary text-on-primary p-3 md:p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed flex flex-col gap-2">
+                      <div className="bg-primary text-on-primary p-3 md:p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed flex flex-col gap-2 shadow-lg shadow-primary/20">
                          {msg.fileUrl && (
                             <div className="w-full">
                               {msg.fileType === 'image' && <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
@@ -485,7 +484,7 @@ export default function GroupChatClient({
                         })}
                       </span>
                     </div>
-                    <div className="bg-surface-container-low p-3 md:p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed bg-secondary/10 text-on-surface flex flex-col gap-2">
+                    <div className="glass-panel-subtle p-3 md:p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed text-on-surface flex flex-col gap-2">
                        {msg.fileUrl && (
                           <div className="w-full">
                             {msg.fileType === 'image' && <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
@@ -520,9 +519,9 @@ export default function GroupChatClient({
           </div>
 
           {/* Input Area */}
-          <div className="p-4 md:p-6 bg-surface-container-lowest border-t border-outline-variant/10">
+          <div className="p-4 md:p-6 glass-panel-subtle border-t glass-divider">
             {isMember ? (
-              <div className="bg-surface-container-low rounded-2xl p-2">
+              <div className="rounded-2xl border border-outline-variant/30 bg-surface/60 p-2">
                 <textarea
                   value={inputValue}
                   onChange={handleInputChange}
@@ -582,7 +581,7 @@ export default function GroupChatClient({
 
             {isAdmin && (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <section className="rounded-xl bg-surface-container-lowest border border-outline-variant/10 p-6">
+                <section className="glass-panel-subtle rounded-[28px] p-6">
                   <h3 className="text-lg font-black mb-4">Add Resource</h3>
                   <form action={createGroupResource} className="space-y-4">
                     <input type="hidden" name="groupId" value={group.id} />
@@ -601,30 +600,30 @@ export default function GroupChatClient({
                         </label>
                       ))}
                     </div>
-                    <input name="title" required maxLength={140} className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" placeholder="Resource title" />
+                    <input name="title" required maxLength={140} className="app-input px-4 py-3" placeholder="Resource title" />
                     {resourceType === 'LINK' && (
-                      <input name="url" type="url" required className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20" placeholder="https://..." />
+                      <input name="url" type="url" required className="app-input px-4 py-3" placeholder="https://..." />
                     )}
                     {resourceType === 'FILE' && (
-                      <input name="file" type="file" required className="w-full rounded-xl bg-surface-container px-4 py-3 text-sm" />
+                      <input name="file" type="file" required className="app-input px-4 py-3 text-sm" />
                     )}
                     <textarea
                       name="description"
                       required={resourceType === 'NOTE'}
                       maxLength={500}
-                      className="w-full rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 resize-none h-24"
+                      className="app-input px-4 py-3 resize-none h-24"
                       placeholder={resourceType === 'NOTE' ? 'Write the note...' : 'Optional description'}
                     />
-                    <button className="w-full rounded-full bg-primary text-on-primary py-3 font-black active:scale-95 transition-transform">
+                    <button className="w-full rounded-full app-primary-button py-3 font-black">
                       Add Resource
                     </button>
                   </form>
                 </section>
 
-                <section className="rounded-xl bg-surface-container-lowest border border-outline-variant/10 p-6">
+                <section className="glass-panel-subtle rounded-[28px] p-6">
                   <h3 className="text-lg font-black mb-4">Invite Members</h3>
                   <form action={handleInviteAction} className="flex gap-2">
-                    <select name="inviteeId" required className="min-w-0 flex-1 rounded-xl bg-surface-container px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20">
+                    <select name="inviteeId" required className="app-input min-w-0 flex-1 px-4 py-3">
                       <option value="">Select a student</option>
                       {inviteCandidates.map((candidate) => (
                         <option key={candidate.id} value={candidate.id}>
@@ -647,7 +646,7 @@ export default function GroupChatClient({
                           <div className="flex items-center gap-3 min-w-0">
                             <img
                               alt=""
-                              className="w-8 h-8 rounded-full object-cover bg-slate-200"
+                              className="w-8 h-8 rounded-full object-cover bg-surface-container"
                               src={invite.inviteeImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(invite.inviteeName)}&background=random&size=32`}
                             />
                             <div className="min-w-0">
@@ -674,7 +673,7 @@ export default function GroupChatClient({
                 </div>
               ) : (
                 resources.map((resource) => (
-                  <article key={resource.id} className={`rounded-xl bg-surface-container-lowest border p-5 shadow-sm ${resource.pinned ? 'border-primary/30 ring-4 ring-primary/5' : 'border-outline-variant/10'}`}>
+                  <article key={resource.id} className={`glass-panel-subtle rounded-[28px] border p-5 ${resource.pinned ? 'border-primary/30 ring-4 ring-primary/5' : 'border-outline-variant/10'}`}>
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary">
@@ -720,7 +719,7 @@ export default function GroupChatClient({
 
         {/* Members Sidebar */}
         {showMembers && (
-          <div className="w-72 border-l border-outline-variant/10 bg-surface-container-lowest shrink-0 overflow-y-auto hidden lg:block animate-fade-in">
+          <div className="w-72 border-l glass-divider glass-panel-subtle shrink-0 overflow-y-auto hidden lg:block animate-fade-in">
             <div className="p-5 border-b border-outline-variant/10">
               <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
                 Members — {members.length}
@@ -734,7 +733,7 @@ export default function GroupChatClient({
                 >
                   <img
                     alt={member.name}
-                    className="w-8 h-8 rounded-full object-cover bg-slate-200"
+                    className="w-8 h-8 rounded-full object-cover bg-surface-container"
                     src={
                       member.image ||
                       `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=32`

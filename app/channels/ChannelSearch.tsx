@@ -42,7 +42,7 @@ export default function ChannelSearch({
       {/* Search Bar */}
       <div className="mb-8 md:mb-10">
         <div className="relative max-w-xl">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-xl">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-xl">
             search
           </span>
           <input
@@ -50,13 +50,13 @@ export default function ChannelSearch({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by #tag or channel name..."
-            className="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border border-outline-variant/10 rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all focus:shadow-lg focus:shadow-primary/5"
+            className="app-input pl-12 pr-4 py-3.5 text-sm"
             id="channel-search"
           />
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
@@ -71,7 +71,7 @@ export default function ChannelSearch({
             Search Results · {filtered.length} found
           </h3>
           {filtered.length === 0 ? (
-            <div className="bg-surface-container-low rounded-2xl p-8 text-center">
+            <div className="glass-panel-subtle rounded-2xl p-8 text-center">
               <span className="material-symbols-outlined text-4xl text-on-surface-variant/50 mb-3 block">
                 search_off
               </span>
@@ -87,7 +87,7 @@ export default function ChannelSearch({
               {filtered.map((channel) => (
                 <div
                   key={channel.id}
-                  className="bg-surface-container-lowest rounded-xl p-6 border border-primary/20 shadow-md shadow-primary/5 flex flex-col animate-fade-in"
+                  className="glass-panel-subtle rounded-2xl p-6 flex flex-col animate-fade-in"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">

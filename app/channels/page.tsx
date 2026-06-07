@@ -1,25 +1,25 @@
-import React from 'react';
-export const runtime = 'nodejs';
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import Sidebar from '@/app/components/Sidebar';
-import CreateChannelModal from '@/app/components/CreateChannelModal';
-import JoinChannelButton from '@/app/components/JoinChannelButton';
-import Link from 'next/link';
-import ChannelSearch from './ChannelSearch';
-import NotificationBell from '@/app/components/NotificationBell';
+import React from "react";
+export const runtime = "nodejs";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import Sidebar from "@/app/components/Sidebar";
+import CreateChannelModal from "@/app/components/CreateChannelModal";
+import JoinChannelButton from "@/app/components/JoinChannelButton";
+import Link from "next/link";
+import ChannelSearch from "./ChannelSearch";
+import NotificationBell from "@/app/components/NotificationBell";
 
 export default async function ChannelsPage() {
   const session = await auth();
-  if (!session?.user?.email) redirect('/login');
+  if (!session?.user?.email) redirect("/login");
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { profile: true },
   });
 
-  if (!user) return redirect('/login');
+  if (!user) return redirect("/login");
 
   const channels = await prisma.channel.findMany({
     include: {
@@ -29,179 +29,142 @@ export default async function ChannelsPage() {
       creator: { select: { id: true, name: true, image: true } },
       _count: { select: { members: true, messages: true } },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
-  const serializedChannels = channels.map((ch) => ({
-    id: ch.id,
-    name: ch.name,
-    tag: ch.tag,
-    description: ch.description,
-    creatorId: ch.creatorId,
-    creatorName: ch.creator.name || 'Unknown',
-    creatorImage: ch.creator.image,
-    memberCount: ch._count.members,
-    messageCount: ch._count.messages,
-    isMember: ch.members.some((m) => m.userId === user.id),
-    isCreator: ch.creatorId === user.id,
-    members: ch.members.slice(0, 4).map((m) => ({
-      id: m.user.id,
-      name: m.user.name || 'Anonymous',
-      image: m.user.image,
+  const serializedChannels = channels.map((channel) => ({
+    id: channel.id,
+    name: channel.name,
+    tag: channel.tag,
+    description: channel.description,
+    creatorId: channel.creatorId,
+    creatorName: channel.creator.name || "Unknown",
+    creatorImage: channel.creator.image,
+    memberCount: channel._count.members,
+    messageCount: channel._count.messages,
+    isMember: channel.members.some((member) => member.userId === user.id),
+    isCreator: channel.creatorId === user.id,
+    members: channel.members.slice(0, 4).map((member) => ({
+      id: member.user.id,
+      name: member.user.name || "Anonymous",
+      image: member.user.image,
     })),
-    createdAt: ch.createdAt.toISOString(),
+    createdAt: channel.createdAt.toISOString(),
   }));
 
   return (
-    <div className="bg-surface text-on-surface antialiased min-h-screen">
+    <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
       <Sidebar />
-
-      {/* Top Bar */}
-      <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none">
-        <div className="flex items-center flex-1 max-w-sm md:max-w-xl">
-          <div className="relative w-full">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-lg">search</span>
-            <input
-              className="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-              placeholder="Search channels by tag..."
-              type="text"
-              id="channel-search-top"
-              readOnly
-            />
+      <main className="app-main">
+        <header className="app-topbar">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Public Hubs</p>
+            <h1 className="text-lg font-black text-on-surface">Channels</h1>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <NotificationBell />
-          <div className="w-8 h-8 rounded-full overflow-hidden ml-2 ring-2 ring-primary/10">
+          <div className="flex items-center gap-3">
+            <NotificationBell />
             <img
-              alt="User Profile Avatar"
-              className="w-full h-full object-cover"
-              src={user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=random`}
+              alt=""
+              className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20"
+              src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "U")}&background=random`}
             />
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="md:ml-20 pb-24 md:pb-0 p-4 md:p-12 min-h-screen">
-        {/* Hero */}
-        <div className="mb-8 md:mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <span className="material-symbols-outlined text-white text-2xl">tag</span>
-            </div>
+        <div className="app-content mx-auto max-w-7xl space-y-10 p-4 md:p-12">
+          <section className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h2 className="text-3xl md:text-[2.75rem] font-black text-on-surface leading-tight tracking-tighter">
-                Channels
-              </h2>
-              <p className="text-on-surface-variant text-sm">
-                Discover, join, and chat in public channels
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary">
+                  <span className="material-symbols-outlined text-2xl text-white">tag</span>
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black leading-tight tracking-tight text-on-surface md:text-5xl">Channels</h2>
+                  <p className="text-sm text-on-surface-variant">Discover, join, and chat in public topic spaces.</p>
+                </div>
+              </div>
+              <p className="max-w-2xl text-base leading-relaxed text-on-surface-variant md:text-lg">
+                Create or find channels by unique tags. Members can message, share files, and start focused conversations.
               </p>
             </div>
-          </div>
-          <p className="text-on-surface-variant max-w-2xl text-base md:text-lg leading-relaxed mt-4">
-            Create or find channels by unique tags. Join any channel to start messaging with the community. Only members can send messages inside a channel.
-          </p>
-        </div>
+            <CreateChannelModal>
+              <button className="app-primary-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-black">
+                <span className="material-symbols-outlined text-lg">add</span>
+                Create Channel
+              </button>
+            </CreateChannelModal>
+          </section>
 
-        {/* Search & Filter */}
-        <ChannelSearch channels={serializedChannels} userId={user.id} />
+          <ChannelSearch channels={serializedChannels} userId={user.id} />
 
-        {/* Channel Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {serializedChannels.map((channel) => (
-            <div
-              key={channel.id}
-              className="group bg-surface-container-lowest rounded-xl p-6 md:p-8 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(70,71,211,0.06)] relative flex flex-col h-full border border-outline-variant/5 hover-lift"
-            >
-              {/* Tag Badge */}
-              <div className="flex justify-between items-start mb-6">
-                <span className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-bold rounded-full flex items-center gap-1">
-                  <span className="text-primary/70">#</span>
-                  {channel.tag}
-                </span>
-                <div className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                  <span className="material-symbols-outlined text-xs">group</span>
-                  {channel.memberCount}
-                </div>
-              </div>
-
-              {/* Info */}
-              <div className="mb-4 flex-1">
-                <h3 className="text-xl font-bold text-on-surface mb-2 leading-tight">{channel.name}</h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-2">
-                  {channel.description || 'A channel for open discussion.'}
-                </p>
-                <div className="flex items-center gap-2 mt-3 text-[10px] text-on-surface-variant">
-                  <span className="material-symbols-outlined text-xs">chat_bubble</span>
-                  <span>{channel.messageCount} messages</span>
-                  <span className="mx-1">·</span>
-                  <span>by {channel.creatorName}</span>
-                </div>
-              </div>
-
-              {/* Bottom */}
-              <div className="mt-auto pt-6 flex items-center justify-between border-t border-outline-variant/10">
-                <div className="flex -space-x-3">
-                  {channel.members.map((member) => (
-                    <img
-                      key={member.id}
-                      alt={member.name}
-                      className="w-9 h-9 rounded-full border-[3px] border-white dark:border-slate-900 object-cover bg-slate-200"
-                      src={member.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=36`}
-                    />
-                  ))}
-                  {channel.memberCount > 4 && (
-                    <div className="w-9 h-9 rounded-full border-[3px] border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                      +{channel.memberCount - 4}
-                    </div>
-                  )}
+          <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {serializedChannels.map((channel) => (
+              <article key={channel.id} className="group glass-panel-subtle glass-interactive flex h-full flex-col rounded-[28px] p-7">
+                <div className="mb-6 flex items-start justify-between gap-4">
+                  <span className="flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
+                    <span className="text-primary/70">#</span>
+                    {channel.tag}
+                  </span>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xs">group</span>
+                    {channel.memberCount}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {channel.isMember && (
-                    <Link
-                      href={`/channels/${channel.id}`}
-                      className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold hover:bg-primary/20 transition-colors"
-                    >
-                      Open
-                    </Link>
-                  )}
-                  <JoinChannelButton
-                    channelId={channel.id}
-                    isMember={channel.isMember}
-                    isCreator={channel.isCreator}
-                  />
+                <div className="mb-5 flex-1">
+                  <h3 className="mb-2 text-xl font-bold leading-tight text-on-surface">{channel.name}</h3>
+                  <p className="line-clamp-2 text-sm leading-relaxed text-on-surface-variant">
+                    {channel.description || "A channel for open discussion."}
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xs">chat_bubble</span>
+                    <span>{channel.messageCount} messages</span>
+                    <span>by {channel.creatorName}</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
 
-          {/* Create new channel CTA */}
-          <CreateChannelModal>
-            <div className="bg-surface-container rounded-xl p-8 border-2 border-dashed border-outline-variant/30 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-surface-container-high transition-colors h-full min-h-[300px]">
-              <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-primary text-3xl">add_circle</span>
+                <div className="mt-auto flex items-center justify-between border-t border-outline-variant/30 pt-6">
+                  <div className="flex -space-x-3">
+                    {channel.members.map((member) => (
+                      <img
+                        key={member.id}
+                        alt={member.name}
+                        className="h-9 w-9 rounded-full border-[3px] border-surface object-cover bg-surface-container"
+                        src={member.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=36`}
+                      />
+                    ))}
+                    {channel.memberCount > 4 && (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-surface bg-surface-container text-[10px] font-bold text-on-surface-variant">
+                        +{channel.memberCount - 4}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {channel.isMember && (
+                      <Link href={`/channels/${channel.id}`} className="rounded-full bg-primary/10 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary/20">
+                        Open
+                      </Link>
+                    )}
+                    <JoinChannelButton channelId={channel.id} isMember={channel.isMember} isCreator={channel.isCreator} />
+                  </div>
+                </div>
+              </article>
+            ))}
+
+            <CreateChannelModal>
+              <div className="glass-panel-subtle flex h-full min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-primary/25 p-8 text-center transition-colors hover:border-primary/50">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 transition-transform group-hover:scale-110">
+                  <span className="material-symbols-outlined text-3xl text-primary">add_circle</span>
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-on-surface">Create a Channel</h3>
+                <p className="mb-6 text-sm text-on-surface-variant">Start a public channel with a unique searchable tag.</p>
+                <span className="text-sm font-bold text-primary hover:underline">Create Channel</span>
               </div>
-              <h3 className="text-lg font-bold text-on-surface mb-2">Create a Channel</h3>
-              <p className="text-sm text-on-surface-variant mb-6">
-                Start a new public channel with a unique tag for others to find.
-              </p>
-              <span className="text-sm font-bold text-primary hover:underline">Create Channel</span>
-            </div>
-          </CreateChannelModal>
+            </CreateChannelModal>
+          </section>
         </div>
       </main>
-
-      {/* Floating Action Button */}
-      <CreateChannelModal>
-        <button
-          className="fixed bottom-24 md:bottom-10 right-6 md:right-10 w-14 h-14 md:w-16 md:h-16 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 z-50"
-          style={{ background: 'linear-gradient(135deg, #4647d3 0%, #6a37d4 100%)' }}
-        >
-          <span className="material-symbols-outlined text-2xl md:text-3xl">add</span>
-        </button>
-      </CreateChannelModal>
     </div>
   );
 }

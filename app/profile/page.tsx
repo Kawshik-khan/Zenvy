@@ -4,6 +4,8 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProfileClient from './ProfileClient';
+import Sidebar from '@/app/components/Sidebar';
+import { getStudyMetrics } from '@/lib/study-metrics';
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -46,5 +48,12 @@ export default async function ProfilePage() {
     // In a real app, you might want to redirect or show a success toast.
   }
 
-  return <ProfileClient user={user} updateProfile={updateProfile} />;
+  const metrics = await getStudyMetrics(user.id);
+
+  return (
+    <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
+      <Sidebar />
+      <ProfileClient user={user} metrics={metrics} updateProfile={updateProfile} />
+    </div>
+  );
 }

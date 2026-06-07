@@ -2,6 +2,7 @@ import { Server as NetServer } from 'http';
 import { NextApiRequest } from 'next';
 import { Server as ServerIO } from 'socket.io';
 import { getToken } from 'next-auth/jwt';
+import webpush from 'web-push';
 import { prisma } from '../../lib/prisma';
 import { canAccessChannel, canAccessGroup, canAccessMessageRoom, canSignalUser } from '../../lib/room-auth';
 import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '../../lib/calls';
@@ -11,19 +12,12 @@ import {
   serializeConversation,
 } from '../../lib/conversations';
 
-// Conditionally import web-push (server-side only)
-let webpush: any = null;
-try {
-  webpush = require('web-push');
-  if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-    webpush.setVapidDetails(
-      `mailto:${process.env.VAPID_EMAIL || 'admin@zenvy.app'}`,
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-      process.env.VAPID_PRIVATE_KEY
-    );
-  }
-} catch (e) {
-  console.warn('web-push not configured, push notifications disabled');
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    `mailto:${process.env.VAPID_EMAIL || 'admin@zenvy.app'}`,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
 }
 
 export const config = {

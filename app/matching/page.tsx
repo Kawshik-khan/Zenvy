@@ -19,7 +19,7 @@ function PartnerCard({ partner }: { partner: any }) {
   const matchColor = partner.match < 85 ? (isTertiary ? 'text-tertiary' : 'text-on-surface-variant/40') : `text-${colorClass}`;
   
   return (
-    <div className={`bg-surface-container-lowest rounded-lg p-6 shadow-sm hover:shadow-xl hover:shadow-${colorClass}/5 transition-all group ${partner.category === 'overlap' ? `border-l-4 border-secondary` : ''} ${isTertiary ? 'border border-tertiary/10 ring-4 ring-tertiary-container/20' : ''}`}>
+    <div className={`glass-panel-subtle glass-interactive rounded-[28px] p-6 group ${partner.category === 'overlap' ? `border-l-4 border-secondary` : ''} ${isTertiary ? 'border border-tertiary/20 ring-4 ring-tertiary-container/20' : ''}`}>
       <div className="flex justify-between items-start mb-6">
         <div className="relative">
           <img 
@@ -27,7 +27,7 @@ function PartnerCard({ partner }: { partner: any }) {
             src={partner.avatar} 
             alt={partner.name} 
           />
-          {isTertiary && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary-fixed border-2 border-white rounded-full"></span>}
+          {isTertiary && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary-fixed border-2 border-surface rounded-full"></span>}
         </div>
         <div className="text-right">
           <div className={`text-2xl font-black ${matchColor} tracking-tighter`}>{partner.match}%</div>
@@ -164,14 +164,15 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
   });
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen antialiased overflow-x-hidden">
+    <div className="app-aurora antialiased overflow-x-hidden">
       <Sidebar />
 
-      <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm">
+      <main className="app-main">
+      <header className="app-topbar font-sans text-sm">
         <div className="flex items-center flex-1 max-w-sm md:max-w-xl">
           <div className="relative w-full group">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant z-10">search</span>
-            <Suspense fallback={<input className="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Search for potential study partners..." type="text" />}>
+            <Suspense fallback={<input className="app-input rounded-full pl-10 pr-4 py-2" placeholder="Search for potential study partners..." type="text" />}>
                <SearchInput placeholder="Search by name, major, or skills..." />
             </Suspense>
           </div>
@@ -179,11 +180,11 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 mr-4">
             <NotificationBell />
-            <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-all active:scale-95">
+            <button className="hover:bg-surface-container rounded-full p-2 transition-all active:scale-95">
               <span className="material-symbols-outlined text-on-surface-variant">settings</span>
             </button>
           </div>
-          <div className="flex items-center gap-3 border-l pl-4 border-outline-variant/20">
+          <div className="flex items-center gap-3 border-l pl-4 glass-divider">
             <div className="text-right hidden sm:block">
               <p className="font-bold text-on-surface">{user?.name || "Student"}</p>
               <p className="text-xs text-on-surface-variant">{user?.profile?.major || "Undecided"}</p>
@@ -193,7 +194,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
         </div>
       </header>
 
-      <main className="md:ml-20 pb-24 md:pb-0 p-4 md:p-12 min-h-[calc(100vh-64px)]">
+      <div className="app-content p-4 md:p-12 min-h-[calc(100vh-64px)]">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8 md:mb-12">
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tighter text-on-surface mb-2">Find your tribe.</h2>
@@ -201,7 +202,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
           </div>
 
           {filteredPartners.length === 0 ? (
-            <div className="py-20 text-center bg-surface-container-lowest rounded-3xl border border-dashed border-outline-variant/50">
+            <div className="py-20 text-center glass-panel-subtle rounded-[28px] border border-dashed border-outline-variant/50">
                <span className="material-symbols-outlined text-6xl text-on-surface-variant opacity-50 mb-4">search_off</span>
                <h3 className="text-2xl font-bold text-on-surface mb-2">No matching peers found</h3>
                <p className="text-on-surface-variant max-w-md mx-auto">Try adjusting your search criteria. You can search by their name, their major, or specific skills like "Python".</p>
@@ -243,32 +244,33 @@ export default async function MatchingPage(props: { searchParams?: Promise<{ q?:
           )}
 
           <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-slate-900 rounded-xl p-8 flex items-center justify-between group overflow-hidden relative">
+            <div className="glass-panel-subtle rounded-[28px] p-8 flex items-center justify-between group overflow-hidden relative">
               <div className="z-10">
                 <h4 className="text-white text-2xl font-bold mb-2">Automatch Beta</h4>
-                <p className="text-slate-400 text-sm max-w-[280px]">Let our AI pair you with the perfect squad based on your syllabus.</p>
-                <button className="mt-6 px-6 py-2 bg-white text-slate-900 rounded-full font-bold text-sm hover:bg-indigo-100 transition-colors">Start Automatch</button>
+                <p className="text-on-surface-variant text-sm max-w-[280px]">Let our AI pair you with the perfect squad based on your syllabus.</p>
+                <button className="mt-6 px-6 py-2 bg-on-surface text-background rounded-full font-bold text-sm hover:opacity-90 transition-colors">Start Automatch</button>
               </div>
               <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 text-white/5 group-hover:text-primary/20 transition-all rotate-12">psychology</span>
             </div>
-            <div className="bg-indigo-600 rounded-xl p-8 flex items-center justify-between group overflow-hidden relative">
+            <div className="rounded-[28px] p-8 flex items-center justify-between group overflow-hidden relative bg-gradient-to-br from-primary to-secondary">
               <div className="z-10">
                 <h4 className="text-white text-2xl font-bold mb-2">Review Requests</h4>
-                <p className="text-indigo-100 text-sm max-w-[280px]">You have {pendingRequests} student{pendingRequests === 1 ? '' : 's'} waiting to connect with you.</p>
-                <button className="mt-6 px-6 py-2 bg-indigo-900 text-white rounded-full font-bold text-sm hover:bg-indigo-800 transition-colors">Open Requests</button>
+                <p className="text-on-primary/80 text-sm max-w-[280px]">You have {pendingRequests} student{pendingRequests === 1 ? '' : 's'} waiting to connect with you.</p>
+                <button className="mt-6 px-6 py-2 bg-background/70 text-white rounded-full font-bold text-sm hover:bg-background transition-colors">Open Requests</button>
               </div>
               <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 text-white/5 group-hover:text-white/10 transition-all -rotate-12">notifications_active</span>
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       <div className="fixed bottom-24 md:bottom-10 right-6 md:right-10 z-50">
-        <button className="flex items-center gap-2 md:gap-3 bg-gradient-to-br from-primary to-secondary text-on-primary px-6 md:px-8 py-4 md:py-5 rounded-full shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+        <button className="flex items-center gap-2 md:gap-3 app-primary-button px-6 md:px-8 py-4 md:py-5 rounded-full">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>add</span>
           <span className="font-bold tracking-tight hidden md:inline-block">Post Your Study Ad</span>
         </button>
       </div>
+      </main>
     </div>
   );
 }

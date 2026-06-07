@@ -63,12 +63,12 @@ export default function HeaderProfileMenu({ userName, imageUrl }: HeaderProfileM
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 min-w-[220px] rounded-xl border border-outline-variant/20 bg-white/95 py-1 shadow-lg backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-950/95"
+          className="absolute right-0 top-full z-50 mt-2 min-w-[220px] glass-panel rounded-2xl py-1"
         >
           <Link
             role="menuitem"
             href="/profile"
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low dark:hover:bg-slate-900"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container"
             onClick={() => setOpen(false)}
           >
             <span className="material-symbols-outlined text-lg text-on-surface-variant">person</span>
@@ -77,7 +77,7 @@ export default function HeaderProfileMenu({ userName, imageUrl }: HeaderProfileM
           <Link
             role="menuitem"
             href="/profile#account-settings"
-            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container-low dark:hover:bg-slate-900"
+            className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-on-surface hover:bg-surface-container"
             onClick={() => setOpen(false)}
           >
             <span className="material-symbols-outlined text-lg text-on-surface-variant">settings</span>
@@ -88,7 +88,7 @@ export default function HeaderProfileMenu({ userName, imageUrl }: HeaderProfileM
             <button
               type="submit"
               role="menuitem"
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-error hover:bg-error-container/50"
             >
               <span className="material-symbols-outlined text-lg">logout</span>
               Log out

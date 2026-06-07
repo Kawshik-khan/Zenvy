@@ -10,7 +10,29 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      ".next/**",
+      ".vercel/**",
+      "node_modules/**",
+      "out/**",
+      "build/**",
+      "coverage/**",
+      "public/**",
+      "designs/**",
+      "next-env.d.ts",
+      "*.config.ts.bak",
+      "*.log",
+      "*.tsbuildinfo"
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: ["*.js", "scripts/**/*.js", "scripts/**/*.mjs", "server.js", "standalone-socket.js", "test-db.js", "update_sidebars.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off"
+    }
+  },
   {
     rules: {
       "react/no-unescaped-entities": "off",

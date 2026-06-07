@@ -223,13 +223,13 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen min-w-0 md:ml-20 pb-20 md:pb-0 relative bg-background">
+    <div className="flex-1 flex flex-col h-screen min-w-0 ml-[280px] relative bg-transparent">
       {/* Channel Header */}
-      <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none shrink-0">
+      <header className="app-topbar shrink-0">
         <div className="flex items-center gap-4">
           <Link
             href="/channels"
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            className="p-2 hover:bg-surface-container rounded-xl transition-colors"
           >
             <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
           </Link>
@@ -257,14 +257,14 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               showMembers
                 ? 'bg-primary/10 text-primary'
-                : 'text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-on-surface-variant hover:bg-surface-container'
             }`}
           >
             <span className="material-symbols-outlined text-lg">group</span>
             <span>{members.length}</span>
           </button>
           
-          <div className="border-l pl-4 ml-2 border-slate-200 dark:border-slate-800 hidden sm:block">
+          <div className="border-l pl-4 ml-2 glass-divider hidden sm:block">
             <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                       </button>
-                      <div className="bg-primary text-on-primary p-3 md:p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed flex flex-col gap-2">
+                      <div className="bg-primary text-on-primary p-3 md:p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed flex flex-col gap-2 shadow-lg shadow-primary/20">
                          {msg.fileUrl && (
                             <div className="w-full">
                               {msg.fileType === 'image' && <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
@@ -354,7 +354,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                         })}
                       </span>
                     </div>
-                    <div className="bg-surface-container-low p-3 md:p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed bg-secondary/10 text-on-surface flex flex-col gap-2">
+                    <div className="glass-panel-subtle p-3 md:p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed text-on-surface flex flex-col gap-2">
                        {msg.fileUrl && (
                           <div className="w-full">
                             {msg.fileType === 'image' && <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
@@ -389,9 +389,9 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
           </div>
 
           {/* Input Area */}
-          <div className="p-4 md:p-6 bg-surface-container-lowest border-t border-outline-variant/10">
+          <div className="p-4 md:p-6 glass-panel-subtle border-t glass-divider">
             {isMember ? (
-              <div className="bg-surface-container-low rounded-2xl p-2">
+              <div className="rounded-2xl border border-outline-variant/30 bg-surface/60 p-2">
                 <textarea
                   value={inputValue}
                   onChange={handleInputChange}
@@ -436,7 +436,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
 
         {/* Members Sidebar */}
         {showMembers && (
-          <div className="w-72 border-l border-outline-variant/10 bg-surface-container-lowest shrink-0 overflow-y-auto hidden lg:block animate-fade-in">
+          <div className="w-72 border-l glass-divider glass-panel-subtle shrink-0 overflow-y-auto hidden lg:block animate-fade-in">
             <div className="p-5 border-b border-outline-variant/10">
               <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
                 Members — {members.length}
@@ -450,7 +450,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                 >
                   <img
                     alt={member.name}
-                    className="w-8 h-8 rounded-full object-cover bg-slate-200"
+                    className="w-8 h-8 rounded-full object-cover bg-surface-container"
                     src={
                       member.image ||
                       `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=32`
