@@ -515,10 +515,24 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const [mediaType, setMediaType] = useState<"AUDIO" | "VIDEO">("AUDIO");
   const [error, setError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const initializedKeyRef = useRef("");
+  const activeCallIdRef = useRef("");
+  const callRef = useRef<CallPayload | null>(null);
+  const credentialsRef = useRef<LiveKitCredentials | null>(null);
+  const scopeRef = useRef<CallScope | undefined>(undefined);
+  const mediaTypeRef = useRef<"AUDIO" | "VIDEO">("AUDIO");
+  const inFlightKeyRef = useRef("");
+  const restoreAttemptedRef = useRef(false);
 
   const expanded = pathname === "/call/active";
   const liveKitReady = Boolean(credentials?.serverUrl && credentials?.token && activeCallId);
+
+  useEffect(() => {
+    activeCallIdRef.current = activeCallId;
+    callRef.current = call;
+    credentialsRef.current = credentials;
+    scopeRef.current = scope;
+    mediaTypeRef.current = mediaType;
+  }, [activeCallId, call, credentials, mediaType, scope]);
 
   const persistCall = useCallback((next: StoredCall | null) => {
     if (typeof window === "undefined") return;
@@ -536,40 +550,53 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     setScope(undefined);
     setError(null);
     setIsConnecting(false);
-    initializedKeyRef.current = "";
+    activeCallIdRef.current = "";
+    callRef.current = null;
+    credentialsRef.current = null;
+    scopeRef.current = undefined;
+    inFlightKeyRef.current = "";
     persistCall(null);
   }, [persistCall]);
 
   const startOrJoinCall = useCallback(
     async (input: CallSessionInput) => {
       const targetKey = input.initialCallId || `${input.scope?.type || "unknown"}:${input.scope?.id || "missing"}:${input.mediaType}`;
-      const activeScope = getCallTarget(call, scope);
+      const currentActiveCallId = activeCallIdRef.current;
+      const currentCredentials = credentialsRef.current;
+      const currentLiveKitReady = Boolean(currentCredentials?.serverUrl && currentCredentials?.token && currentActiveCallId);
+      const activeScope = getCallTarget(callRef.current, scopeRef.current);
+
       if (
-        activeCallId &&
-        liveKitReady &&
-        ((input.initialCallId && input.initialCallId === activeCallId) || sameScope(input.scope, activeScope))
+        currentActiveCallId &&
+        currentLiveKitReady &&
+        ((input.initialCallId && input.initialCallId === currentActiveCallId) || sameScope(input.scope, activeScope))
       ) {
         setCurrentUser(input.currentUser);
         setTitle(input.title);
         setAvatar(input.avatar || input.currentUser.image);
-        setMediaType(input.mediaType);
+        if (mediaTypeRef.current !== input.mediaType) {
+          setMediaType(input.mediaType);
+          mediaTypeRef.current = input.mediaType;
+        }
         return;
       }
 
-      if (activeCallId && liveKitReady) {
+      if (currentActiveCallId && currentLiveKitReady) {
         setError("Leave the current call before joining another one.");
         return;
       }
 
-      if (initializedKeyRef.current === targetKey && isConnecting) return;
-      initializedKeyRef.current = targetKey;
+      if (inFlightKeyRef.current === targetKey) return;
+      inFlightKeyRef.current = targetKey;
       setIsConnecting(true);
       setError(null);
       setCurrentUser(input.currentUser);
       setTitle(input.title);
       setAvatar(input.avatar || input.currentUser.image);
       setMediaType(input.mediaType);
+      mediaTypeRef.current = input.mediaType;
       setScope(input.scope);
+      scopeRef.current = input.scope;
 
       try {
         let callId = input.initialCallId || "";
@@ -613,6 +640,10 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         setCall(responseData.call);
         setCredentials(responseData.liveKit);
         setScope(resolvedScope);
+        activeCallIdRef.current = callId;
+        callRef.current = responseData.call;
+        credentialsRef.current = responseData.liveKit;
+        scopeRef.current = resolvedScope;
         socket.connect();
         socket.emit(input.initialCallId ? "call:join" : "call:start", { callId });
 
@@ -626,16 +657,17 @@ export default function CallProvider({ children }: { children: React.ReactNode }
         });
       } catch (err: any) {
         setError(err.message || "Unable to initialize call");
-        initializedKeyRef.current = "";
       } finally {
         setIsConnecting(false);
+        if (inFlightKeyRef.current === targetKey) inFlightKeyRef.current = "";
       }
     },
-    [activeCallId, call, isConnecting, liveKitReady, persistCall, scope],
+    [persistCall],
   );
 
   useEffect(() => {
-    if (typeof window === "undefined" || activeCallId) return;
+    if (typeof window === "undefined" || activeCallId || restoreAttemptedRef.current) return;
+    restoreAttemptedRef.current = true;
     const stored = window.sessionStorage.getItem(STORAGE_KEY);
     if (!stored) return;
 

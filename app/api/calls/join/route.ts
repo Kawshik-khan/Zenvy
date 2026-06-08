@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const callSession = callId
-      ? await assertCanAccessCall(userId, callId)
+      ? await assertCanAccessCall(userId, callId, { includeParticipants: false })
       : await prisma.callSession.findUnique({ where: { roomId } });
 
     if (!callSession) {

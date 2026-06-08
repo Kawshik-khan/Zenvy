@@ -37,16 +37,25 @@ export async function assertCanAccessCallScope(userId: string, scope: CallScope)
   return true;
 }
 
-export async function assertCanAccessCall(userId: string, callId: string) {
+export async function assertCanAccessCall(
+  userId: string,
+  callId: string,
+  options: { includeParticipants?: boolean } = {},
+): Promise<any> {
+  const includeParticipants = options.includeParticipants ?? true;
   const call = await prisma.callSession.findUnique({
     where: { id: callId },
-    include: {
-      participants: {
-        include: {
-          user: { select: { id: true, name: true, image: true } },
-        },
-      },
-    },
+    ...(includeParticipants
+      ? {
+          include: {
+            participants: {
+              include: {
+                user: { select: { id: true, name: true, image: true } },
+              },
+            },
+          },
+        }
+      : {}),
   });
 
   if (!call) throw new Error("Call not found");

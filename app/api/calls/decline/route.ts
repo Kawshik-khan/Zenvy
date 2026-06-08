@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const call = await assertCanAccessCall(session.user.id, callId);
+    const call = await assertCanAccessCall(session.user.id, callId, { includeParticipants: false });
     await prisma.callParticipant.update({
       where: { callId_userId: { callId: call.id, userId: session.user.id } },
       data: {

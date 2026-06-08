@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCallSession, type CallScope } from "@/app/components/CallProvider";
 
@@ -23,10 +23,17 @@ export default function UnifiedCallClient({
 }: UnifiedCallClientProps) {
   const router = useRouter();
   const { activeCallId, error, isConnecting, startOrJoinCall, leaveCall } = useCallSession();
+  const initializedKeyRef = useRef("");
+  const callKey = useMemo(
+    () => initialCallId || `${scope?.type || "unknown"}:${scope?.id || "missing"}:${mediaType}`,
+    [initialCallId, mediaType, scope?.id, scope?.type],
+  );
 
   useEffect(() => {
+    if (initializedKeyRef.current === callKey) return;
+    initializedKeyRef.current = callKey;
     startOrJoinCall({ currentUser, initialCallId, scope, title, avatar, mediaType });
-  }, [avatar, currentUser, initialCallId, mediaType, scope, startOrJoinCall, title]);
+  }, [avatar, callKey, currentUser, initialCallId, mediaType, scope, startOrJoinCall, title]);
 
   if (error) {
     return (

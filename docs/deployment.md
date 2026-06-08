@@ -21,7 +21,7 @@ Required environment variables are listed in `.env.example`. Set them in Vercel 
 
 This project uses Prisma with Supabase Postgres.
 
-- Use `DATABASE_URL` with the Supabase pooler URL for app runtime.
+- Use `DATABASE_URL` with the Supabase transaction pooler URL for app runtime: port `6543` with `pgbouncer=true&connection_limit=1&pool_timeout=20`.
 - Use `DIRECT_URL` for direct database access.
 - After changing `prisma/schema.prisma`, run:
 
