@@ -3,12 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePomodoro } from "./PomodoroProvider";
 
 export const sidebarLinks = [
   { href: "/dashboard", icon: "home", label: "Dashboard" },
   { href: "/groups", icon: "groups", label: "Groups" },
   { href: "/channels", icon: "tag", label: "Channels" },
   { href: "/chat", icon: "chat_bubble", label: "Chat" },
+  { href: "#focus-timer", icon: "timer", label: "Focus Timer", action: "pomodoro" },
   { href: "/matching", icon: "favorite", label: "Matching" },
   { href: "/events", icon: "event", label: "Events" },
   { href: "/notifications", icon: "notifications", label: "Notifications" },
@@ -23,6 +25,7 @@ type SidebarNavProps = {
 
 export default function SidebarNav({ variant = "sidebar", chatUnreadCount = 0 }: SidebarNavProps) {
   const pathname = usePathname();
+  const { openPomodoro } = usePomodoro();
   const isBottom = variant === "bottom";
   const chatBadge = chatUnreadCount > 9 ? "9+" : chatUnreadCount > 0 ? String(chatUnreadCount) : null;
 
@@ -36,22 +39,20 @@ export default function SidebarNav({ variant = "sidebar", chatUnreadCount = 0 }:
       aria-label={isBottom ? "Primary navigation" : "Sidebar navigation"}
     >
       {sidebarLinks.map((link) => {
-        const isActive = pathname?.startsWith(link.href) || pathname === link.href;
+        const isAction = link.action === "pomodoro";
+        const isActive = !isAction && (pathname?.startsWith(link.href) || pathname === link.href);
         const badge = link.href === "/chat" ? chatBadge : null;
-        return (
-          <Link
-            key={link.label}
-            href={link.href}
-            className={`relative transition-all duration-200 ${
-              isBottom
-                ? "flex min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2"
-                : "flex w-full items-center gap-4 rounded-2xl px-3 py-3"
-            } ${
-              isActive
-                ? "bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20"
-                : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-            }`}
-          >
+        const className = `relative transition-all duration-200 ${
+          isBottom
+            ? "flex min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2"
+            : "flex w-full items-center gap-4 rounded-2xl px-3 py-3"
+        } ${
+          isActive
+            ? "bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20"
+            : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+        }`;
+        const content = (
+          <>
             <span className="material-symbols-outlined flex-shrink-0 text-[22px]" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
               {link.icon}
             </span>
@@ -66,6 +67,22 @@ export default function SidebarNav({ variant = "sidebar", chatUnreadCount = 0 }:
                 {badge}
               </div>
             )}
+          </>
+        );
+        if (isAction) {
+          return (
+            <button key={link.label} type="button" onClick={openPomodoro} className={className}>
+              {content}
+            </button>
+          );
+        }
+        return (
+          <Link
+            key={link.label}
+            href={link.href}
+            className={className}
+          >
+            {content}
           </Link>
         );
       })}

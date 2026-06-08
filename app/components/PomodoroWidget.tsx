@@ -126,6 +126,7 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
   const [muted, setMuted] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [saveState, setSaveState] = useState<"IDLE" | "SAVING" | "SAVED" | "PENDING">("IDLE");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const isControlled = typeof open === "boolean";
   const isExpanded = isControlled ? open : expanded;
 
@@ -384,6 +385,11 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
     setRemainingSeconds(getDurationSeconds(mode, settings));
   };
 
+  const endSession = () => {
+    pauseMusic();
+    resetTimer();
+  };
+
   const skipTimer = () => {
     const nextMode = mode === "FOCUS" ? "SHORT_BREAK" : "FOCUS";
     moveToMode(nextMode);
@@ -409,6 +415,7 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
 
   const progress = durationSeconds > 0 ? Math.round(((durationSeconds - remainingSeconds) / durationSeconds) * 100) : 0;
   const pendingCount = typeof window !== "undefined" ? readPendingSessions().length : 0;
+  const todaysFocusMinutes = focusSessionsCompleted * settings.focusMinutes;
 
   if (isCheckingAuth || !authorized || !selectedTrack) {
     return null;
@@ -426,154 +433,156 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
           setIsMusicOn(false);
         }}
       />
-      {(showLauncher || isExpanded) && (
-      <div className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-[120] w-[calc(100vw-2rem)] max-w-[380px] md:bottom-6 md:right-6">
-        {!isExpanded ? (
+      {showLauncher && !isExpanded && (
+        <button type="button" onClick={() => updateExpanded(true)} className="sr-only">
+          Open Focus Timer
+        </button>
+      )}
+      {isExpanded && (
+        <div className="fixed inset-0 z-[130]">
           <button
             type="button"
-            onClick={() => updateExpanded(true)}
-            className="ml-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#0E1525]/95 px-4 py-3 text-sm font-black text-[#F8FAFC] shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all hover:border-[#7C83FF]/40 hover:bg-[#141C30]"
-            aria-label="Open Pomodoro timer"
-          >
-            <span className="material-symbols-outlined text-[#22D3EE]">timer</span>
-            <span>{modeLabel(mode)}</span>
-            <span className="font-mono text-[#94A3B8]">{formatTime(remainingSeconds)}</span>
-          </button>
-        ) : (
-          <section className="max-h-[calc(100dvh-7rem-env(safe-area-inset-bottom))] overflow-y-auto rounded-[24px] border border-white/10 bg-[#0E1525]/95 p-4 text-[#F8FAFC] shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl md:max-h-none md:overflow-hidden md:rounded-[28px]">
-            <div className="mb-4 flex items-start justify-between gap-4">
+            aria-label="Close Focus Timer"
+            onClick={() => updateExpanded(false)}
+            className="absolute inset-0 hidden bg-black/45 backdrop-blur-sm md:block"
+          />
+          <section className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] rounded-t-[28px] border border-white/10 bg-[#0E1525]/98 p-4 pb-[max(env(safe-area-inset-bottom),1rem)] text-[#F8FAFC] shadow-[0_-24px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[350px] md:max-h-none md:rounded-none md:border-y-0 md:border-r-0 md:p-5">
+            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/20 md:hidden" />
+            <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#22D3EE]">Focus Timer</p>
-                <h2 className="text-lg font-black">{modeLabel(mode)}</h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#22D3EE]">Focus Session</p>
+                <h2 className="mt-1 text-xl font-black">{modeLabel(mode)}</h2>
               </div>
               <button
                 type="button"
                 onClick={() => updateExpanded(false)}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C30] text-[#94A3B8] transition-colors hover:text-white"
-                aria-label="Minimize Pomodoro timer"
+                aria-label="Close Focus Timer"
               >
-                <span className="material-symbols-outlined text-lg">expand_more</span>
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
             <div className="rounded-3xl border border-white/5 bg-[#070B14]/70 p-5 text-center">
-              <p className="font-mono text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">{formatTime(remainingSeconds)}</p>
+              <p className="font-mono text-5xl font-black tracking-tight">{formatTime(remainingSeconds)}</p>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#141C30]">
                 <div className="h-full rounded-full bg-gradient-to-r from-[#7C83FF] to-[#22D3EE]" style={{ width: `${progress}%` }} />
               </div>
-              <p className="mt-3 text-xs font-bold text-[#94A3B8]">{focusSessionsCompleted} focus sessions completed today</p>
+              <p className="mt-3 text-xs font-bold text-[#94A3B8]">{status === "RUNNING" ? "Focus in progress" : status === "PAUSED" ? "Paused" : "Ready to begin"}</p>
             </div>
 
-            <div className="mt-4 grid grid-cols-4 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={status === "RUNNING" ? pauseTimer : startTimer}
-                className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white transition-transform active:scale-95"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white transition-transform active:scale-95"
               >
                 <span className="material-symbols-outlined text-lg">{status === "RUNNING" ? "pause" : "play_arrow"}</span>
-                {status === "RUNNING" ? "Pause" : "Start"}
+                {status === "RUNNING" ? "Pause" : status === "PAUSED" ? "Resume" : "Start"}
               </button>
-              <button type="button" onClick={resetTimer} className="rounded-2xl bg-[#141C30] px-3 py-3 text-sm font-bold text-[#94A3B8] transition-colors hover:text-white">
-                Reset
-              </button>
-              <button type="button" onClick={skipTimer} className="rounded-2xl bg-[#141C30] px-3 py-3 text-sm font-bold text-[#94A3B8] transition-colors hover:text-white">
-                Skip
+              <button type="button" onClick={endSession} className="rounded-2xl bg-[#141C30] px-3 py-3 text-sm font-black text-[#CBD5E1] transition-colors hover:text-white">
+                End Session
               </button>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-white/5 bg-[#141C30]/70 p-3">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black">{selectedTrack.title}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{selectedTrack.mood}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={toggleMusic}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0E1525] text-[#22D3EE] transition-colors hover:text-white"
-                  aria-label={isMusicOn ? "Pause music" : "Play music"}
-                >
-                  <span className="material-symbols-outlined text-lg">{isMusicOn ? "pause" : "music_note"}</span>
-                </button>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl bg-[#141C30]/70 p-3">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">Today</p>
+                <p className="mt-1 text-sm font-black">{todaysFocusMinutes}m</p>
               </div>
-              <div className="grid grid-cols-[1fr_auto] gap-2">
-                <select
-                  value={selectedTrackId}
-                  onChange={(event) => {
-                    setSelectedTrackId(event.target.value);
-                    setAudioError("");
-                    pauseMusic();
-                  }}
-                  className="min-w-0 rounded-xl border border-white/10 bg-[#0E1525] px-3 py-2 text-xs font-bold text-[#F8FAFC] outline-none"
-                >
-                  {focusTracks.map((track) => (
-                    <option key={track.id} value={track.id}>
-                      {track.title}
-                    </option>
+              <div className="rounded-2xl bg-[#141C30]/70 p-3">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">Sessions</p>
+                <p className="mt-1 text-sm font-black">{focusSessionsCompleted}</p>
+              </div>
+              <div className="rounded-2xl bg-[#141C30]/70 p-3">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">Streak</p>
+                <p className="mt-1 text-sm font-black">{focusSessionsCompleted > 0 ? 1 : 0}d</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((current) => !current)}
+              className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/5 bg-[#141C30]/70 px-4 py-3 text-left text-sm font-black text-[#F8FAFC]"
+            >
+              <span>Session Settings</span>
+              <span className="material-symbols-outlined text-lg text-[#94A3B8]">{settingsOpen ? "expand_less" : "expand_more"}</span>
+            </button>
+
+            {settingsOpen && (
+              <div className="mt-3 space-y-3 rounded-2xl border border-white/5 bg-[#070B14]/60 p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    ["focusMinutes", "Timer Length"],
+                    ["shortBreakMinutes", "Break Length"],
+                    ["longBreakMinutes", "Long Break"],
+                    ["longBreakEvery", "Cycle"],
+                  ].map(([key, label]) => (
+                    <label key={key} className="block rounded-2xl bg-[#141C30]/70 p-2">
+                      <span className="block text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">{label}</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={settings[key as keyof TimerSettings]}
+                        disabled={status === "RUNNING"}
+                        onChange={(event) => updateSetting(key as keyof TimerSettings, Number(event.target.value))}
+                        className="mt-1 w-full bg-transparent text-sm font-black text-[#F8FAFC] outline-none disabled:opacity-50"
+                      />
+                    </label>
                   ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setMuted((current) => !current)}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0E1525] text-[#94A3B8] transition-colors hover:text-white"
-                  aria-label={muted ? "Unmute music" : "Mute music"}
-                >
-                  <span className="material-symbols-outlined text-lg">{muted ? "volume_off" : "volume_up"}</span>
-                </button>
-              </div>
-              <input
-                aria-label="Music volume"
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={volume}
-                onChange={(event) => setVolume(Number(event.target.value))}
-                className="mt-3 w-full accent-[#22D3EE]"
-              />
-              <button
-                type="button"
-                onClick={toggleMusic}
-                className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-colors ${
-                  isMusicOn
-                    ? "bg-[#22D3EE]/15 text-[#22D3EE] ring-1 ring-[#22D3EE]/30"
-                    : "bg-[#0E1525] text-[#F8FAFC] hover:bg-[#1B2740]"
-                }`}
-              >
-                <span className="material-symbols-outlined text-lg">{isMusicOn ? "pause" : "music_note"}</span>
-                <span>{isMusicOn ? "Pause Music" : "Play Music"}</span>
-              </button>
-              {audioError && <p className="mt-2 text-xs font-bold text-[#FB7185]">{audioError}</p>}
-            </div>
+                </div>
 
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              {[
-                ["focusMinutes", "Focus"],
-                ["shortBreakMinutes", "Short"],
-                ["longBreakMinutes", "Long"],
-                ["longBreakEvery", "Cycle"],
-              ].map(([key, label]) => (
-                <label key={key} className="block rounded-2xl bg-[#141C30]/70 p-2">
-                  <span className="block text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">{label}</span>
+                <div className="rounded-2xl bg-[#141C30]/70 p-3">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black">Sound Settings</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{selectedTrack.title}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleMusic}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0E1525] text-[#22D3EE] transition-colors hover:text-white"
+                      aria-label={isMusicOn ? "Pause music" : "Play music"}
+                    >
+                      <span className="material-symbols-outlined text-lg">{isMusicOn ? "pause" : "music_note"}</span>
+                    </button>
+                  </div>
+                  <select
+                    value={selectedTrackId}
+                    onChange={(event) => {
+                      setSelectedTrackId(event.target.value);
+                      setAudioError("");
+                      pauseMusic();
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-[#0E1525] px-3 py-2 text-xs font-bold text-[#F8FAFC] outline-none"
+                  >
+                    {focusTracks.map((track) => (
+                      <option key={track.id} value={track.id}>
+                        {track.title}
+                      </option>
+                    ))}
+                  </select>
                   <input
-                    type="number"
-                    min="1"
-                    value={settings[key as keyof TimerSettings]}
-                    disabled={status === "RUNNING"}
-                    onChange={(event) => updateSetting(key as keyof TimerSettings, Number(event.target.value))}
-                    className="mt-1 w-full bg-transparent text-sm font-black text-[#F8FAFC] outline-none disabled:opacity-50"
+                    aria-label="Music volume"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={volume}
+                    onChange={(event) => setVolume(Number(event.target.value))}
+                    className="mt-3 w-full accent-[#22D3EE]"
                   />
-                </label>
-              ))}
-            </div>
+                  {audioError && <p className="mt-2 text-xs font-bold text-[#FB7185]">{audioError}</p>}
+                </div>
+              </div>
+            )}
 
             <div className="mt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
               <span>{saveState === "SAVING" ? "Saving" : saveState === "PENDING" || pendingCount > 0 ? "Save pending" : saveState === "SAVED" ? "Saved" : "Ready"}</span>
               <span>{status.toLowerCase()}</span>
             </div>
           </section>
-        )}
-      </div>
+        </div>
       )}
     </>
   );

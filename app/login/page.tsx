@@ -18,6 +18,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const message = searchParams?.get("message");
   const error = searchParams?.get("error");
+  const callbackUrl = searchParams?.get("callbackUrl") || "";
 
   return (
     <div className="app-aurora flex min-h-screen flex-col font-body selection:bg-primary/30 selection:text-on-surface">
@@ -54,6 +55,8 @@ function LoginForm() {
             </div>
 
             <form action={formAction} className="space-y-6">
+              {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
+
               <div className="space-y-2">
                 <label className="ml-1 block text-xs font-semibold uppercase tracking-wider text-on-surface-variant" htmlFor="email">
                   Email Address

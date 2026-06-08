@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 
+const MATCH_REQUEST_NOTE_MAX_LENGTH = 180;
+
 export async function blockUser(blockedId: string) {
   const session = await auth();
   if (!session?.user?.email) throw new Error("Unauthorized");
@@ -74,9 +76,14 @@ export async function reportUser(reportedId: string, reason: string) {
   return { success: true };
 }
 
-export async function sendMatchRequest(targetUserId: string) {
+export async function sendMatchRequest(targetUserId: string, note?: string) {
   const session = await auth();
   if (!session?.user?.email) throw new Error("Unauthorized");
+
+  const requestNote = typeof note === "string" ? note.trim() : "";
+  if (requestNote.length > MATCH_REQUEST_NOTE_MAX_LENGTH) {
+    throw new Error(`Connection request note must be ${MATCH_REQUEST_NOTE_MAX_LENGTH} characters or fewer`);
+  }
 
   const sender = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -134,6 +141,7 @@ export async function sendMatchRequest(targetUserId: string) {
       profileId: senderProfile.id,
       matchedProfileId: targetProfile.id,
       status: "PENDING",
+      requestNote: requestNote || null,
     },
   });
 
@@ -141,7 +149,9 @@ export async function sendMatchRequest(targetUserId: string) {
     data: {
       userId: targetUserId,
       type: "MATCH_REQUEST",
-      content: `You have a new match request from ${sender.name || "a user"}.`,
+      content: requestNote
+        ? `${sender.name || "A user"} sent you a match request with a note.`
+        : `You have a new match request from ${sender.name || "a user"}.`,
       relatedId: match.id,
     },
   });

@@ -51,15 +51,11 @@ export default function RegisterPage() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Registration</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-on-surface md:text-4xl">Create your account</h2>
             <p className="mt-3 text-sm leading-relaxed text-on-surface-variant">
-              Start with the essentials. Academic details can be expanded from your profile later.
+              Start with your account. You will add academic and matching details right after sign in.
             </p>
           </div>
 
           <form action={formAction} className="space-y-5">
-            <input type="hidden" name="college" value="University" />
-            <input type="hidden" name="major" value="Undeclared" />
-            <input type="hidden" name="semester" value="1" />
-
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-widest text-on-surface-variant" htmlFor="name">
                 Full Name

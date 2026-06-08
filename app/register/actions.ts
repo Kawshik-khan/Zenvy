@@ -24,9 +24,6 @@ export async function signUp(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const college = formData.get("college") as string;
-  const major = formData.get("major") as string;
-  const semester = formData.get("semester") as string;
 
   if (!email || !password || !name) {
     return { error: "Missing fields" };
@@ -52,11 +49,7 @@ export async function signUp(prevState: any, formData: FormData) {
         emailVerified: new Date(), // Auto-verify (SEC-005 temporarily disabled)
         password: hashedPassword,
         profile: {
-          create: {
-            college,
-            major,
-            semester: parseInt(semester) || 1,
-          },
+          create: {},
         },
       },
     });
@@ -88,5 +81,5 @@ export async function signUp(prevState: any, formData: FormData) {
     return { error: "User already exists or email service error" };
   }
 
-  redirect("/login");
+  redirect("/login?callbackUrl=%2Fonboarding");
 }

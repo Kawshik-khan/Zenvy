@@ -29,6 +29,16 @@ export default async function NotificationsPage() {
   if (!user) redirect("/login");
 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const matchRequestIds = notifications
+    .filter((notification) => notification.type === "MATCH_REQUEST" && notification.relatedId)
+    .map((notification) => notification.relatedId as string);
+  const matchRequests = matchRequestIds.length
+    ? await prisma.match.findMany({
+        where: { id: { in: matchRequestIds } },
+        select: { id: true, requestNote: true },
+      })
+    : [];
+  const requestNoteByMatchId = new Map(matchRequests.map((match) => [match.id, match.requestNote]));
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
@@ -69,30 +79,40 @@ export default async function NotificationsPage() {
                 <p className="mt-4 text-sm text-on-surface-variant">No notifications yet.</p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`rounded-[28px] border p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 backdrop-blur-md transition-colors ${
-                    notification.read
-                      ? "glass-panel-subtle border-outline-variant/20"
-                      : "bg-primary/10 border-primary/20"
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      {!notification.read && <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(124,131,255,0.8)]" />}
-                      <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                        {notification.type.replace(/_/g, " ")}
+              notifications.map((notification) => {
+                const requestNote = notification.relatedId ? requestNoteByMatchId.get(notification.relatedId) : null;
+
+                return (
+                  <div
+                    key={notification.id}
+                    className={`rounded-[28px] border p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 backdrop-blur-md transition-colors ${
+                      notification.read
+                        ? "glass-panel-subtle border-outline-variant/20"
+                        : "bg-primary/10 border-primary/20"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {!notification.read && <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(124,131,255,0.8)]" />}
+                        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                          {notification.type.replace(/_/g, " ")}
+                        </p>
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-on-surface">{notification.content}</p>
+                      {requestNote && (
+                        <div className="mt-3 rounded-2xl border border-primary/20 bg-surface-container-low/70 px-4 py-3">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-primary">Request note</p>
+                          <p className="mt-2 text-sm leading-6 text-on-surface-variant">{requestNote}</p>
+                        </div>
+                      )}
+                      <p className="mt-1 text-xs text-on-surface-variant">
+                        {notification.createdAt.toLocaleString()}
                       </p>
                     </div>
-                    <p className="mt-2 text-sm font-semibold text-on-surface">{notification.content}</p>
-                    <p className="mt-1 text-xs text-on-surface-variant">
-                      {notification.createdAt.toLocaleString()}
-                    </p>
+                    <NotificationActions notificationId={notification.id} type={notification.type} read={notification.read} />
                   </div>
-                  <NotificationActions notificationId={notification.id} type={notification.type} read={notification.read} />
-                </div>
-              ))
+                );
+              })
             )}
           </section>
         </div>

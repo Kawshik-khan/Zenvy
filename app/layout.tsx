@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@livekit/components-styles";
 import "./globals.css";
 import PushManager from "./components/PushManager";
+import PomodoroProvider from "./components/PomodoroProvider";
+import CallProvider from "./components/CallProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +32,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <PushManager />
-        {children}
+        <PomodoroProvider>
+          <CallProvider>
+            <PushManager />
+            {children}
+          </CallProvider>
+        </PomodoroProvider>
       </body>
     </html>
   );

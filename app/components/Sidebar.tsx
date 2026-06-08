@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import SidebarNav from './SidebarNav';
-import PomodoroLauncher from './PomodoroLauncher';
-import PomodoroWidget from './PomodoroWidget';
+import FocusSessionStatus from './FocusSessionStatus';
 
 type SidebarMetrics = {
   totalXp: number;
@@ -38,7 +37,6 @@ const fallbackMetrics: SidebarMetrics = {
 export default function Sidebar() {
   const [payload, setPayload] = useState<SidebarPayload | null>(null);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
-  const [pomodoroOpen, setPomodoroOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -92,7 +90,6 @@ export default function Sidebar() {
 
   return (
     <>
-    <PomodoroWidget open={pomodoroOpen} onOpenChange={setPomodoroOpen} showLauncher={false} />
     <aside className="fixed left-4 top-4 bottom-4 z-[100] hidden w-[250px] flex-col rounded-[28px] glass-panel hide-scrollbar md:flex">
       {/* Logo */}
       <div className="p-6 flex items-center gap-4 cursor-pointer">
@@ -106,7 +103,6 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <SidebarNav chatUnreadCount={chatUnreadCount} />
-      <PomodoroLauncher onOpen={() => setPomodoroOpen(true)} />
 
       {/* User Profile Card at bottom */}
       <div className="p-4 whitespace-nowrap border-t glass-divider">
@@ -158,6 +154,7 @@ export default function Sidebar() {
               })}
             </div>
           </div>
+          <FocusSessionStatus />
         </div>
 
         {/* Upgrade Button removed per request */}
@@ -165,9 +162,20 @@ export default function Sidebar() {
     </aside>
 
     <div className="fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-[#090A12]/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-16px_40px_rgba(0,0,0,0.36)] backdrop-blur-2xl md:hidden">
+      <div className="border-b border-white/10 px-3 py-2">
+        <div className="flex items-center gap-3">
+          <img alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20" src={avatarUrl} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-black text-on-surface">{displayName}</p>
+            <p className="truncate text-[10px] font-bold text-on-surface-variant">{metrics.totalXp.toLocaleString()} XP · {metrics.currentStreakDays} day streak</p>
+          </div>
+          <div className="w-[9rem] max-w-[44vw]">
+            <FocusSessionStatus compact />
+          </div>
+        </div>
+      </div>
       <div className="flex items-stretch gap-1 px-2 py-2">
         <SidebarNav variant="bottom" chatUnreadCount={chatUnreadCount} />
-        <PomodoroLauncher variant="bottom" onOpen={() => setPomodoroOpen(true)} />
       </div>
     </div>
     </>
