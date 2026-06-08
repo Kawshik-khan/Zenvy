@@ -8,6 +8,7 @@ import {
   serializeCall,
   type CallScope,
 } from "@/lib/calls";
+import { createLiveKitCallCredentials } from "@/lib/livekit";
 
 function parseScope(body: any): CallScope | null {
   if (body?.conversationId) return { type: "DM", conversationId: String(body.conversationId) };
@@ -98,7 +99,13 @@ export async function POST(req: NextRequest) {
     }
 
     const updated = await getCallWithParticipants(call.id);
-    return NextResponse.json({ call: serializeCall(updated) });
+    const liveKit = await createLiveKitCallCredentials({
+      callId: call.id,
+      userId: session.user.id,
+      userName: session.user.name,
+    });
+
+    return NextResponse.json({ call: serializeCall(updated), liveKit });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Unable to start call" }, { status: 403 });
   }

@@ -508,6 +508,10 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         if (call.conversationId) io.to(`conversation_${call.conversationId}`).emit('call:state', payload);
       };
 
+      function isSocketInCallRoom(targetSocket: any, callId: string) {
+        return Boolean(targetSocket && callId && targetSocket.rooms.has(`call_${callId}`));
+      }
+
       socket.on('call:start', async (data: { callId: string }) => {
         if (!userId) return;
         try {
@@ -556,10 +560,10 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       socket.on('call:signal', async (data: { callId: string; toSocketId: string; signal: any }) => {
         if (!userId || !data.toSocketId) return;
         try {
-          await assertCanAccessCall(userId, data.callId);
           const targetUserId = socketUsers.get(data.toSocketId);
           if (!targetUserId) return;
-          await assertCanAccessCall(targetUserId, data.callId);
+          const targetSocket = io.sockets.sockets.get(data.toSocketId);
+          if (!isSocketInCallRoom(socket, data.callId) || !isSocketInCallRoom(targetSocket, data.callId)) return;
           io.to(data.toSocketId).emit('call:signal', {
             callId: data.callId,
             fromSocketId: socket.id,
@@ -574,7 +578,10 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       socket.on('call:media-state', async (data: { callId: string; audioEnabled?: boolean; videoEnabled?: boolean; screenSharing?: boolean }) => {
         if (!userId) return;
         try {
-          await assertCanAccessCall(userId, data.callId);
+          if (!isSocketInCallRoom(socket, data.callId)) {
+            await assertCanAccessCall(userId, data.callId);
+            socket.join(`call_${data.callId}`);
+          }
           await prisma.callParticipant.update({
             where: { callId_userId: { callId: data.callId, userId } },
             data: {
@@ -593,14 +600,14 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       socket.on('call:leave', async (data: { callId: string }) => {
         if (!userId) return;
         try {
-          const call = await assertCanAccessCall(userId, data.callId);
-          socket.leave(`call_${call.id}`);
-          socket.to(`call_${call.id}`).emit('call:peer-left', {
-            callId: call.id,
+          if (!isSocketInCallRoom(socket, data.callId)) return;
+          socket.leave(`call_${data.callId}`);
+          socket.to(`call_${data.callId}`).emit('call:peer-left', {
+            callId: data.callId,
             userId,
             socketId: socket.id,
           });
-          await emitCallState(call.id);
+          await emitCallState(data.callId);
         } catch (error: any) {
           socket.emit('call:error', { message: error.message || 'Unable to leave call' });
         }

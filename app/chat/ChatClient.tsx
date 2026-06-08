@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { socket } from '@/lib/socket';
 import Sidebar from '@/app/components/Sidebar';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
@@ -69,6 +70,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   const [inputValue, setInputValue] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
@@ -76,11 +78,47 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const newMessageRef = useRef<HTMLDivElement>(null);
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConversationId) || null,
     [conversations, activeConversationId]
   );
+
+  const filteredConversations = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return conversations;
+
+    return conversations.filter((conversation) => {
+      const preview = conversation.lastMessage?.content || '';
+      return (
+        conversation.title.toLowerCase().includes(query) ||
+        preview.toLowerCase().includes(query) ||
+        conversation.participants.some((participant) => participant.name.toLowerCase().includes(query))
+      );
+    });
+  }, [conversations, searchQuery]);
+
+  const suggestedPartners = useMemo(() => {
+    const existingPeerIds = new Set(conversations.map((conversation) => conversation.dmPeerId).filter(Boolean));
+    const suggestions = partners.filter((partner) => !existingPeerIds.has(partner.id));
+    return suggestions.length > 0 ? suggestions : partners;
+  }, [conversations, partners]);
+
+  const formatConversationTime = (value: string | Date | null) => {
+    if (!value) return '';
+    const date = new Date(value);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  const getConversationPreview = (conversation: ConversationSummary) => {
+    if (!conversation.lastMessage) return 'No messages yet';
+    const content = conversation.lastMessage.status === 'DELETED' ? 'Message deleted' : conversation.lastMessage.content;
+    return `${conversation.lastMessage.senderName.split(' ')[0]}: ${content}`;
+  };
 
   const refreshConversations = async () => {
     const res = await fetch('/api/conversations');
@@ -240,6 +278,15 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   const openConversation = (conversationId: string) => {
     router.push(`/chat?conversation=${conversationId}`);
     setIsSidebarVisible(false);
+  };
+
+  const backToInbox = () => {
+    router.push('/chat');
+    setIsSidebarVisible(false);
+  };
+
+  const focusNewMessage = () => {
+    newMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const startDm = async (targetUserId: string) => {
@@ -429,10 +476,10 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
 
       <main className="mobile-safe-bottom h-dvh w-full relative z-10 max-w-full flex flex-col gap-3 p-3 md:ml-[280px] md:gap-6 md:py-6 md:pl-4 md:pr-8">
         {/* Top Header */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3">
+        <header className={`${activeConversation ? 'hidden md:flex' : 'flex'} h-14 shrink-0 items-center justify-between gap-3`}>
           <div className="flex items-center gap-4">
             <button
-              className="lg:hidden p-2 rounded-xl text-[#F8FAFC] hover:bg-[#141C30]"
+              className="hidden lg:hidden p-2 rounded-xl text-[#F8FAFC] hover:bg-[#141C30]"
               onClick={() => setIsSidebarVisible(true)}
             >
               <span className="material-symbols-outlined">menu</span>
@@ -451,20 +498,40 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
         {/* Main Content: Inbox & Active Chat */}
         <section className="flex-1 flex min-h-0 gap-3 md:gap-6">
           {/* Inbox Sidebar Panel */}
-          <aside className={`w-[min(22rem,calc(100vw-1.5rem))] bg-[#0E1525]/95 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl flex flex-col overflow-hidden shrink-0 transition-transform duration-300 z-50 absolute lg:relative left-0 top-0 bottom-0 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-[120%] lg:translate-x-0'}`}>
-            <div className="p-5 border-b border-white/5 flex justify-between items-center shrink-0">
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#94A3B8]">Inbox</h2>
-              <button className="lg:hidden p-1.5 rounded-full bg-[#141C30] hover:bg-white/10 transition-colors" onClick={() => setIsSidebarVisible(false)}>
+          <aside className={`${activeConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-[min(22rem,calc(100vw-1.5rem))] bg-[#0E1525]/95 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl flex-col overflow-hidden shrink-0 transition-transform duration-300 z-50 lg:relative ${isSidebarVisible ? 'translate-x-0' : 'lg:translate-x-0'}`}>
+            <div className="p-4 md:p-5 border-b border-white/5 shrink-0 space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xs font-black uppercase tracking-widest text-[#94A3B8]">Recent Chats</h2>
+                  <p className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#22D3EE]">
+                    <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-[#F59E0B]'}`}></span>
+                    {isConnected ? 'Online' : 'Connecting'}
+                  </p>
+                </div>
+                <button className="hidden lg:hidden p-1.5 rounded-full bg-[#141C30] hover:bg-white/10 transition-colors" onClick={() => setIsSidebarVisible(false)}>
                 <span className="material-symbols-outlined text-[14px]">close</span>
-              </button>
+                </button>
+              </div>
+              <label className="relative block">
+                <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[#94A3B8]/70">search</span>
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-[#070B14]/75 py-3 pl-10 pr-4 text-sm font-medium text-[#F8FAFC] outline-none transition-all placeholder:text-[#94A3B8]/50 focus:border-[#7C83FF]/60 focus:shadow-[0_0_18px_rgba(124,131,255,0.18)]"
+                  placeholder="Search conversations..."
+                />
+              </label>
             </div>
 
             <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-1">
-              {conversations.map((conversation) => {
+              {filteredConversations.length > 0 && filteredConversations.map((conversation, index) => {
                 const isActive = conversation.id === activeConversationId;
                 return (
-                  <button
+                  <motion.button
                     key={conversation.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18, delay: Math.min(index * 0.025, 0.15) }}
                     onClick={() => openConversation(conversation.id)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all ${
                       isActive 
@@ -475,11 +542,12 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                     <div className="relative">
                       <img
                         alt=""
-                        className="w-11 h-11 rounded-full object-cover bg-[#070B14]"
+                        className="w-12 h-12 rounded-2xl object-cover bg-[#070B14]"
                         src={conversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.title)}&background=random`}
                       />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#0E1525] bg-[#34D399] shadow-[0_0_10px_rgba(52,211,153,0.7)]"></span>
                       {conversation.unreadCount > 0 && (
-                        <div className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-[#A855F7] shadow-[0_0_10px_rgba(168,85,247,0.5)] border-2 border-[#0E1525] flex items-center justify-center text-white text-[9px] font-bold">
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-[#A855F7] shadow-[0_0_10px_rgba(168,85,247,0.5)] border-2 border-[#0E1525] flex items-center justify-center text-white text-[9px] font-bold">
                           {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
                         </div>
                       )}
@@ -487,20 +555,41 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className={`text-sm font-bold truncate ${isActive ? 'text-[#F8FAFC]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'}`}>{conversation.title}</p>
+                        <span className="shrink-0 text-[10px] font-bold text-[#94A3B8]/50">{formatConversationTime(conversation.lastMessageAt || conversation.lastMessage?.timestamp || null)}</span>
                       </div>
-                      <p className={`text-[11px] truncate mt-0.5 ${isActive ? 'text-[#7C83FF]' : 'text-[#94A3B8]/60'}`}>
-                        {conversation.lastMessage ? `${conversation.lastMessage.senderName.split(' ')[0]}: ${conversation.lastMessage.content}` : 'No messages yet'}
+                      <p className={`text-[12px] truncate mt-1 ${conversation.unreadCount > 0 ? 'font-bold text-[#F8FAFC]' : isActive ? 'text-[#7C83FF]' : 'text-[#94A3B8]/60'}`}>
+                        {getConversationPreview(conversation)}
                       </p>
                     </div>
-                  </button>
+                  </motion.button>
                 );
               })}
 
+              {conversations.length === 0 && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="px-3 py-8 text-center">
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] border border-[#7C83FF]/30 bg-[#7C83FF]/10 shadow-[0_0_28px_rgba(124,131,255,0.18)]">
+                    <span className="material-symbols-outlined text-3xl text-[#7C83FF]" style={{ fontVariationSettings: "'FILL' 1" }}>forum</span>
+                  </div>
+                  <h3 className="text-lg font-black text-[#F8FAFC]">No conversations yet</h3>
+                  <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-[#94A3B8]">Start chatting with classmates, study partners, and group members.</p>
+                  <button onClick={focusNewMessage} className="mt-5 rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(124,131,255,0.28)]">
+                    Start New Conversation
+                  </button>
+                </motion.div>
+              )}
+
+              {conversations.length > 0 && filteredConversations.length === 0 && (
+                <div className="px-3 py-8 text-center">
+                  <p className="text-sm font-bold text-[#F8FAFC]">No chats found</p>
+                  <p className="mt-1 text-xs text-[#94A3B8]">Try another name or message.</p>
+                </div>
+              )}
+
               {/* Partners (DMs) */}
-              <div className="pt-6 px-3 pb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Start a DM</p>
+              <div ref={newMessageRef} className="pt-6 px-3 pb-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{conversations.length === 0 ? 'Suggested Study Partners' : 'Start a DM'}</p>
               </div>
-              {partners.map((partner) => (
+              {(conversations.length === 0 ? suggestedPartners : partners).map((partner) => (
                 <button
                   key={partner.id}
                   onClick={() => startDm(partner.id)}
@@ -510,6 +599,15 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                   <span className="text-[13px] font-bold text-[#94A3B8] truncate hover:text-[#F8FAFC]">{partner.name}</span>
                 </button>
               ))}
+
+              <button
+                onClick={focusNewMessage}
+                className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-5 z-[80] flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C83FF] to-[#A855F7] text-white shadow-[0_18px_42px_rgba(124,131,255,0.38)] active:scale-95 lg:hidden"
+                title="New Message"
+                aria-label="New Message"
+              >
+                <span className="material-symbols-outlined text-2xl">add</span>
+              </button>
 
               {/* Groups */}
               <div className="pt-6 px-3 pb-2">
@@ -531,12 +629,28 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
           </aside>
 
           {/* Active Chat Window */}
-          <div className="flex-1 flex flex-col min-h-0 bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl overflow-hidden relative">
+          <div className={`${activeConversation ? 'flex' : 'hidden lg:flex'} flex-1 flex-col min-h-0 bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl overflow-hidden relative`}>
             {activeConversation ? (
-              <>
+              <motion.div
+                key={activeConversation.id}
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 18 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="flex min-h-0 flex-1 flex-col"
+              >
                 {/* Chat Header */}
                 <div className="px-3 py-3 md:px-6 md:py-4 flex items-center justify-between gap-3 border-b border-white/5 bg-[#141C30]/50 backdrop-blur-xl shrink-0">
                   <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                    <button
+                      type="button"
+                      onClick={backToInbox}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0E1525] text-[#F8FAFC] transition-colors hover:bg-[#7C83FF]/20 md:hidden"
+                      title="Back to inbox"
+                      aria-label="Back to inbox"
+                    >
+                      <span className="material-symbols-outlined">arrow_back</span>
+                    </button>
                     <img
                       alt=""
                       className="h-10 w-10 rounded-full object-cover shadow-[0_4px_10px_rgba(0,0,0,0.3)] md:h-12 md:w-12"
@@ -544,7 +658,10 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                     />
                     <div className="min-w-0">
                       <h2 className="truncate text-base font-bold text-[#F8FAFC] md:text-lg">{activeConversation.title}</h2>
-                      <p className="text-xs font-medium text-[#22D3EE] uppercase tracking-wider">{activeConversation.type}</p>
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-[#22D3EE] uppercase tracking-wider">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.75)]"></span>
+                        {activeConversation.type}
+                      </p>
                     </div>
                   </div>
                   
@@ -690,7 +807,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                     </div>
                   </div>
                 </form>
-              </>
+              </motion.div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 relative z-10">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#7C83FF]/20 to-[#A855F7]/20 border border-[#7C83FF]/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(124,131,255,0.2)]">

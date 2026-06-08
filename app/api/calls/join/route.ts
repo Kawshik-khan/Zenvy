@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '@/lib/calls';
+import { createLiveKitCallCredentials } from '@/lib/livekit';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +26,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Call not found' }, { status: 404 });
     }
 
-    await assertCanAccessCall(userId, callSession.id);
+    if (!callId) {
+      await assertCanAccessCall(userId, callSession.id);
+    }
 
     await prisma.callParticipant.upsert({
       where: {
@@ -49,7 +52,13 @@ export async function POST(req: NextRequest) {
     });
 
     const updated = await getCallWithParticipants(callSession.id);
-    return NextResponse.json({ success: true, call: serializeCall(updated) }, { status: 200 });
+    const liveKit = await createLiveKitCallCredentials({
+      callId: callSession.id,
+      userId,
+      userName: session.user.name,
+    });
+
+    return NextResponse.json({ success: true, call: serializeCall(updated), liveKit }, { status: 200 });
   } catch (error) {
     console.error('Error joining call:', error);
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Internal server error' }, { status: 500 });

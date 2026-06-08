@@ -337,6 +337,10 @@ io.on('connection', (socket) => {
     if (call.conversationId) io.to(`conversation_${call.conversationId}`).emit('call:state', payload);
   };
 
+  function isSocketInCallRoom(targetSocket, callId) {
+    return Boolean(targetSocket && callId && targetSocket.rooms.has(`call_${callId}`));
+  }
+
   socket.on('call:start', async (data) => {
     if (!userId) return;
     try {
@@ -378,10 +382,10 @@ io.on('connection', (socket) => {
   socket.on('call:signal', async (data) => {
     if (!userId || !data.toSocketId) return;
     try {
-      await assertCanAccessCall(userId, data.callId);
       const targetUserId = socketUsers.get(data.toSocketId);
       if (!targetUserId) return;
-      await assertCanAccessCall(targetUserId, data.callId);
+      const targetSocket = io.sockets.sockets.get(data.toSocketId);
+      if (!isSocketInCallRoom(socket, data.callId) || !isSocketInCallRoom(targetSocket, data.callId)) return;
       io.to(data.toSocketId).emit('call:signal', {
         callId: data.callId,
         fromSocketId: socket.id,
@@ -396,7 +400,10 @@ io.on('connection', (socket) => {
   socket.on('call:media-state', async (data) => {
     if (!userId) return;
     try {
-      await assertCanAccessCall(userId, data.callId);
+      if (!isSocketInCallRoom(socket, data.callId)) {
+        await assertCanAccessCall(userId, data.callId);
+        socket.join(`call_${data.callId}`);
+      }
       await prisma.callParticipant.update({
         where: { callId_userId: { callId: data.callId, userId } },
         data: {
@@ -415,10 +422,10 @@ io.on('connection', (socket) => {
   socket.on('call:leave', async (data) => {
     if (!userId) return;
     try {
-      const call = await assertCanAccessCall(userId, data.callId);
-      socket.leave(`call_${call.id}`);
-      socket.to(`call_${call.id}`).emit('call:peer-left', { callId: call.id, userId, socketId: socket.id });
-      await emitCallState(call.id);
+      if (!isSocketInCallRoom(socket, data.callId)) return;
+      socket.leave(`call_${data.callId}`);
+      socket.to(`call_${data.callId}`).emit('call:peer-left', { callId: data.callId, userId, socketId: socket.id });
+      await emitCallState(data.callId);
     } catch (error) {
       socket.emit('call:error', { message: error.message || 'Unable to leave call' });
     }

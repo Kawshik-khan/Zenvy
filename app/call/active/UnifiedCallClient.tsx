@@ -7,8 +7,9 @@ import {
   LiveKitRoom,
   ParticipantTile,
   RoomAudioRenderer,
-  TrackToggle,
+  useLocalParticipant,
   useParticipants,
+  useRoomContext,
   useTracks,
 } from '@livekit/components-react';
 import { RoomEvent, Track } from 'livekit-client';
@@ -46,6 +47,12 @@ type LiveKitCredentials = {
   roomName: string;
 };
 
+type CallApiResponse = {
+  call: CallPayload;
+  liveKit: LiveKitCredentials;
+  error?: string;
+};
+
 interface UnifiedCallClientProps {
   currentUser: { id: string; name: string; image: string };
   initialCallId?: string;
@@ -55,7 +62,7 @@ interface UnifiedCallClientProps {
   mediaType: 'AUDIO' | 'VIDEO';
 }
 
-function CallTiles({ mediaType }: { mediaType: 'AUDIO' | 'VIDEO' }) {
+function CallTiles() {
   const tracks = useTracks(
     [{ source: Track.Source.Camera, withPlaceholder: true }],
     {
@@ -84,9 +91,9 @@ function CallTiles({ mediaType }: { mediaType: 'AUDIO' | 'VIDEO' }) {
           />
         </div>
       ))}
-      {mediaType === 'AUDIO' && tracks.length === 0 && (
+      {tracks.length === 0 && (
         <div className="flex min-h-52 items-center justify-center rounded-2xl glass-panel-subtle">
-          <p className="text-sm font-bold text-on-surface-variant">Connecting audio...</p>
+          <p className="text-sm font-bold text-on-surface-variant">Camera is off</p>
         </div>
       )}
     </main>
@@ -95,41 +102,126 @@ function CallTiles({ mediaType }: { mediaType: 'AUDIO' | 'VIDEO' }) {
 
 function CallControls({
   callId,
-  mediaType,
   scope,
   onLeave,
+  onError,
+  speakerMuted,
+  onSpeakerMutedChange,
 }: {
   callId: string;
-  mediaType: 'AUDIO' | 'VIDEO';
   scope?: Scope;
   onLeave: () => void;
+  onError: (message: string) => void;
+  speakerMuted: boolean;
+  onSpeakerMutedChange: (muted: boolean) => void;
 }) {
+  const room = useRoomContext();
+  const { isCameraEnabled, isMicrophoneEnabled, localParticipant } = useLocalParticipant();
+  const [audioOutputs, setAudioOutputs] = useState<MediaDeviceInfo[]>([]);
+  const [speakerOn, setSpeakerOn] = useState(true);
+  const [mediaPending, setMediaPending] = useState<'audio' | 'video' | 'speaker' | null>(null);
+  const supportsAudioOutput = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+
   const emitMediaState = useCallback((next: { audioEnabled?: boolean; videoEnabled?: boolean }) => {
     socket.emit('call:media-state', { callId, ...next });
   }, [callId]);
 
+  useEffect(() => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((devices) => {
+        setAudioOutputs(devices.filter((device) => device.kind === 'audiooutput'));
+      })
+      .catch(() => {
+        setAudioOutputs([]);
+      });
+  }, []);
+
+  const toggleMicrophone = useCallback(async () => {
+    const enabled = !isMicrophoneEnabled;
+    setMediaPending('audio');
+    try {
+      await localParticipant.setMicrophoneEnabled(enabled);
+      emitMediaState({ audioEnabled: enabled });
+    } catch (error: any) {
+      onError(error?.message || 'Unable to update microphone');
+    } finally {
+      setMediaPending(null);
+    }
+  }, [emitMediaState, isMicrophoneEnabled, localParticipant, onError]);
+
+  const toggleCamera = useCallback(async () => {
+    const enabled = !isCameraEnabled;
+    setMediaPending('video');
+    try {
+      await localParticipant.setCameraEnabled(enabled);
+      emitMediaState({ videoEnabled: enabled });
+    } catch (error: any) {
+      onError(error?.message || 'Unable to update camera');
+    } finally {
+      setMediaPending(null);
+    }
+  }, [emitMediaState, isCameraEnabled, localParticipant, onError]);
+
+  const toggleSpeaker = useCallback(async () => {
+    setMediaPending('speaker');
+    try {
+      const nextMuted = !speakerMuted;
+      onSpeakerMutedChange(nextMuted);
+      setSpeakerOn(!nextMuted);
+
+      if (!nextMuted && supportsAudioOutput && audioOutputs.length > 1) {
+        const target =
+          audioOutputs.find((device) => device.label.toLowerCase().includes('speaker')) ||
+          audioOutputs.find((device) => device.deviceId !== 'default') ||
+          audioOutputs[0];
+
+        if (target) {
+          await room.switchActiveDevice('audiooutput', target.deviceId).catch(() => false);
+        }
+      }
+    } finally {
+      setMediaPending(null);
+    }
+  }, [audioOutputs, onSpeakerMutedChange, room, speakerMuted, supportsAudioOutput]);
+
+  const controlClass = 'flex h-14 w-14 items-center justify-center rounded-full bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60';
+  const offClass = 'bg-error text-on-error hover:bg-error-dim';
+
   return (
     <footer className="flex min-h-24 shrink-0 items-center justify-center gap-3 border-t px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 glass-panel-subtle glass-divider md:gap-4 md:pb-3">
-      <TrackToggle
-        source={Track.Source.Microphone}
-        showIcon={false}
-        onChange={(enabled) => emitMediaState({ audioEnabled: enabled })}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high data-[lk-enabled=false]:bg-error data-[lk-enabled=false]:text-on-error"
-        title="Toggle microphone"
+      <button
+        type="button"
+        onClick={toggleMicrophone}
+        disabled={mediaPending === 'audio'}
+        className={`${controlClass} ${isMicrophoneEnabled ? '' : offClass}`}
+        title={isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'}
+        aria-label={isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'}
       >
-        <span className="material-symbols-outlined">mic</span>
-      </TrackToggle>
-      {mediaType === 'VIDEO' && (
-        <TrackToggle
-          source={Track.Source.Camera}
-          showIcon={false}
-          onChange={(enabled) => emitMediaState({ videoEnabled: enabled })}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high data-[lk-enabled=false]:bg-error data-[lk-enabled=false]:text-on-error"
-          title="Toggle camera"
-        >
-          <span className="material-symbols-outlined">videocam</span>
-        </TrackToggle>
-      )}
+        <span className="material-symbols-outlined">{isMicrophoneEnabled ? 'mic' : 'mic_off'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={toggleCamera}
+        disabled={mediaPending === 'video'}
+        className={`${controlClass} ${isCameraEnabled ? '' : offClass}`}
+        title={isCameraEnabled ? 'Turn camera off' : 'Start video'}
+        aria-label={isCameraEnabled ? 'Turn camera off' : 'Start video'}
+      >
+        <span className="material-symbols-outlined">{isCameraEnabled ? 'videocam' : 'videocam_off'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={toggleSpeaker}
+        disabled={mediaPending === 'speaker'}
+        className={`${controlClass} ${speakerOn && !speakerMuted ? 'bg-primary text-on-primary hover:bg-primary/90' : ''}`}
+        title={speakerMuted ? 'Turn speaker on' : 'Mute speaker'}
+        aria-label={speakerMuted ? 'Turn speaker on' : 'Mute speaker'}
+      >
+        <span className="material-symbols-outlined">{speakerMuted ? 'volume_off' : 'volume_up'}</span>
+      </button>
       <button
         onClick={onLeave}
         className="flex h-16 w-16 items-center justify-center rounded-full bg-error text-on-error hover:bg-error-dim"
@@ -172,6 +264,7 @@ function LiveKitCallContent({
   const [callMusicAutoStarted, setCallMusicAutoStarted] = useState(false);
   const [callMusicBlocked, setCallMusicBlocked] = useState(false);
   const [callMusicManuallyControlled, setCallMusicManuallyControlled] = useState(false);
+  const [speakerMuted, setSpeakerMuted] = useState(false);
   const isAloneInCall = participants.length <= 1;
 
   const playCallMusic = useCallback(async (manual = false) => {
@@ -240,7 +333,7 @@ function LiveKitCallContent({
           }}
         />
       )}
-      <RoomAudioRenderer />
+      <RoomAudioRenderer muted={speakerMuted} />
       <header className="app-topbar shrink-0">
         <div className="flex min-w-0 items-center gap-3">
           <button onClick={onLeave} className="rounded-full p-2 hover:bg-surface-container">
@@ -261,7 +354,7 @@ function LiveKitCallContent({
         )}
       </header>
 
-      <CallTiles mediaType={mediaType} />
+      <CallTiles />
 
       {(isAloneInCall || callMusicOn || callMusicBlocked) && selectedCallTrack && (
         <div className="flex shrink-0 flex-wrap items-center justify-center gap-3 border-t px-4 py-3 glass-panel-subtle glass-divider">
@@ -286,7 +379,14 @@ function LiveKitCallContent({
         </div>
       )}
 
-      <CallControls callId={callId} mediaType={mediaType} scope={scope} onLeave={onLeave} />
+      <CallControls
+        callId={callId}
+        scope={scope}
+        onLeave={onLeave}
+        onError={onError}
+        speakerMuted={speakerMuted}
+        onSpeakerMutedChange={setSpeakerMuted}
+      />
     </>
   );
 }
@@ -361,9 +461,9 @@ export default function UnifiedCallClient({
 
     async function initialize() {
       try {
-        socket.connect();
-
         let callId = initialCallId || '';
+        let responseData: CallApiResponse;
+
         if (!callId) {
           if (!scope) throw new Error('Missing call target');
           const body =
@@ -381,27 +481,29 @@ export default function UnifiedCallClient({
           const startData = await startRes.json();
           if (!startRes.ok) throw new Error(startData.error || 'Unable to start call');
           callId = startData.call.id;
-          if (!cancelled) setCall(startData.call);
-          socket.emit('call:start', { callId });
+          responseData = startData;
+        } else {
+          const joinRes = await fetch('/api/calls/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callId }),
+          });
+          const joinData = await joinRes.json();
+          if (!joinRes.ok) throw new Error(joinData.error || 'Unable to join call');
+          responseData = joinData;
         }
 
-        const joinRes = await fetch('/api/calls/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ callId }),
-        });
-        const joinData = await joinRes.json();
-        if (!joinRes.ok) throw new Error(joinData.error || 'Unable to join call');
-
-        const tokenRes = await fetch(`/api/livekit-token?callId=${encodeURIComponent(callId)}`, { cache: 'no-store' });
-        const tokenData = await tokenRes.json();
-        if (!tokenRes.ok) throw new Error(tokenData.error || 'Unable to get LiveKit token');
+        if (!responseData.liveKit?.token || !responseData.liveKit?.serverUrl) {
+          throw new Error('LiveKit credentials were not returned');
+        }
 
         if (cancelled) return;
         setActiveCallId(callId);
-        setCall(joinData.call);
-        setCredentials(tokenData);
-        socket.emit('call:join', { callId });
+        setCall(responseData.call);
+        setCredentials(responseData.liveKit);
+
+        socket.connect();
+        socket.emit(initialCallId ? 'call:join' : 'call:start', { callId });
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Unable to initialize call');
       }
@@ -465,9 +567,34 @@ export default function UnifiedCallClient({
 
   if (!liveKitReady || !credentials) {
     return (
-      <div className="app-aurora flex h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
-        <span className="material-symbols-outlined animate-pulse text-5xl text-primary">sensors</span>
-        <p className="text-sm font-bold text-on-surface-variant">Preparing secure call...</p>
+      <div className="app-aurora flex h-dvh flex-col overflow-hidden">
+        <header className="app-topbar shrink-0">
+          <div className="flex min-w-0 items-center gap-3">
+            <button onClick={() => router.back()} className="rounded-full p-2 hover:bg-surface-container">
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <img alt="" src={avatar || currentUser.image} className="h-10 w-10 rounded-xl bg-surface-container object-cover" />
+            <div className="min-w-0">
+              <h1 className="truncate font-black">{title}</h1>
+              <p className="text-xs text-on-surface-variant">Connecting media...</p>
+            </div>
+          </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center p-6 text-center">
+          <div className="rounded-2xl p-6 glass-panel-subtle">
+            <span className="material-symbols-outlined animate-pulse text-5xl text-primary">sensors</span>
+            <p className="mt-3 text-sm font-bold text-on-surface-variant">Connecting media...</p>
+          </div>
+        </main>
+        <footer className="flex min-h-24 shrink-0 items-center justify-center border-t px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 glass-panel-subtle glass-divider">
+          <button
+            onClick={() => router.back()}
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-error text-on-error hover:bg-error-dim"
+            title="Leave Call"
+          >
+            <span className="material-symbols-outlined text-3xl">call_end</span>
+          </button>
+        </footer>
       </div>
     );
   }

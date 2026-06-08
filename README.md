@@ -47,7 +47,7 @@ Create a `.env` file in the root directory and add the following:
 
 ```env
 # Database
-DATABASE_URL="postgresql://user:password@host:port/dbname?pgbouncer=true"
+DATABASE_URL="postgresql://user:password@host:port/dbname?pgbouncer=true&connection_limit=5&pool_timeout=20"
 DIRECT_URL="postgresql://user:password@host:port/dbname"
 
 # Auth
