@@ -8,7 +8,7 @@ export const sidebarLinks = [
   { href: "/dashboard", icon: "home", label: "Dashboard" },
   { href: "/groups", icon: "groups", label: "Groups" },
   { href: "/channels", icon: "tag", label: "Channels" },
-  { href: "/chat", icon: "chat_bubble", label: "Chat", badge: 3 },
+  { href: "/chat", icon: "chat_bubble", label: "Chat" },
   { href: "/matching", icon: "favorite", label: "Matching" },
   { href: "/events", icon: "event", label: "Events" },
   { href: "/notifications", icon: "notifications", label: "Notifications" },
@@ -18,11 +18,13 @@ export const sidebarLinks = [
 
 type SidebarNavProps = {
   variant?: "sidebar" | "bottom";
+  chatUnreadCount?: number;
 };
 
-export default function SidebarNav({ variant = "sidebar" }: SidebarNavProps) {
+export default function SidebarNav({ variant = "sidebar", chatUnreadCount = 0 }: SidebarNavProps) {
   const pathname = usePathname();
   const isBottom = variant === "bottom";
+  const chatBadge = chatUnreadCount > 9 ? "9+" : chatUnreadCount > 0 ? String(chatUnreadCount) : null;
 
   return (
     <nav
@@ -35,6 +37,7 @@ export default function SidebarNav({ variant = "sidebar" }: SidebarNavProps) {
     >
       {sidebarLinks.map((link) => {
         const isActive = pathname?.startsWith(link.href) || pathname === link.href;
+        const badge = link.href === "/chat" ? chatBadge : null;
         return (
           <Link
             key={link.label}
@@ -54,13 +57,13 @@ export default function SidebarNav({ variant = "sidebar" }: SidebarNavProps) {
             </span>
             <span className={`${isBottom ? "max-w-full truncate text-[10px]" : "text-sm"} whitespace-nowrap ${isActive ? "font-semibold" : "font-medium"}`}>{link.label}</span>
 
-            {link.badge && (
+            {badge && (
               <div
                 className={`absolute flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-bold text-white shadow-[0_0_10px_rgba(168,85,247,0.5)] ${
                   isBottom ? "right-2 top-1" : "right-4 top-1/2 -translate-y-1/2"
                 }`}
               >
-                {link.badge}
+                {badge}
               </div>
             )}
           </Link>

@@ -10,10 +10,29 @@ const eventSchema = z.object({
   description: z.string().max(500).optional().nullable(),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
+  timezoneOffset: z.preprocess((value) => (value === null || value === "" ? undefined : value), z.coerce.number().optional()),
   groupId: z.string().optional().nullable(),
   location: z.string().max(160).optional().nullable(),
   type: z.string().max(40).default("VIRTUAL"),
 });
+
+function parseLocalDateTime(value: string, timezoneOffset?: number) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute] = match;
+  const parts = [year, month, day, hour, minute].map(Number);
+  if (parts.some((part) => Number.isNaN(part))) return null;
+
+  const [yyyy, mm, dd, hh, min] = parts;
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31 || hh < 0 || hh > 23 || min < 0 || min > 59) return null;
+
+  if (typeof timezoneOffset === "number" && Number.isFinite(timezoneOffset)) {
+    return new Date(Date.UTC(yyyy, mm - 1, dd, hh, min) + timezoneOffset * 60000);
+  }
+
+  return new Date(yyyy, mm - 1, dd, hh, min);
+}
 
 async function getCurrentUser() {
   const session = await auth();
@@ -35,6 +54,7 @@ export async function createEvent(formData: FormData) {
     description: formData.get("description") || null,
     startTime: formData.get("startTime"),
     endTime: formData.get("endTime"),
+    timezoneOffset: formData.get("timezoneOffset"),
     groupId: formData.get("groupId") || null,
     location: formData.get("location") || null,
     type: formData.get("type") || "VIRTUAL",
@@ -45,10 +65,18 @@ export async function createEvent(formData: FormData) {
   }
 
   const { title, description, groupId, location, type } = validation.data;
-  const startTime = new Date(validation.data.startTime);
-  const endTime = new Date(validation.data.endTime);
+  const startTime = parseLocalDateTime(validation.data.startTime, validation.data.timezoneOffset);
+  const endTime = parseLocalDateTime(validation.data.endTime, validation.data.timezoneOffset);
 
-  if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime()) || endTime <= startTime) {
+  if (!startTime || !endTime || Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) {
+    throw new Error("Invalid event date or time");
+  }
+
+  if (startTime < new Date(Date.now() - 60000)) {
+    throw new Error("Event start time cannot be in the past");
+  }
+
+  if (endTime <= startTime) {
     throw new Error("Event end time must be after start time");
   }
 
@@ -78,6 +106,7 @@ export async function createEvent(formData: FormData) {
     },
   });
 
+  revalidatePath("/events");
   revalidatePath("/scheduling");
   revalidatePath("/dashboard");
 }
@@ -104,6 +133,7 @@ export async function rsvpEvent(eventId: string, status: "GOING" | "MAYBE" | "DE
     create: { eventId, userId: user.id, status },
   });
 
+  revalidatePath("/events");
   revalidatePath("/scheduling");
   revalidatePath("/dashboard");
 }
@@ -129,6 +159,7 @@ export async function cancelEvent(eventId: string) {
 
   await prisma.event.delete({ where: { id: eventId } });
 
+  revalidatePath("/events");
   revalidatePath("/scheduling");
   revalidatePath("/dashboard");
 }

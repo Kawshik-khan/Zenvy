@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
+import EventDateTimePicker from "@/app/components/EventDateTimePicker";
 import { cancelEvent, createEvent, rsvpEvent } from "@/app/actions/event";
 
 export default async function SchedulingPage() {
@@ -106,16 +107,7 @@ export default async function SchedulingPage() {
                     ))}
                   </select>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Start</label>
-                    <input name="startTime" required type="datetime-local" className="app-input px-4 py-3" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">End</label>
-                    <input name="endTime" required type="datetime-local" className="app-input px-4 py-3" />
-                  </div>
-                </div>
+                <EventDateTimePicker />
                 <div>
                   <label className="block text-xs font-black uppercase tracking-widest text-on-surface-variant mb-1">Location</label>
                   <input name="location" maxLength={160} className="app-input px-4 py-3" placeholder="Virtual, library room, or URL" />

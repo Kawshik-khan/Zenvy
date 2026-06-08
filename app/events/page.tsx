@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
 import ErrorView from "@/app/components/ErrorView";
+import EventDateTimePicker from "@/app/components/EventDateTimePicker";
 import { cancelEvent, createEvent, rsvpEvent } from "@/app/actions/event";
 
 const rsvpStatuses = ["GOING", "MAYBE", "DECLINED"] as const;
@@ -132,16 +133,7 @@ export default async function EventsPage() {
                       ))}
                     </select>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-black uppercase tracking-widest text-on-surface-variant">Start</label>
-                      <input name="startTime" required type="datetime-local" className="app-input px-4 py-3" />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-black uppercase tracking-widest text-on-surface-variant">End</label>
-                      <input name="endTime" required type="datetime-local" className="app-input px-4 py-3" />
-                    </div>
-                  </div>
+                  <EventDateTimePicker />
                   <div>
                     <label className="mb-1 block text-xs font-black uppercase tracking-widest text-on-surface-variant">Location</label>
                     <input name="location" maxLength={160} className="app-input px-4 py-3" placeholder="Library room, meeting link, or campus spot" />

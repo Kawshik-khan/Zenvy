@@ -35,6 +35,7 @@ const fallbackMetrics: SidebarMetrics = {
 
 export default function Sidebar() {
   const [payload, setPayload] = useState<SidebarPayload | null>(null);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -50,6 +51,33 @@ export default function Sidebar() {
 
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshUnreadCount = () => {
+      fetch("/api/conversations/unread", { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data: { unreadCount?: number } | null) => {
+          if (active) setChatUnreadCount(Math.max(0, Number(data?.unreadCount || 0)));
+        })
+        .catch(() => {
+          if (active) setChatUnreadCount(0);
+        });
+    };
+
+    const onFocus = () => refreshUnreadCount();
+
+    refreshUnreadCount();
+    window.addEventListener("focus", onFocus);
+    const interval = window.setInterval(refreshUnreadCount, 30_000);
+
+    return () => {
+      active = false;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
     };
   }, []);
 
@@ -73,7 +101,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <SidebarNav />
+      <SidebarNav chatUnreadCount={chatUnreadCount} />
 
       {/* User Profile Card at bottom */}
       <div className="p-4 whitespace-nowrap border-t glass-divider">
@@ -132,7 +160,7 @@ export default function Sidebar() {
     </aside>
 
     <div className="fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-[#090A12]/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-16px_40px_rgba(0,0,0,0.36)] backdrop-blur-2xl md:hidden">
-      <SidebarNav variant="bottom" />
+      <SidebarNav variant="bottom" chatUnreadCount={chatUnreadCount} />
     </div>
     </>
   );
