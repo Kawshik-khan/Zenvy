@@ -30,7 +30,7 @@ export default function SidebarNav({ variant = "sidebar", chatUnreadCount = 0 }:
     <nav
       className={
         isBottom
-          ? "flex items-stretch gap-1 overflow-x-auto px-2 py-2 hide-scrollbar"
+          ? "flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto hide-scrollbar"
           : "flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar py-2 px-3 space-y-1"
       }
       aria-label={isBottom ? "Primary navigation" : "Sidebar navigation"}

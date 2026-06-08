@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@livekit/components-styles";
 import "./globals.css";
 import PushManager from "./components/PushManager";
-import PomodoroWidget from "./components/PomodoroWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +31,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <PushManager />
-        <PomodoroWidget />
         {children}
       </body>
     </html>

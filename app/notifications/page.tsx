@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/app/components/Sidebar";
+import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import { prisma } from "@/lib/prisma";
 import { markAllNotificationsRead } from "@/app/actions/notifications";
 import { NotificationActions } from "./NotificationActions";
@@ -13,19 +14,35 @@ export default async function NotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const notifications = await prisma.notification.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  const [user, notifications] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, image: true },
+    }),
+    prisma.notification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+  ]);
+
+  if (!user) redirect("/login");
 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
       <Sidebar />
-      <main className="app-main p-4 md:p-12">
-        <div className="relative z-10 max-w-4xl mx-auto space-y-8">
+      <main className="app-main">
+        <header className="app-topbar">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Inbox</p>
+            <h1 className="text-lg font-black text-on-surface">Notifications</h1>
+          </div>
+          <HeaderProfileMenu userName={user.name || "Student"} imageUrl={user.image} />
+        </header>
+
+        <div className="app-content relative z-10 mx-auto max-w-4xl space-y-8 p-4 md:p-12">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
               <Link href="/dashboard" className="text-xs font-black uppercase tracking-widest text-primary">

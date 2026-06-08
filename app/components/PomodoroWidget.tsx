@@ -37,6 +37,12 @@ type PendingSession = {
   trackId?: string;
 };
 
+type PomodoroWidgetProps = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showLauncher?: boolean;
+};
+
 const STORAGE_KEY = "zenvy:pomodoro-state:v2";
 const PENDING_KEY = "zenvy:pomodoro-pending:v1";
 
@@ -96,7 +102,7 @@ function writePendingSessions(sessions: PendingSession[]) {
   localStorage.setItem(PENDING_KEY, JSON.stringify(sessions));
 }
 
-export default function PomodoroWidget() {
+export default function PomodoroWidget({ open, onOpenChange, showLauncher = true }: PomodoroWidgetProps = {}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const completionLock = useRef(false);
   const startedAtRef = useRef<number | null>(null);
@@ -120,11 +126,18 @@ export default function PomodoroWidget() {
   const [muted, setMuted] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [saveState, setSaveState] = useState<"IDLE" | "SAVING" | "SAVED" | "PENDING">("IDLE");
+  const isControlled = typeof open === "boolean";
+  const isExpanded = isControlled ? open : expanded;
 
   const selectedTrack = useMemo(
     () => focusTracks.find((track) => track.id === selectedTrackId) || focusTracks[0],
     [selectedTrackId],
   );
+
+  const updateExpanded = useCallback((nextOpen: boolean) => {
+    if (!isControlled) setExpanded(nextOpen);
+    onOpenChange?.(nextOpen);
+  }, [isControlled, onOpenChange]);
 
   useEffect(() => {
     modeRef.current = mode;
@@ -164,11 +177,11 @@ export default function PomodoroWidget() {
       setSelectedTrackId(saved.selectedTrackId || focusTracks[0]?.id || "");
       setVolume(typeof saved.volume === "number" ? saved.volume : DEFAULT_VOLUME);
       setMuted(Boolean(saved.muted));
-      setExpanded(Boolean(saved.expanded));
+      if (!isControlled) setExpanded(Boolean(saved.expanded));
     } catch {
       localStorage.removeItem(STORAGE_KEY);
     }
-  }, []);
+  }, [isControlled]);
 
   useEffect(() => {
     if (!authorized) return;
@@ -206,11 +219,11 @@ export default function PomodoroWidget() {
       selectedTrackId,
       volume,
       muted,
-      expanded,
+      expanded: isExpanded,
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-  }, [authorized, mode, status, remainingSeconds, durationSeconds, startedAt, focusSessionsCompleted, settings, selectedTrackId, volume, muted, expanded]);
+  }, [authorized, mode, status, remainingSeconds, durationSeconds, startedAt, focusSessionsCompleted, settings, selectedTrackId, volume, muted, isExpanded]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -413,11 +426,12 @@ export default function PomodoroWidget() {
           setIsMusicOn(false);
         }}
       />
+      {(showLauncher || isExpanded) && (
       <div className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-[120] w-[calc(100vw-2rem)] max-w-[380px] md:bottom-6 md:right-6">
-        {!expanded ? (
+        {!isExpanded ? (
           <button
             type="button"
-            onClick={() => setExpanded(true)}
+            onClick={() => updateExpanded(true)}
             className="ml-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#0E1525]/95 px-4 py-3 text-sm font-black text-[#F8FAFC] shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl transition-all hover:border-[#7C83FF]/40 hover:bg-[#141C30]"
             aria-label="Open Pomodoro timer"
           >
@@ -434,7 +448,7 @@ export default function PomodoroWidget() {
               </div>
               <button
                 type="button"
-                onClick={() => setExpanded(false)}
+                onClick={() => updateExpanded(false)}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C30] text-[#94A3B8] transition-colors hover:text-white"
                 aria-label="Minimize Pomodoro timer"
               >
@@ -560,6 +574,7 @@ export default function PomodoroWidget() {
           </section>
         )}
       </div>
+      )}
     </>
   );
 }

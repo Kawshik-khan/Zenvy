@@ -8,6 +8,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
+import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import ErrorView from "@/app/components/ErrorView";
 
 function resourceIcon(type: string) {
@@ -54,11 +55,7 @@ export default async function BookmarksPage() {
             </div>
             <div className="flex items-center gap-3">
               <NotificationBell />
-              <img
-                alt=""
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20"
-                src={user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "U")}&background=random`}
-              />
+              <HeaderProfileMenu userName={user.name || "Student"} imageUrl={user.image} />
             </div>
           </header>
 

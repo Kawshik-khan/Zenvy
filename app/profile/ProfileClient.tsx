@@ -1,18 +1,25 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useTransition } from 'react';
 import { uploadProfilePicture } from './upload-action';
 import type { StudyMetrics } from '@/lib/study-metrics';
+
+type SaveResult = {
+  success: boolean;
+  error?: string;
+};
 
 type ProfileClientProps = {
   user: any;
   metrics: StudyMetrics;
-  updateProfile: (formData: FormData) => void;
+  updateProfile: (formData: FormData) => Promise<SaveResult>;
 };
 
 export default function ProfileClient({ user, metrics, updateProfile }: ProfileClientProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [saveResult, setSaveResult] = useState<SaveResult | null>(null);
+  const [isSaving, startSaving] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentBio = user.profile?.bio || "";
@@ -37,6 +44,17 @@ export default function ProfileClient({ user, metrics, updateProfile }: ProfileC
     setIsUploading(false);
   };
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaveResult(null);
+    const formData = new FormData(event.currentTarget);
+
+    startSaving(async () => {
+      const result = await updateProfile(formData);
+      setSaveResult(result);
+    });
+  };
+
   return (
       <main className="app-main">
         <div className="app-content p-4 md:p-12 max-w-6xl mx-auto">
@@ -45,7 +63,7 @@ export default function ProfileClient({ user, metrics, updateProfile }: ProfileC
             <p className="text-on-surface-variant text-base md:text-lg">Manage your digital presence and academic preferences.</p>
           </div>
 
-          <form id="account-settings" action={updateProfile} className="scroll-mt-28">
+          <form id="account-settings" onSubmit={handleSubmit} className="scroll-mt-28">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
               <div className="lg:col-span-4 space-y-8">
                 <div className="glass-panel-subtle rounded-[28px] p-8 flex flex-col items-center text-center">
@@ -205,9 +223,20 @@ export default function ProfileClient({ user, metrics, updateProfile }: ProfileC
                   </div>
                 </section>
 
-                <div className="flex items-center justify-end gap-4 pb-12">
-                  <button type="submit" className="px-10 py-3 app-primary-button rounded-full font-bold">
-                    Save Profile
+                <div className="flex flex-col items-stretch gap-4 pb-12 sm:flex-row sm:items-center sm:justify-end">
+                  {saveResult && (
+                    <p
+                      className={`rounded-2xl px-4 py-3 text-sm font-bold ${
+                        saveResult.success
+                          ? 'bg-accent-green/10 text-accent-green'
+                          : 'bg-error-container text-on-error-container'
+                      }`}
+                    >
+                      {saveResult.success ? 'Profile saved successfully.' : saveResult.error || 'Failed to save profile.'}
+                    </p>
+                  )}
+                  <button type="submit" disabled={isSaving} className="px-10 py-3 app-primary-button rounded-full font-bold disabled:opacity-60">
+                    {isSaving ? 'Saving...' : 'Save Profile'}
                   </button>
                 </div>
               </div>
