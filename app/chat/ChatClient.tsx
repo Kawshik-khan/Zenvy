@@ -571,10 +571,10 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                     <span className="material-symbols-outlined text-3xl text-[#7C83FF]" style={{ fontVariationSettings: "'FILL' 1" }}>forum</span>
                   </div>
                   <h3 className="text-lg font-black text-[#F8FAFC]">No conversations yet</h3>
-                  <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-[#94A3B8]">Start chatting with classmates, study partners, and group members.</p>
-                  <button onClick={focusNewMessage} className="mt-5 rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(124,131,255,0.28)]">
-                    Start New Conversation
-                  </button>
+                  <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-[#94A3B8]">Accept a match request before starting a direct message.</p>
+                  <Link href="/matching" className="mt-5 inline-flex rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(124,131,255,0.28)]">
+                    Find Matches
+                  </Link>
                 </motion.div>
               )}
 
@@ -587,7 +587,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
 
               {/* Partners (DMs) */}
               <div ref={newMessageRef} className="pt-6 px-3 pb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{conversations.length === 0 ? 'Suggested Study Partners' : 'Start a DM'}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{conversations.length === 0 ? 'Accepted Matches' : 'Start a DM'}</p>
               </div>
               {(conversations.length === 0 ? suggestedPartners : partners).map((partner) => (
                 <button
@@ -599,6 +599,14 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                   <span className="text-[13px] font-bold text-[#94A3B8] truncate hover:text-[#F8FAFC]">{partner.name}</span>
                 </button>
               ))}
+              {partners.length === 0 && (
+                <Link
+                  href="/matching"
+                  className="mx-3 flex items-center justify-center rounded-2xl border border-white/5 bg-[#141C30]/60 px-3 py-3 text-center text-[12px] font-bold text-[#94A3B8] transition-colors hover:text-[#F8FAFC]"
+                >
+                  Connect with classmates first
+                </Link>
+              )}
 
               <button
                 onClick={focusNewMessage}

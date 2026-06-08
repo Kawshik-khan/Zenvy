@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import UnifiedCallClient from './UnifiedCallClient';
+import { assertCanAccessConversation } from '@/lib/conversations';
 
 export default async function ActiveCallPage({
   searchParams,
@@ -42,6 +43,11 @@ export default async function ActiveCallPage({
     resolvedMediaType = call.mediaType === 'VIDEO' ? 'VIDEO' : 'AUDIO';
 
     if (call.type === 'DM' && call.conversationId) {
+      try {
+        await assertCanAccessConversation(user.id, call.conversationId);
+      } catch {
+        redirect('/chat');
+      }
       const peer = call.participants.find((participant) => participant.userId !== user.id)?.user;
       title = peer?.name || 'Direct Call';
       avatar = peer?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
@@ -67,6 +73,11 @@ export default async function ActiveCallPage({
       },
     });
     if (!conversation || !conversation.participants.some((participant) => participant.userId === user.id)) {
+      redirect('/chat');
+    }
+    try {
+      await assertCanAccessConversation(user.id, id);
+    } catch {
       redirect('/chat');
     }
     const peer = conversation.participants.find((participant) => participant.userId !== user.id)?.user;

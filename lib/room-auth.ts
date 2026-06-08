@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { canDmUsers } from "@/lib/conversations";
 
 const GLOBAL_ROOMS = new Set(["global_lobby"]);
 
@@ -23,17 +24,7 @@ export async function canAccessMessageRoom(userId: string, roomId: string) {
   if (dm.userA !== userId && dm.userB !== userId) return false;
 
   const otherUserId = dm.userA === userId ? dm.userB : dm.userA;
-  const blocked = await prisma.userBlock.findFirst({
-    where: {
-      OR: [
-        { blockerId: userId, blockedId: otherUserId },
-        { blockerId: otherUserId, blockedId: userId },
-      ],
-    },
-    select: { id: true },
-  });
-
-  return !blocked;
+  return canDmUsers(userId, otherUserId);
 }
 
 export async function canAccessGroup(userId: string, groupId: string) {
@@ -65,15 +56,5 @@ export async function canSignalUser(fromUserId: string, toUserId: string, roomId
     if (dm && dm.userA !== toUserId && dm.userB !== toUserId) return false;
   }
 
-  const blocked = await prisma.userBlock.findFirst({
-    where: {
-      OR: [
-        { blockerId: fromUserId, blockedId: toUserId },
-        { blockerId: toUserId, blockedId: fromUserId },
-      ],
-    },
-    select: { id: true },
-  });
-
-  return !blocked;
+  return canDmUsers(fromUserId, toUserId);
 }

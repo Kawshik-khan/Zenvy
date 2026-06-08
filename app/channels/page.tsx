@@ -7,10 +7,18 @@ import Sidebar from "@/app/components/Sidebar";
 import CreateChannelModal from "@/app/components/CreateChannelModal";
 import JoinChannelButton from "@/app/components/JoinChannelButton";
 import Link from "next/link";
-import ChannelSearch from "./ChannelSearch";
 import NotificationBell from "@/app/components/NotificationBell";
+import { recommendChannels } from "@/lib/discovery";
 
-export default async function ChannelsPage() {
+type ChannelSearchParams = {
+  q?: string;
+  membership?: string;
+};
+
+export default async function ChannelsPage(props: { searchParams?: Promise<ChannelSearchParams> }) {
+  const searchParams = (await props.searchParams) || {};
+  const query = searchParams.q || "";
+  const membership = searchParams.membership || "all";
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
 
@@ -27,12 +35,28 @@ export default async function ChannelsPage() {
         include: { user: { select: { id: true, name: true, image: true } } },
       },
       creator: { select: { id: true, name: true, image: true } },
+      messages: { select: { createdAt: true }, take: 1, orderBy: { createdAt: "desc" } },
       _count: { select: { members: true, messages: true } },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  const serializedChannels = channels.map((channel) => ({
+  const rankedChannels = recommendChannels({
+    currentUser: user,
+    channels,
+    query,
+  }).filter((channel) => {
+    const isMember = channel.members.some((member) => member.userId === user.id);
+    if (membership === "joined") return isMember;
+    if (membership === "new") return !isMember;
+    return true;
+  });
+
+  const recommendedChannels = rankedChannels
+    .filter((channel) => !channel.members.some((member) => member.userId === user.id))
+    .slice(0, 3);
+
+  const serializedChannels = rankedChannels.map((channel) => ({
     id: channel.id,
     name: channel.name,
     tag: channel.tag,
@@ -50,6 +74,7 @@ export default async function ChannelsPage() {
       image: member.user.image,
     })),
     createdAt: channel.createdAt.toISOString(),
+    discoveryReasons: channel.discoveryReasons,
   }));
 
   return (
@@ -95,7 +120,55 @@ export default async function ChannelsPage() {
             </CreateChannelModal>
           </section>
 
-          <ChannelSearch channels={serializedChannels} userId={user.id} />
+          <form action="/channels" className="glass-panel-subtle rounded-[28px] p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[220px] flex-1">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant">search</span>
+                <input
+                  name="q"
+                  defaultValue={query}
+                  className="app-input py-3 pl-12 pr-4 text-sm"
+                  placeholder="Search #tag, channel name, or description..."
+                />
+              </div>
+              <div className="relative">
+                <select name="membership" defaultValue={membership} className="app-input min-w-[160px] appearance-none py-2 pl-4 pr-10 text-xs font-semibold">
+                  <option value="all">All channels</option>
+                  <option value="new">Not joined</option>
+                  <option value="joined">Joined</option>
+                </select>
+                <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">
+                  expand_more
+                </span>
+              </div>
+              <button className="app-primary-button rounded-full px-5 py-2 text-xs font-black">Search</button>
+              {(query || membership !== "all") && (
+                <Link href="/channels" className="px-4 text-xs font-bold text-primary hover:underline">Clear All</Link>
+              )}
+            </div>
+          </form>
+
+          {recommendedChannels.length > 0 && !query && (
+            <section>
+              <div className="mb-4">
+                <p className="text-xs font-black uppercase tracking-widest text-primary">Recommended</p>
+                <h2 className="text-xl font-black text-on-surface">Channels you may want to join</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {recommendedChannels.map((channel) => (
+                  <Link key={channel.id} href={`/channels/${channel.id}`} className="glass-panel-subtle glass-interactive rounded-[24px] p-5">
+                    <span className="mb-3 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">#{channel.tag}</span>
+                    <h3 className="truncate text-base font-black text-on-surface">{channel.name}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-on-surface-variant">{channel.discoveryReasons.join(" - ")}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <h3 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+            {query ? `${serializedChannels.length} Search Results` : "All Channels"}
+          </h3>
 
           <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {serializedChannels.map((channel) => (
@@ -151,6 +224,14 @@ export default async function ChannelsPage() {
                 </div>
               </article>
             ))}
+
+            {serializedChannels.length === 0 && (
+              <div className="glass-panel-subtle col-span-full rounded-[28px] p-10 text-center">
+                <span className="material-symbols-outlined mb-3 block text-4xl text-on-surface-variant/60">search_off</span>
+                <h3 className="text-xl font-black text-on-surface">No channels found</h3>
+                <p className="mt-2 text-sm text-on-surface-variant">Try another tag or create a new public channel.</p>
+              </div>
+            )}
 
             <CreateChannelModal>
               <div className="glass-panel-subtle flex h-full min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-primary/25 p-8 text-center transition-colors hover:border-primary/50">

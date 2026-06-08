@@ -15,7 +15,8 @@ export default function ProfileClient({ user, metrics, updateProfile }: ProfileC
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentBio = user.profile?.bio || "Passionate about Distributed Systems and AI. Looking to collaborate on group projects and study for the upcoming GRE.";
+  const currentBio = user.profile?.bio || "";
+  const currentMatchingAvailable = user.profile?.matchingAvailable ?? true;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,12 +122,85 @@ export default function ProfileClient({ user, metrics, updateProfile }: ProfileC
                       <input name="name" className="app-input py-3 px-4" type="text" defaultValue={user.name || ''} required />
                     </div>
                     <div className="col-span-2 md:col-span-1 space-y-2">
-                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Major</label>
-                      <input name="major" className="app-input py-3 px-4" type="text" defaultValue={user.profile?.major || ''} />
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">College</label>
+                      <input name="college" className="app-input py-3 px-4" type="text" defaultValue={user.profile?.college || ''} placeholder="e.g. BRAC University" />
                     </div>
                     <div className="col-span-2 space-y-2">
                       <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Short Bio</label>
-                      <textarea name="bio" className="app-input py-3 px-4 resize-none" rows={3} defaultValue={currentBio}></textarea>
+                      <textarea name="bio" className="app-input py-3 px-4 resize-none" rows={3} defaultValue={currentBio} placeholder="Share your study goals, collaboration style, and what you are working on."></textarea>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="glass-panel-subtle rounded-[28px] p-8">
+                  <h4 className="text-lg font-bold mb-8 text-on-surface">Academic Details</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="col-span-2 md:col-span-1 space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Major</label>
+                      <input name="major" className="app-input py-3 px-4" type="text" defaultValue={user.profile?.major || ''} placeholder="e.g. Computer Science" />
+                    </div>
+                    <div className="col-span-2 md:col-span-1 space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Semester</label>
+                      <select name="semester" className="app-input py-3 px-4" defaultValue={user.profile?.semester || ''}>
+                        <option value="">Select semester</option>
+                        {Array.from({ length: 12 }, (_, index) => index + 1).map((semester) => (
+                          <option key={semester} value={semester}>Semester {semester}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Study Style</label>
+                      <select name="studyStyle" className="app-input py-3 px-4" defaultValue={user.profile?.studyStyle || ''}>
+                        <option value="">Select study style</option>
+                        <option value="Focused solo work">Focused solo work</option>
+                        <option value="Pair programming">Pair programming</option>
+                        <option value="Group discussion">Group discussion</option>
+                        <option value="Exam prep">Exam prep</option>
+                        <option value="Project collaboration">Project collaboration</option>
+                      </select>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="glass-panel-subtle rounded-[28px] p-8">
+                  <h4 className="text-lg font-bold mb-8 text-on-surface">Matching Preferences</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="col-span-2 space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Interests</label>
+                      <input
+                        name="interests"
+                        className="app-input py-3 px-4"
+                        type="text"
+                        defaultValue={user.profile?.interests || ''}
+                        placeholder="React, Algorithms, Physics"
+                      />
+                      <p className="text-xs leading-5 text-on-surface-variant">Use comma-separated topics so matching and search can rank study partners accurately.</p>
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Availability</label>
+                      <textarea
+                        name="availability"
+                        className="app-input py-3 px-4 resize-none"
+                        rows={3}
+                        defaultValue={user.profile?.availability || ''}
+                        placeholder="Weeknights after 8 PM, Friday morning, weekend project sessions..."
+                      ></textarea>
+                    </div>
+                    <label className="col-span-2 flex cursor-pointer items-start gap-4 rounded-2xl border border-outline-variant/30 bg-surface-container-low/50 p-4">
+                      <input
+                        name="matchingAvailable"
+                        type="checkbox"
+                        defaultChecked={currentMatchingAvailable}
+                        className="mt-1 h-5 w-5 rounded border-outline-variant accent-primary"
+                      />
+                      <span>
+                        <span className="block text-sm font-black text-on-surface">Available for matching</span>
+                        <span className="mt-1 block text-xs leading-5 text-on-surface-variant">Turn this off to hide your profile from partner recommendations while keeping your account active.</span>
+                      </span>
+                    </label>
+                    <div className="col-span-2 rounded-2xl bg-surface-container-low/60 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Public profile note</p>
+                      <p className="mt-2 text-sm leading-6 text-on-surface-variant">Matched and discoverable students can review your public academic profile before sending or accepting a request. Email and private account details are not shown.</p>
                     </div>
                   </div>
                 </section>

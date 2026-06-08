@@ -3,7 +3,7 @@ const { Server: ServerIO } = require('socket.io');
 const { PrismaClient } = require('@prisma/client');
 const { getToken } = require('next-auth/jwt');
 const { verifySocketToken } = require('./lib/socket-auth');
-const { registerConversationHandlers } = require('./lib/conversation-socket');
+const { canDmUsers, registerConversationHandlers } = require('./lib/conversation-socket');
 
 // Initialize Prisma
 const prisma = new PrismaClient();
@@ -112,16 +112,7 @@ async function canAccessMessageRoom(currentUserId, roomId) {
   const dm = parseDmRoomId(roomId);
   if (!dm || (dm.userA !== currentUserId && dm.userB !== currentUserId)) return false;
   const otherUserId = dm.userA === currentUserId ? dm.userB : dm.userA;
-  const blocked = await prisma.userBlock.findFirst({
-    where: {
-      OR: [
-        { blockerId: currentUserId, blockedId: otherUserId },
-        { blockerId: otherUserId, blockedId: currentUserId },
-      ],
-    },
-    select: { id: true },
-  });
-  return !blocked;
+  return canDmUsers(prisma, currentUserId, otherUserId);
 }
 
 async function canSignalUser(fromUserId, toUserId, roomId) {
@@ -132,16 +123,7 @@ async function canSignalUser(fromUserId, toUserId, roomId) {
     const dm = parseDmRoomId(roomId);
     if (dm && dm.userA !== toUserId && dm.userB !== toUserId) return false;
   }
-  const blocked = await prisma.userBlock.findFirst({
-    where: {
-      OR: [
-        { blockerId: fromUserId, blockedId: toUserId },
-        { blockerId: toUserId, blockedId: fromUserId },
-      ],
-    },
-    select: { id: true },
-  });
-  return !blocked;
+  return canDmUsers(prisma, fromUserId, toUserId);
 }
 
 async function canAccessGroup(currentUserId, groupId) {
@@ -175,11 +157,14 @@ async function assertCanAccessCall(currentUserId, callId) {
   const call = await getCallWithParticipants(callId);
   if (!call) throw new Error('Call not found');
   if (call.type === 'DM' && call.conversationId) {
-    const participant = await prisma.conversationParticipant.findUnique({
-      where: { conversationId_userId: { conversationId: call.conversationId, userId: currentUserId } },
-      select: { id: true },
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: call.conversationId },
+      include: { participants: { select: { userId: true } } },
     });
-    if (!participant) throw new Error('Call access denied');
+    const other = conversation && conversation.participants.find((participant) => participant.userId !== currentUserId);
+    if (!conversation || !conversation.participants.some((participant) => participant.userId === currentUserId) || !other || !(await canDmUsers(prisma, currentUserId, other.userId))) {
+      throw new Error('Call access denied');
+    }
   } else if (call.type === 'GROUP' && call.groupId) {
     if (!(await canAccessGroup(currentUserId, call.groupId))) throw new Error('Call access denied');
   } else if (call.type === 'CHANNEL' && call.channelId) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { serializeConversation } from "@/lib/conversations";
+import { assertCanAccessConversation, serializeConversation } from "@/lib/conversations";
 
 export async function GET() {
   const session = await auth();
@@ -30,8 +30,16 @@ export async function GET() {
     take: 100,
   });
 
+  const accessibleConversations = [];
+  for (const conversation of conversations) {
+    try {
+      await assertCanAccessConversation(userId, conversation.id);
+      accessibleConversations.push(conversation);
+    } catch {}
+  }
+
   const serialized = await Promise.all(
-    conversations.map((conversation) => serializeConversation(conversation, userId))
+    accessibleConversations.map((conversation) => serializeConversation(conversation, userId))
   );
 
   return NextResponse.json({ conversations: serialized });

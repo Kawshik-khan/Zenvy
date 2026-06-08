@@ -20,6 +20,46 @@ export function getDmKey(userA: string, userB: string) {
   return [userA, userB].sort().join(":");
 }
 
+async function hasBlockingRelationship(userA: string, userB: string) {
+  const blocked = await prisma.userBlock.findFirst({
+    where: {
+      OR: [
+        { blockerId: userA, blockedId: userB },
+        { blockerId: userB, blockedId: userA },
+      ],
+    },
+    select: { id: true },
+  });
+
+  return Boolean(blocked);
+}
+
+export async function canDmUsers(currentUserId: string, targetUserId: string) {
+  if (currentUserId === targetUserId) return false;
+  if (await hasBlockingRelationship(currentUserId, targetUserId)) return false;
+
+  const profiles = await prisma.profile.findMany({
+    where: { userId: { in: [currentUserId, targetUserId] } },
+    select: { id: true, userId: true },
+  });
+  const currentProfileId = profiles.find((profile) => profile.userId === currentUserId)?.id;
+  const targetProfileId = profiles.find((profile) => profile.userId === targetUserId)?.id;
+  if (!currentProfileId || !targetProfileId) return false;
+
+  const accepted = await prisma.match.findFirst({
+    where: {
+      status: "ACCEPTED",
+      OR: [
+        { profileId: currentProfileId, matchedProfileId: targetProfileId },
+        { profileId: targetProfileId, matchedProfileId: currentProfileId },
+      ],
+    },
+    select: { id: true },
+  });
+
+  return Boolean(accepted);
+}
+
 export async function assertCanAccessConversation(userId: string, conversationId: string) {
   const participant = await prisma.conversationParticipant.findUnique({
     where: { conversationId_userId: { conversationId, userId } },
@@ -40,18 +80,7 @@ export async function assertCanAccessConversation(userId: string, conversationId
 
   if (participant.conversation.type === "DM") {
     const other = participant.conversation.participants.find((p) => p.userId !== userId);
-    if (other) {
-      const blocked = await prisma.userBlock.findFirst({
-        where: {
-          OR: [
-            { blockerId: userId, blockedId: other.userId },
-            { blockerId: other.userId, blockedId: userId },
-          ],
-        },
-        select: { id: true },
-      });
-      if (blocked) throw new Error("Conversation access denied");
-    }
+    if (!other || !(await canDmUsers(userId, other.userId))) throw new Error("Conversation access denied");
   }
 
   return participant.conversation;
@@ -66,16 +95,9 @@ export async function resolveDmConversation(currentUserId: string, targetUserId:
   });
   if (!target) throw new Error("Target user not found");
 
-  const blocked = await prisma.userBlock.findFirst({
-    where: {
-      OR: [
-        { blockerId: currentUserId, blockedId: targetUserId },
-        { blockerId: targetUserId, blockedId: currentUserId },
-      ],
-    },
-    select: { id: true },
-  });
-  if (blocked) throw new Error("Cannot message this user");
+  if (!(await canDmUsers(currentUserId, targetUserId))) {
+    throw new Error("You can message this user after the match request is accepted");
+  }
 
   const dmKey = getDmKey(currentUserId, targetUserId);
   const existing = await prisma.conversation.findUnique({

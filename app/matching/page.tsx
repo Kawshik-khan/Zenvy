@@ -8,6 +8,7 @@ import NotificationBell from "@/app/components/NotificationBell";
 import ConnectButton from "./ConnectButton";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { normalize, recommendPeople, splitList } from "@/lib/discovery";
 
 type SearchParams = {
   q?: string;
@@ -34,19 +35,8 @@ type Partner = {
   bio: string;
 };
 
-function splitList(value?: string | null) {
-  return (value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
-}
-
-function normalize(value?: string | null) {
-  return (value || "").trim().toLowerCase();
 }
 
 function makeAvatar(name?: string | null, image?: string | null) {
@@ -71,37 +61,6 @@ function relativeDate(date: Date) {
   if (diffDays === 1) return "Yesterday";
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-function getReasons({
-  currentMajor,
-  otherMajor,
-  currentCollege,
-  otherCollege,
-  currentSemester,
-  otherSemester,
-  overlap,
-  available,
-}: {
-  currentMajor?: string | null;
-  otherMajor?: string | null;
-  currentCollege?: string | null;
-  otherCollege?: string | null;
-  currentSemester?: number | null;
-  otherSemester?: number | null;
-  overlap: string[];
-  available: boolean;
-}) {
-  const reasons: string[] = [];
-
-  if (currentMajor && otherMajor && normalize(currentMajor) === normalize(otherMajor)) reasons.push("Same department");
-  if (currentCollege && otherCollege && normalize(currentCollege) === normalize(otherCollege)) reasons.push("Same college");
-  if (currentSemester && otherSemester && Math.abs(currentSemester - otherSemester) <= 1) reasons.push("Similar semester");
-  if (overlap[0]) reasons.push(`Shared ${overlap[0]} interest`);
-  if (overlap.length > 1) reasons.push(`${overlap.length} shared interests`);
-  if (available) reasons.push("Available for study");
-
-  return reasons.length ? reasons.slice(0, 4) : ["Open to study partners", "Profile ready for matching"];
 }
 
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
@@ -163,15 +122,20 @@ function PartnerCard({ partner }: { partner: Partner }) {
       </div>
 
       <div className="flex gap-2">
-        <Link href={`/chat/personal?id=${partner.id}`} className="flex-1 rounded-full bg-primary-container py-3 text-center text-xs font-black text-on-primary-container transition-colors hover:bg-primary hover:text-white">
-          Message
+        <Link href={`/users/${partner.id}`} className="flex-1 rounded-full bg-primary-container py-3 text-center text-xs font-black text-on-primary-container transition-colors hover:bg-primary hover:text-white">
+          View Profile
         </Link>
+        {partner.connectionStatus === "ACCEPTED" && (
+          <Link href={`/chat/personal?id=${partner.id}`} className="flex-1 rounded-full bg-surface-container py-3 text-center text-xs font-black text-on-surface-variant transition-colors hover:text-on-surface">
+            Message
+          </Link>
+        )}
         <ConnectButton partnerId={partner.id} buttonText="Connect" initialStatus={partner.connectionStatus} />
       </div>
 
       <details className="mt-2 group/details">
         <summary className="list-none cursor-pointer rounded-full bg-surface-container py-3 text-center text-xs font-black text-on-surface-variant transition-colors hover:text-on-surface">
-          View Profile
+          Quick Preview
         </summary>
         <div className="mt-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low/40 p-4 text-xs leading-5 text-on-surface-variant">
           <p className="font-bold text-on-surface">{partner.college}</p>
@@ -198,11 +162,19 @@ export default async function MatchingPage(props: { searchParams?: Promise<Searc
   const user = session.user.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profile: true },
+        include: {
+          profile: true,
+          groupMemberships: { select: { groupId: true } },
+          channelMemberships: { select: { channelId: true } },
+        },
       })
     : await prisma.user.findUnique({
         where: { email: session.user.email || "" },
-        include: { profile: true },
+        include: {
+          profile: true,
+          groupMemberships: { select: { groupId: true } },
+          channelMemberships: { select: { channelId: true } },
+        },
       });
 
   if (!user) redirect("/login");
@@ -214,7 +186,11 @@ export default async function MatchingPage(props: { searchParams?: Promise<Searc
         blockedBy: { none: { blockerId: user.id } },
         blocks: { none: { blockedId: user.id } },
       },
-      include: { profile: true },
+      include: {
+        profile: true,
+        groupMemberships: { select: { groupId: true } },
+        channelMemberships: { select: { channelId: true } },
+      },
       orderBy: { updatedAt: "desc" },
       take: 80,
     }),
@@ -262,22 +238,15 @@ export default async function MatchingPage(props: { searchParams?: Promise<Searc
     statusByProfileId.set(otherProfileId, matchRecord.status);
   }
 
-  const currentInterests = splitList(user.profile?.interests).map((interest) => interest.toLowerCase());
-
-  const processedPartners: Partner[] = otherUsers
+  const processedPartners: Partner[] = recommendPeople({
+    currentUser: user,
+    candidates: otherUsers,
+    existingMatches,
+    query: q,
+  })
     .map((otherUser) => {
       const otherInterests = splitList(otherUser.profile?.interests);
-      const normalizedOtherInterests = otherInterests.map((interest) => interest.toLowerCase());
-      const overlap = normalizedOtherInterests.filter((interest) => currentInterests.includes(interest));
-
-      let match = 60;
-      if (user.profile?.major && normalize(otherUser.profile?.major) === normalize(user.profile.major)) match += 15;
-      if (user.profile?.college && normalize(otherUser.profile?.college) === normalize(user.profile.college)) match += 15;
-      if (otherUser.profile?.semester && user.profile?.semester && Math.abs(otherUser.profile.semester - user.profile.semester) <= 1) match += 5;
-      match += Math.min(overlap.length * 5, 20);
-
       const isAvailable = Boolean(otherUser.profile?.matchingAvailable && otherUser.profile?.availability);
-      const displayOverlap = otherInterests.filter((interest) => currentInterests.includes(interest.toLowerCase()));
 
       return {
         id: otherUser.id,
@@ -286,20 +255,11 @@ export default async function MatchingPage(props: { searchParams?: Promise<Searc
         semester: otherUser.profile?.semester ? `Semester ${otherUser.profile.semester}` : "Semester not set",
         college: otherUser.profile?.college || "College not set",
         avatar: makeAvatar(otherUser.name, otherUser.image),
-        match: Math.min(match, 100),
+        match: Math.round(otherUser.discoveryScore),
         connectionStatus: otherUser.profile?.id ? statusByProfileId.get(otherUser.profile.id) || null : null,
         skills: otherInterests.length ? otherInterests : ["Study Partner"],
         schedule: otherUser.profile?.availability || "Availability not set",
-        reasons: getReasons({
-          currentMajor: user.profile?.major,
-          otherMajor: otherUser.profile?.major,
-          currentCollege: user.profile?.college,
-          otherCollege: otherUser.profile?.college,
-          currentSemester: user.profile?.semester,
-          otherSemester: otherUser.profile?.semester,
-          overlap: displayOverlap,
-          available: isAvailable,
-        }),
+        reasons: otherUser.discoveryReasons,
         isAvailable,
         bio: otherUser.profile?.bio || "No bio added yet.",
       };
@@ -308,7 +268,7 @@ export default async function MatchingPage(props: { searchParams?: Promise<Searc
 
   const query = q.toLowerCase();
   const filteredPartners = processedPartners.filter((partner) => {
-    const searchable = [partner.name, partner.major, partner.college, partner.schedule, ...partner.skills, ...partner.reasons].join(" ").toLowerCase();
+    const searchable = [partner.name, partner.major, partner.college, partner.schedule, partner.bio, ...partner.skills, ...partner.reasons].join(" ").toLowerCase();
     const matchesQuery = !query || searchable.includes(query);
     const matchesMajor = !major || major === "all" || partner.major === major;
     const matchesSemester = !semester || semester === "all" || partner.semester === semester;

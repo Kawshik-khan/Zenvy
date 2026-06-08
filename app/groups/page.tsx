@@ -9,8 +9,31 @@ import JoinGroupButton from "@/app/components/JoinGroupButton";
 import CreateGroupModal from "@/app/components/CreateGroupModal";
 import ErrorView from "@/app/components/ErrorView";
 import NotificationBell from "@/app/components/NotificationBell";
+import { recommendGroups } from "@/lib/discovery";
 
-export default async function StudyGroupsPage() {
+type GroupSearchParams = {
+  q?: string;
+  subject?: string;
+  members?: string;
+};
+
+function unique(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
+}
+
+function memberFilterMatches(value: string, count: number) {
+  if (!value || value === "all") return true;
+  if (value === "small") return count <= 5;
+  if (value === "medium") return count > 5 && count <= 20;
+  if (value === "large") return count > 20;
+  return true;
+}
+
+export default async function StudyGroupsPage(props: { searchParams?: Promise<GroupSearchParams> }) {
+  const searchParams = (await props.searchParams) || {};
+  const query = searchParams.q || "";
+  const subject = searchParams.subject || "all";
+  const members = searchParams.members || "all";
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
 
@@ -30,6 +53,9 @@ export default async function StudyGroupsPage() {
         members: {
           include: { user: true },
         },
+        messages: { select: { createdAt: true }, take: 1, orderBy: { createdAt: "desc" } },
+        events: { select: { startTime: true }, take: 1, orderBy: { startTime: "desc" } },
+        _count: { select: { members: true, messages: true, events: true, resources: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -37,6 +63,20 @@ export default async function StudyGroupsPage() {
     console.error("Groups Page Error:", error);
     return <ErrorView error={error} />;
   }
+
+  const rankedGroups = recommendGroups({
+    currentUser: user,
+    groups,
+    query,
+  }).filter((group) => {
+    const matchesSubject = subject === "all" || (group.subject || "General") === subject;
+    const matchesMembers = memberFilterMatches(members, group._count?.members ?? group.members.length);
+    return matchesSubject && matchesMembers;
+  });
+  const recommendedGroups = rankedGroups
+    .filter((group) => !group.members.some((member) => member.userId === user.id))
+    .slice(0, 3);
+  const subjectOptions = unique(groups.map((group) => group.subject || "General"));
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
@@ -73,30 +113,69 @@ export default async function StudyGroupsPage() {
             </CreateGroupModal>
           </section>
 
-          <section className="glass-panel-subtle rounded-[28px] p-4">
+          <form action="/groups" className="glass-panel-subtle rounded-[28px] p-4">
             <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[220px] flex-1">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-xl text-on-surface-variant">search</span>
+                <input name="q" defaultValue={query} className="app-input py-3 pl-12 pr-4 text-sm" placeholder="Search groups, subjects, goals..." />
+              </div>
               <div className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface/50 px-4 py-2 text-sm font-medium text-on-surface-variant">
                 <span className="material-symbols-outlined text-[18px]">filter_list</span>
                 Filters
               </div>
-              {["Subject", "Goals", "Members", "Difficulty"].map((label) => (
-                <div key={label} className="relative">
-                  <select className="app-input min-w-[140px] appearance-none py-2 pl-4 pr-10 text-xs font-semibold">
-                    <option>{label}</option>
-                  </select>
-                  <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">
-                    expand_more
-                  </span>
-                </div>
-              ))}
-              <button className="ml-auto px-4 text-xs font-bold text-primary hover:underline">Clear All</button>
+              <div className="relative">
+                <select name="subject" defaultValue={subject} className="app-input min-w-[160px] appearance-none py-2 pl-4 pr-10 text-xs font-semibold">
+                  <option value="all">All subjects</option>
+                  {subjectOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">
+                  expand_more
+                </span>
+              </div>
+              <div className="relative">
+                <select name="members" defaultValue={members} className="app-input min-w-[150px] appearance-none py-2 pl-4 pr-10 text-xs font-semibold">
+                  <option value="all">Any size</option>
+                  <option value="small">1-5 members</option>
+                  <option value="medium">6-20 members</option>
+                  <option value="large">20+ members</option>
+                </select>
+                <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">
+                  expand_more
+                </span>
+              </div>
+              <button className="app-primary-button rounded-full px-5 py-2 text-xs font-black">Apply</button>
+              {(query || subject !== "all" || members !== "all") && (
+                <Link href="/groups" className="px-4 text-xs font-bold text-primary hover:underline">Clear All</Link>
+              )}
             </div>
-          </section>
+          </form>
+
+          {recommendedGroups.length > 0 && !query && (
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-primary">Recommended</p>
+                  <h2 className="text-xl font-black text-on-surface">Groups that fit your profile</h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {recommendedGroups.map((group) => (
+                  <Link key={group.id} href={`/groups/${group.id}`} className="glass-panel-subtle glass-interactive rounded-[24px] p-5">
+                    <span className="mb-3 block text-xs font-bold uppercase tracking-tight text-primary">{group.subject || "General"}</span>
+                    <h3 className="truncate text-base font-black text-on-surface">{group.name}</h3>
+                    <p className="mt-2 line-clamp-2 text-sm text-on-surface-variant">{group.discoveryReasons.join(" - ")}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {groups.map((group) => {
+            {rankedGroups.map((group) => {
               const isMember = group.members.some((member) => member.userId === user.id);
-              const memberCount = group.members.length;
+              const memberCount = group._count?.members ?? group.members.length;
 
               return (
                 <article key={group.id} className="group glass-panel-subtle glass-interactive flex h-full flex-col rounded-[28px] p-7">
@@ -136,6 +215,14 @@ export default async function StudyGroupsPage() {
                 </article>
               );
             })}
+
+            {rankedGroups.length === 0 && (
+              <div className="glass-panel-subtle col-span-full rounded-[28px] p-10 text-center">
+                <span className="material-symbols-outlined mb-3 block text-4xl text-on-surface-variant/60">search_off</span>
+                <h3 className="text-xl font-black text-on-surface">No groups found</h3>
+                <p className="mt-2 text-sm text-on-surface-variant">Try a broader search or create a new study group.</p>
+              </div>
+            )}
 
             <CreateGroupModal>
               <div className="glass-panel-subtle flex h-full min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[28px] border-2 border-dashed border-primary/25 p-8 text-center transition-colors hover:border-primary/50">

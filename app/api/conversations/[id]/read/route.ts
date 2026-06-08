@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { assertCanAccessConversation } from "@/lib/conversations";
 
 export async function PATCH(
   _request: Request,
@@ -12,10 +13,15 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  await prisma.conversationParticipant.updateMany({
-    where: { conversationId: id, userId: session.user.id },
-    data: { lastReadAt: new Date() },
-  });
+  try {
+    await assertCanAccessConversation(session.user.id, id);
+    await prisma.conversationParticipant.updateMany({
+      where: { conversationId: id, userId: session.user.id },
+      data: { lastReadAt: new Date() },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Forbidden" }, { status: 403 });
+  }
 
   return NextResponse.json({ success: true });
 }

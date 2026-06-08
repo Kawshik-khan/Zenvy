@@ -24,19 +24,32 @@ export default async function ChatPage() {
     take: 10
   });
 
-  // Fetch some "partners" (other users) for DM list
-  const otherUsers = await prisma.user.findMany({
-    where: { NOT: { id: user.id } },
-    include: { profile: true },
-    take: 5
-  });
+  const acceptedMatches = user.profile
+    ? await prisma.match.findMany({
+        where: {
+          status: "ACCEPTED",
+          OR: [
+            { profileId: user.profile.id },
+            { matchedProfileId: user.profile.id },
+          ],
+        },
+        include: {
+          profile: { include: { user: { include: { profile: true } } } },
+          matchedProfile: { include: { user: { include: { profile: true } } } },
+        },
+        take: 12,
+      })
+    : [];
 
-  const partners = otherUsers.map(u => ({
-    id: u.id,
-    name: u.name || "Anonymous",
-    avatar: u.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "U")}&background=random`,
-    major: u.profile?.major || "Student"
-  }));
+  const partners = acceptedMatches.map((match) => {
+    const other = match.profileId === user.profile?.id ? match.matchedProfile.user : match.profile.user;
+    return {
+      id: other.id,
+      name: other.name || "Anonymous",
+      avatar: other.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(other.name || "U")}&background=random`,
+      major: other.profile?.major || "Student"
+    };
+  });
 
   return <ChatClient user={user} groups={userGroups} partners={partners} />;
 }

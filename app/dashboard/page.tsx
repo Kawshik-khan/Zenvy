@@ -8,6 +8,7 @@ import QuickJoinButton from "./QuickJoinButton";
 import ErrorView from "@/app/components/ErrorView";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import NotificationBell from "@/app/components/NotificationBell";
+import GlobalPeopleSearch from "@/app/components/GlobalPeopleSearch";
 import { getStudyMetrics } from "@/lib/study-metrics";
 
 export const runtime = "nodejs";
@@ -201,18 +202,7 @@ export default async function DashboardPage() {
 
         <main className="mobile-safe-bottom min-h-screen w-full max-w-full px-4 py-4 relative z-10 md:ml-[280px] md:px-4 md:py-6 md:pr-8">
           <header className="mb-6 flex items-center justify-between gap-3 md:mb-8 md:gap-6">
-            <div className="group relative min-w-0 flex-1 md:max-w-xl">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-lg text-[#94A3B8] transition-colors group-focus-within:text-[#7C83FF]">search</span>
-              <input
-                className="w-full rounded-2xl border border-white/5 bg-[#0E1525]/80 py-3.5 pl-12 pr-12 text-sm text-[#F8FAFC] shadow-[0_4px_20px_rgba(0,0,0,0.2)] outline-none backdrop-blur-md transition-all placeholder:text-[#94A3B8] focus:border-[#7C83FF]/50 focus:ring-1 focus:ring-[#7C83FF]/50"
-                placeholder="Search groups, people, messages..."
-                type="text"
-              />
-              <div className="absolute right-4 top-1/2 hidden -translate-y-1/2 items-center gap-1 opacity-50 sm:flex">
-                <span className="rounded border border-white/10 bg-[#141C30] px-1.5 py-0.5 font-mono text-[10px] font-bold">Ctrl</span>
-                <span className="rounded border border-white/10 bg-[#141C30] px-1.5 py-0.5 font-mono text-[10px] font-bold">K</span>
-              </div>
-            </div>
+            <GlobalPeopleSearch className="min-w-0 flex-1 md:max-w-xl" />
 
             <div className="flex shrink-0 items-center gap-2 md:gap-4">
               <Link
