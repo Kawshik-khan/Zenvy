@@ -60,6 +60,7 @@ model User {
   pushSubscriptions  PushSubscription[]
   callParticipations CallParticipant[]
   pomodoroSessions   PomodoroSession[]
+  studyAds           StudyAd[]
 }
 
 model Profile {
@@ -94,6 +95,23 @@ model Match {
   chatRoom         ChatRoom?
 
   @@unique([profileId, matchedProfileId])
+}
+
+model StudyAd {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  subjects     String
+  availability String
+  mode         String   @default("ANY") // ONLINE, IN_PERSON, HYBRID, ANY
+  status       String   @default("ACTIVE") // ACTIVE, PAUSED, CLOSED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([status, createdAt])
 }
 
 model ChatRoom {

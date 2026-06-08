@@ -120,7 +120,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
       socket.disconnect();
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [channel.id, isMember]);
+  }, [channel.id, isMember, user.id, user.name]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

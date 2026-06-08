@@ -194,7 +194,7 @@ export default function GroupChatClient({
       socket.disconnect();
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [group.id, isMember]);
+  }, [group.id, isMember, user.id, user.name]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

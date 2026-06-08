@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import { socket } from '@/lib/socket';
 
@@ -71,6 +71,80 @@ export default function CallOverlay({
     return `${m}:${sec}`;
   };
 
+  const startCall = useCallback((localStream: MediaStream) => {
+    setCallStatus('RINGING');
+
+    const peer = new Peer({
+      initiator: true,
+      trickle: true,
+      stream: localStream,
+      config: ICE_SERVERS,
+    });
+
+    peer.on('signal', (data) => {
+      socket.emit('call_user', {
+        to: targetUser.id,
+        signalData: data,
+        callerName: currentUser.name || 'Unknown',
+        callerAvatar: currentUser.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`,
+        isVideo: isVideoCall,
+        roomId,
+      });
+    });
+
+    peer.on('stream', (rStream) => {
+      setCallStatus('CONNECTED');
+      if (remoteVideo.current) {
+        remoteVideo.current.srcObject = rStream;
+      }
+    });
+
+    peer.on('error', (err) => {
+      console.error('Peer error:', err);
+      setCallStatus('ENDED');
+      setTimeout(onClose, 2000);
+    });
+
+    peerRef.current = peer;
+  }, [currentUser.image, currentUser.name, isVideoCall, onClose, roomId, targetUser.id]);
+
+  const answerCall = useCallback((localStream: MediaStream, signalPayload: any) => {
+    const peer = new Peer({
+      initiator: false,
+      trickle: true,
+      stream: localStream,
+      config: ICE_SERVERS,
+    });
+
+    peer.on('signal', (data) => {
+      socket.emit('answer_call', {
+        to: signalPayload.from || targetUser.id,
+        signalData: data,
+      });
+    });
+
+    peer.on('stream', (rStream) => {
+      setCallStatus('CONNECTED');
+      if (remoteVideo.current) {
+        remoteVideo.current.srcObject = rStream;
+      }
+    });
+
+    peer.on('error', (err) => {
+      console.error('Peer error:', err);
+      setCallStatus('ENDED');
+      setTimeout(onClose, 2000);
+    });
+
+    if (signalPayload.signals && Array.isArray(signalPayload.signals)) {
+      signalPayload.signals.forEach((sig: any) => peer.signal(sig));
+    } else if (signalPayload.signalData || signalPayload) {
+      peer.signal(signalPayload.signalData || signalPayload);
+    }
+
+    peerRef.current = peer;
+  }, [onClose, targetUser.id]);
+
   useEffect(() => {
     const initCall = async () => {
       try {
@@ -83,7 +157,7 @@ export default function CallOverlay({
         }
 
         if (isIncoming && incomingSignal) {
-          answerCall(mediaStream);
+          answerCall(mediaStream, incomingSignal);
         } else {
           startCall(mediaStream);
         }
@@ -142,81 +216,7 @@ export default function CallOverlay({
       socket.off('call_answered', handleCallAnswered);
       socket.off('incoming_call', handleLateCandidates);
     };
-  }, []);
-
-  const startCall = (localStream: MediaStream) => {
-    setCallStatus('RINGING');
-
-    const peer = new Peer({
-      initiator: true,
-      trickle: true,
-      stream: localStream,
-      config: ICE_SERVERS,
-    });
-
-    peer.on('signal', (data) => {
-      socket.emit('call_user', {
-        to: targetUser.id,
-        signalData: data,
-        callerName: currentUser.name || 'Unknown',
-        callerAvatar: currentUser.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'U')}&background=random`,
-        isVideo: isVideoCall,
-        roomId,
-      });
-    });
-
-    peer.on('stream', (rStream) => {
-      setCallStatus('CONNECTED');
-      if (remoteVideo.current) {
-        remoteVideo.current.srcObject = rStream;
-      }
-    });
-
-    peer.on('error', (err) => {
-      console.error('Peer error:', err);
-      setCallStatus('ENDED');
-      setTimeout(onClose, 2000);
-    });
-
-    peerRef.current = peer;
-  };
-
-  const answerCall = (localStream: MediaStream) => {
-    const peer = new Peer({
-      initiator: false,
-      trickle: true,
-      stream: localStream,
-      config: ICE_SERVERS,
-    });
-
-    peer.on('signal', (data) => {
-      socket.emit('answer_call', {
-        to: incomingSignal.from || targetUser.id,
-        signalData: data,
-      });
-    });
-
-    peer.on('stream', (rStream) => {
-      setCallStatus('CONNECTED');
-      if (remoteVideo.current) {
-        remoteVideo.current.srcObject = rStream;
-      }
-    });
-
-    peer.on('error', (err) => {
-      console.error('Peer error:', err);
-      setCallStatus('ENDED');
-      setTimeout(onClose, 2000);
-    });
-
-    if (incomingSignal.signals && Array.isArray(incomingSignal.signals)) {
-      incomingSignal.signals.forEach((sig: any) => peer.signal(sig));
-    } else if (incomingSignal.signalData || incomingSignal) {
-      peer.signal(incomingSignal.signalData || incomingSignal);
-    }
-    
-    peerRef.current = peer;
-  };
+  }, [answerCall, incomingSignal, isIncoming, isVideoCall, onClose, startCall, targetUser.id]);
 
   const toggleMute = () => {
     if (streamRef.current) {

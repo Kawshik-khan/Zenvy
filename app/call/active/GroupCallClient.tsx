@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
@@ -64,109 +64,23 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
   const [remoteStreams, setRemoteStreams] = useState<Map<string, { stream: MediaStream, userId: string }>>(new Map());
 
   // Safe wrapper to add/remove remote streams in state
-  const addRemoteStream = (socketId: string, remoteStream: MediaStream, targetUserId: string) => {
+  const addRemoteStream = useCallback((socketId: string, remoteStream: MediaStream, targetUserId: string) => {
     setRemoteStreams(prev => {
       const newMap = new Map(prev);
       newMap.set(socketId, { stream: remoteStream, userId: targetUserId });
       return newMap;
     });
-  };
+  }, []);
 
-  const removeRemoteStream = (socketId: string) => {
+  const removeRemoteStream = useCallback((socketId: string) => {
     setRemoteStreams(prev => {
       const newMap = new Map(prev);
       newMap.delete(socketId);
       return newMap;
     });
-  };
+  }, []);
 
-  // Setup WebRTC and Sockets
-  useEffect(() => {
-    let localStream: MediaStream | null = null;
-
-    const initializeMedia = async () => {
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setStream(localStream);
-        setHasPermissions(true);
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = localStream;
-        }
-
-        // Connect Socket
-        socket.connect();
-        socket.emit('authenticate', { userId: currentUser.id });
-        socket.emit('join_group_call', roomId);
-
-        // -- Event Listeners --
-        
-        socket.on('user_joined_call', (data: { userId: string, socketId: string }) => {
-          if (!socket.id) return;
-          // Send an offer to the newly joined peer!
-          const peer = createPeer(data.socketId, socket.id, localStream!, data.userId);
-          peersRef.current.set(data.socketId, { peer, userId: data.userId });
-        });
-
-        socket.on('receive_webrtc_offer', (data: { from: string, userId: string, offer: any }) => {
-          // Receive an offer, create answering peer!
-          const peer = addPeer(data.offer, data.from, localStream!, data.userId);
-          peersRef.current.set(data.from, { peer, userId: data.userId });
-        });
-
-        socket.on('receive_webrtc_answer', (data: { from: string, userId: string, answer: any }) => {
-          const item = peersRef.current.get(data.from);
-          if (item) {
-            item.peer.signal(data.answer);
-          }
-        });
-
-        socket.on('receive_ice_candidate', (data: { from: string, candidate: any }) => {
-          const item = peersRef.current.get(data.from);
-          if (item) {
-            item.peer.signal(data.candidate);
-          }
-        });
-
-        socket.on('user_left_call', (data: { socketId: string }) => {
-          console.log('User left the call', data.socketId);
-          const item = peersRef.current.get(data.socketId);
-          if (item) {
-            item.peer.destroy();
-            peersRef.current.delete(data.socketId);
-          }
-          removeRemoteStream(data.socketId);
-        });
-
-      } catch (err) {
-        console.error("Failed to access media devices:", err);
-        setHasPermissions(false);
-      }
-    };
-
-    initializeMedia();
-
-    // -- Component Cleanup --
-    return () => {
-      socket.emit('leave_group_call', roomId);
-      socket.off('user_joined_call');
-      socket.off('receive_webrtc_offer');
-      socket.off('receive_webrtc_answer');
-      socket.off('receive_ice_candidate');
-      socket.off('user_left_call');
-      
-      peersRef.current.forEach(item => item.peer.destroy());
-      peersRef.current.clear();
-      setRemoteStreams(new Map());
-
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [roomId, currentUser.id]);
-
-  // -- Peer Management Methods --
-
-  const createPeer = (userToSignal: string, callerId: string, currentStream: MediaStream, targetUserId: string) => {
+  const createPeer = useCallback((userToSignal: string, callerId: string, currentStream: MediaStream, targetUserId: string) => {
     const peer = new Peer({
       initiator: true,
       trickle: true,
@@ -189,9 +103,9 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
     peer.on('error', err => console.log('Peer error (caller):', err));
 
     return peer;
-  };
+  }, [addRemoteStream, roomId]);
 
-  const addPeer = (incomingSignal: any, callerSocketId: string, currentStream: MediaStream, callerUserId: string) => {
+  const addPeer = useCallback((incomingSignal: any, callerSocketId: string, currentStream: MediaStream, callerUserId: string) => {
     const peer = new Peer({
       initiator: false,
       trickle: true,
@@ -216,7 +130,92 @@ export default function GroupCallClient({ currentUser, roomId, roomName, roomAva
     peer.signal(incomingSignal);
 
     return peer;
-  };
+  }, [addRemoteStream, roomId]);
+
+  // Setup WebRTC and Sockets
+  useEffect(() => {
+    let localStream: MediaStream | null = null;
+    const peers = peersRef.current;
+
+    const initializeMedia = async () => {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setStream(localStream);
+        setHasPermissions(true);
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStream;
+        }
+
+        // Connect Socket
+        socket.connect();
+        socket.emit('authenticate', { userId: currentUser.id });
+        socket.emit('join_group_call', roomId);
+
+        // -- Event Listeners --
+        
+        socket.on('user_joined_call', (data: { userId: string, socketId: string }) => {
+          if (!socket.id) return;
+          // Send an offer to the newly joined peer!
+          const peer = createPeer(data.socketId, socket.id, localStream!, data.userId);
+          peers.set(data.socketId, { peer, userId: data.userId });
+        });
+
+        socket.on('receive_webrtc_offer', (data: { from: string, userId: string, offer: any }) => {
+          // Receive an offer, create answering peer!
+          const peer = addPeer(data.offer, data.from, localStream!, data.userId);
+          peers.set(data.from, { peer, userId: data.userId });
+        });
+
+        socket.on('receive_webrtc_answer', (data: { from: string, userId: string, answer: any }) => {
+          const item = peers.get(data.from);
+          if (item) {
+            item.peer.signal(data.answer);
+          }
+        });
+
+        socket.on('receive_ice_candidate', (data: { from: string, candidate: any }) => {
+          const item = peers.get(data.from);
+          if (item) {
+            item.peer.signal(data.candidate);
+          }
+        });
+
+        socket.on('user_left_call', (data: { socketId: string }) => {
+          console.log('User left the call', data.socketId);
+          const item = peers.get(data.socketId);
+          if (item) {
+            item.peer.destroy();
+            peers.delete(data.socketId);
+          }
+          removeRemoteStream(data.socketId);
+        });
+
+      } catch (err) {
+        console.error("Failed to access media devices:", err);
+        setHasPermissions(false);
+      }
+    };
+
+    initializeMedia();
+
+    // -- Component Cleanup --
+    return () => {
+      socket.emit('leave_group_call', roomId);
+      socket.off('user_joined_call');
+      socket.off('receive_webrtc_offer');
+      socket.off('receive_webrtc_answer');
+      socket.off('receive_ice_candidate');
+      socket.off('user_left_call');
+      
+      peers.forEach(item => item.peer.destroy());
+      peers.clear();
+      setRemoteStreams(new Map());
+
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [addPeer, createPeer, currentUser.id, removeRemoteStream, roomId]);
 
   // -- Controls --
 

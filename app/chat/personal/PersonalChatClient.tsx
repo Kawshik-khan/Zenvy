@@ -175,7 +175,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
       socket.off('user_stopped_typing');
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [roomId]);
+  }, [currentUser.id, currentUser.name, roomId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
