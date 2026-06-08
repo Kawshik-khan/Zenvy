@@ -189,9 +189,6 @@ export default function Sidebar() {
             <p className="truncate text-xs font-black text-on-surface">{displayName}</p>
             <p className="truncate text-[10px] font-bold text-on-surface-variant">{metrics.totalXp.toLocaleString()} XP · {metrics.currentStreakDays} day streak</p>
           </div>
-          <div className="w-[9rem] max-w-[44vw]">
-            <FocusSessionStatus compact />
-          </div>
         </div>
       </div>
       <div className="flex items-stretch gap-1 px-2 py-2">

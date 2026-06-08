@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
+import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
 
@@ -252,6 +253,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
         </div>
 
         <div className="flex shrink-0 items-center gap-1 md:gap-2">
+          <FocusHeaderIndicator />
           <button
             onClick={() => setShowMembers(!showMembers)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${

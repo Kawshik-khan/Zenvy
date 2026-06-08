@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
 import Sidebar from '@/app/components/Sidebar';
+import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import CallOverlay from '../components/CallOverlay';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
@@ -397,6 +398,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
               </div>
 
               <div className="flex items-center gap-2 sm:gap-4">
+                <FocusHeaderIndicator />
                 <div className="flex items-center gap-1 sm:gap-2 mr-2">
                    <button
                      onClick={() => initiateCall(false)}

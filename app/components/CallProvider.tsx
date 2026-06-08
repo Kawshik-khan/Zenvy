@@ -22,6 +22,7 @@ import {
 import { RoomEvent, Track } from "livekit-client";
 import { socket } from "@/lib/socket";
 import { focusTracks } from "@/lib/focus-audio";
+import FocusHeaderIndicator from "./FocusHeaderIndicator";
 
 type CallParticipant = {
   userId: string;
@@ -637,11 +638,14 @@ function LiveCallSurface({
             </p>
           </div>
         </div>
-        {call?.status && (
-          <span className="rounded-full bg-accent-green/15 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-accent-green">
-            {call.status}
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          <FocusHeaderIndicator />
+          {call?.status && (
+            <span className="rounded-full bg-accent-green/15 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-accent-green">
+              {call.status}
+            </span>
+          )}
+        </div>
       </header>
 
       <CallTiles />

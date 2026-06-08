@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCallSession, type CallScope } from "@/app/components/CallProvider";
+import FocusHeaderIndicator from "@/app/components/FocusHeaderIndicator";
 
 interface UnifiedCallClientProps {
   currentUser: { id: string; name: string; image: string };
@@ -71,6 +72,7 @@ export default function UnifiedCallClient({
             <p className="text-xs text-on-surface-variant">{isConnecting || !activeCallId ? "Connecting media..." : "Opening call..."}</p>
           </div>
         </div>
+        <FocusHeaderIndicator />
       </header>
       <main className="flex flex-1 items-center justify-center p-6 text-center">
         <div className="rounded-2xl p-6 glass-panel-subtle">

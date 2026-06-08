@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { Suspense, createContext, useContext, useState } from "react";
+import FocusFloatingIndicator from "./FocusFloatingIndicator";
 import PomodoroWidget from "./PomodoroWidget";
 
 type PomodoroContextValue = {
@@ -25,6 +26,9 @@ export default function PomodoroProvider({ children }: { children: React.ReactNo
     <PomodoroContext.Provider value={{ openPomodoro: () => setOpen(true), closePomodoro: () => setOpen(false) }}>
       <PomodoroWidget open={open} onOpenChange={setOpen} showLauncher={false} />
       {children}
+      <Suspense fallback={null}>
+        <FocusFloatingIndicator />
+      </Suspense>
     </PomodoroContext.Provider>
   );
 }

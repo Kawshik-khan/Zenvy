@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
+import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import Link from 'next/link';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
@@ -331,6 +332,7 @@ export default function GroupChatClient({
         </div>
 
         <div className="flex shrink-0 items-center gap-1 md:gap-2">
+          <FocusHeaderIndicator />
           <div className="flex rounded-full bg-surface-container p-1">
             <button
               type="button"

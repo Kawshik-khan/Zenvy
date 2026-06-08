@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { socket } from '@/lib/socket';
 import Sidebar from '@/app/components/Sidebar';
+import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
 
@@ -674,6 +675,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                   </div>
                   
                   <div className="flex shrink-0 items-center gap-2 md:gap-3">
+                    <FocusHeaderIndicator />
                     {activeCall && (
                       <Link
                         href={`/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}

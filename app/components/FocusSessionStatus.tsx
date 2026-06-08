@@ -2,55 +2,24 @@
 
 import React, { useEffect, useState } from "react";
 import { usePomodoro } from "./PomodoroProvider";
+import {
+  FOCUS_STATE_EVENT,
+  FocusTimerState,
+  emptyFocusState,
+  formatFocusTime,
+  isFocusActive,
+  readFocusState,
+} from "./focus-session-state";
 
 type FocusSessionStatusProps = {
   compact?: boolean;
 };
 
-type SavedTimerState = {
-  status?: "IDLE" | "RUNNING" | "PAUSED";
-  remainingSeconds?: number;
-  durationSeconds?: number;
-  startedAt?: number | null;
-};
-
-type FocusState = {
-  status: "IDLE" | "RUNNING" | "PAUSED";
-  remainingSeconds: number;
-  durationSeconds: number;
-};
-
-const STORAGE_KEY = "zenvy:pomodoro-state:v2";
-
-function formatTime(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
-  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-function readFocusState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") as SavedTimerState | null;
-    if (!saved) return { status: "IDLE" as const, remainingSeconds: 0, durationSeconds: 1 };
-
-    const durationSeconds = saved.durationSeconds || 1;
-    const elapsed = saved.status === "RUNNING" && saved.startedAt ? Math.floor((Date.now() - saved.startedAt) / 1000) : 0;
-    const remainingSeconds = Math.max(0, (saved.remainingSeconds || durationSeconds) - elapsed);
-    return {
-      status: saved.status || "IDLE",
-      remainingSeconds,
-      durationSeconds,
-    };
-  } catch {
-    return { status: "IDLE" as const, remainingSeconds: 0, durationSeconds: 1 };
-  }
-}
-
 export default function FocusSessionStatus({ compact = false }: FocusSessionStatusProps) {
   const { openPomodoro } = usePomodoro();
   const [mounted, setMounted] = useState(false);
-  const [focusState, setFocusState] = useState<FocusState>(() => ({ status: "IDLE", remainingSeconds: 0, durationSeconds: 1 }));
-  const active = focusState.status === "RUNNING" || focusState.status === "PAUSED";
+  const [focusState, setFocusState] = useState<FocusTimerState>(emptyFocusState);
+  const active = isFocusActive(focusState);
   const progress = active ? Math.max(0, Math.min(100, Math.round(((focusState.durationSeconds - focusState.remainingSeconds) / focusState.durationSeconds) * 100))) : 0;
 
   useEffect(() => {
@@ -62,9 +31,11 @@ export default function FocusSessionStatus({ compact = false }: FocusSessionStat
     refresh();
     const interval = window.setInterval(refresh, 1000);
     window.addEventListener("focus", refresh);
+    window.addEventListener(FOCUS_STATE_EVENT, refresh);
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener(FOCUS_STATE_EVENT, refresh);
     };
   }, []);
 
@@ -85,7 +56,7 @@ export default function FocusSessionStatus({ compact = false }: FocusSessionStat
             {active ? "Focus Active" : "Start Focus Session"}
           </p>
           {active && mounted && (
-            <p className="mt-0.5 font-mono text-[11px] font-bold text-on-surface-variant">{formatTime(focusState.remainingSeconds)} remaining</p>
+            <p className="mt-0.5 font-mono text-[11px] font-bold text-on-surface-variant">{formatFocusTime(focusState.remainingSeconds)} remaining</p>
           )}
         </div>
       </div>

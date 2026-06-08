@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { focusTracks } from "@/lib/focus-audio";
+import { FOCUS_STORAGE_KEY, notifyFocusStateChanged } from "./focus-session-state";
 
 type TimerMode = "FOCUS" | "SHORT_BREAK" | "LONG_BREAK";
 type TimerStatus = "IDLE" | "RUNNING" | "PAUSED";
@@ -43,7 +44,7 @@ type PomodoroWidgetProps = {
   showLauncher?: boolean;
 };
 
-const STORAGE_KEY = "zenvy:pomodoro-state:v2";
+const STORAGE_KEY = FOCUS_STORAGE_KEY;
 const PENDING_KEY = "zenvy:pomodoro-pending:v1";
 
 const defaultSettings: TimerSettings = {
@@ -181,6 +182,7 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
       if (!isControlled) setExpanded(Boolean(saved.expanded));
     } catch {
       localStorage.removeItem(STORAGE_KEY);
+      notifyFocusStateChanged();
     }
   }, [isControlled]);
 
@@ -224,6 +226,7 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    notifyFocusStateChanged();
   }, [authorized, mode, status, remainingSeconds, durationSeconds, startedAt, focusSessionsCompleted, settings, selectedTrackId, volume, muted, isExpanded]);
 
   useEffect(() => {
