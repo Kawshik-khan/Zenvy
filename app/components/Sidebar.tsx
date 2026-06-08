@@ -182,15 +182,6 @@ export default function Sidebar() {
     </aside>
 
     <div className={`fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-[#090A12]/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-16px_40px_rgba(0,0,0,0.36)] backdrop-blur-2xl transition-transform duration-200 md:hidden ${hideMobileChrome ? "pointer-events-none translate-y-full" : "translate-y-0"}`}>
-      <div className="border-b border-white/10 px-3 py-2">
-        <div className="flex items-center gap-3">
-          <img alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20" src={avatarUrl} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-black text-on-surface">{displayName}</p>
-            <p className="truncate text-[10px] font-bold text-on-surface-variant">{metrics.totalXp.toLocaleString()} XP · {metrics.currentStreakDays} day streak</p>
-          </div>
-        </div>
-      </div>
       <div className="flex items-stretch gap-1 px-2 py-2">
         <SidebarNav variant="bottom" chatUnreadCount={chatUnreadCount} />
       </div>
