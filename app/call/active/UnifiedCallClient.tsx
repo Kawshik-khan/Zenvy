@@ -22,7 +22,7 @@ export default function UnifiedCallClient({
   mediaType,
 }: UnifiedCallClientProps) {
   const router = useRouter();
-  const { activeCallId, error, isConnecting, startOrJoinCall, leaveCall } = useCallSession();
+  const { activeCallId, error, isConnecting, hasActiveCallSurface, startOrJoinCall, leaveCall } = useCallSession();
   const initializedKeyRef = useRef("");
   const callKey = useMemo(
     () => initialCallId || `${scope?.type || "unknown"}:${scope?.id || "missing"}:${mediaType}`,
@@ -54,6 +54,10 @@ export default function UnifiedCallClient({
     );
   }
 
+  if (hasActiveCallSurface) {
+    return null;
+  }
+
   return (
     <div className="app-aurora flex h-dvh flex-col overflow-hidden">
       <header className="app-topbar shrink-0">
@@ -64,9 +68,7 @@ export default function UnifiedCallClient({
           <img alt="" src={avatar || currentUser.image} className="h-10 w-10 rounded-xl bg-surface-container object-cover" />
           <div className="min-w-0">
             <h1 className="truncate font-black">{title}</h1>
-            <p className="text-xs text-on-surface-variant">
-              {isConnecting || !activeCallId ? "Connecting media..." : "Opening call..."}
-            </p>
+            <p className="text-xs text-on-surface-variant">{isConnecting || !activeCallId ? "Connecting media..." : "Opening call..."}</p>
           </div>
         </div>
       </header>

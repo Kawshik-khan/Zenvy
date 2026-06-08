@@ -79,6 +79,7 @@ type CallContextValue = {
   activeCallId: string;
   error: string | null;
   isConnecting: boolean;
+  hasActiveCallSurface: boolean;
   startOrJoinCall: (input: CallSessionInput) => Promise<void>;
   leaveCall: () => Promise<void>;
   minimizeCall: () => void;
@@ -87,6 +88,38 @@ type CallContextValue = {
 
 const CallContext = createContext<CallContextValue | null>(null);
 const STORAGE_KEY = "zenvy.activeCall";
+const CALL_PANEL_POSITION_PREFIX = "zenvy.callPanelPosition.";
+const PANEL_MARGIN = 12;
+const MOBILE_BOTTOM_CLEARANCE = 168;
+const DESKTOP_BOTTOM_CLEARANCE = 24;
+
+type FloatingPanelPosition = {
+  x: number;
+  y: number;
+};
+
+function getCallPanelPositionKey(callId: string) {
+  return `${CALL_PANEL_POSITION_PREFIX}${callId}`;
+}
+
+function clearCallPanelPosition(callId: string) {
+  if (typeof window === "undefined" || !callId) return;
+  window.sessionStorage.removeItem(getCallPanelPositionKey(callId));
+}
+
+function clampCallPanelPosition(x: number, y: number, width: number, height: number): FloatingPanelPosition {
+  if (typeof window === "undefined") return { x, y };
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const bottomClearance = viewportWidth < 768 ? MOBILE_BOTTOM_CLEARANCE : DESKTOP_BOTTOM_CLEARANCE;
+  const maxX = Math.max(PANEL_MARGIN, viewportWidth - width - PANEL_MARGIN);
+  const maxY = Math.max(PANEL_MARGIN, viewportHeight - height - bottomClearance);
+
+  return {
+    x: Math.min(Math.max(x, PANEL_MARGIN), maxX),
+    y: Math.min(Math.max(y, PANEL_MARGIN), maxY),
+  };
+}
 
 export function useCallSession() {
   const context = useContext(CallContext);
@@ -329,7 +362,138 @@ function LiveCallSurface({
   const [callMusicBlocked, setCallMusicBlocked] = useState(false);
   const [callMusicManuallyControlled, setCallMusicManuallyControlled] = useState(false);
   const [speakerMuted, setSpeakerMuted] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<FloatingPanelPosition | null>(null);
+  const [isPanelDragging, setIsPanelDragging] = useState(false);
+  const minimizedPanelRef = useRef<HTMLDivElement | null>(null);
+  const panelDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+    lastX: number;
+    lastY: number;
+    dragged: boolean;
+  } | null>(null);
+  const suppressPanelExpandRef = useRef(false);
   const isAloneInCall = participants.length <= 1;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !callId) return;
+    const stored = window.sessionStorage.getItem(getCallPanelPositionKey(callId));
+    if (!stored) {
+      setPanelPosition(null);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as FloatingPanelPosition;
+      if (Number.isFinite(parsed.x) && Number.isFinite(parsed.y)) {
+        setPanelPosition(parsed);
+      } else {
+        setPanelPosition(null);
+      }
+    } catch {
+      setPanelPosition(null);
+    }
+  }, [callId]);
+
+  const persistPanelPosition = useCallback(
+    (next: FloatingPanelPosition) => {
+      if (typeof window === "undefined" || !callId) return;
+      window.sessionStorage.setItem(getCallPanelPositionKey(callId), JSON.stringify(next));
+    },
+    [callId],
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !panelPosition) return;
+
+    const clampStoredPosition = () => {
+      const panel = minimizedPanelRef.current;
+      if (!panel) return;
+
+      const rect = panel.getBoundingClientRect();
+      setPanelPosition((current) => {
+        if (!current) return current;
+        const next = clampCallPanelPosition(current.x, current.y, rect.width, rect.height);
+        if (next.x === current.x && next.y === current.y) return current;
+        persistPanelPosition(next);
+        return next;
+      });
+    };
+
+    clampStoredPosition();
+    window.addEventListener("resize", clampStoredPosition);
+    return () => window.removeEventListener("resize", clampStoredPosition);
+  }, [panelPosition, persistPanelPosition]);
+
+  const startPanelDrag = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) return;
+      const panel = minimizedPanelRef.current;
+      if (!panel) return;
+
+      const rect = panel.getBoundingClientRect();
+      const origin = panelPosition || clampCallPanelPosition(rect.left, rect.top, rect.width, rect.height);
+      setPanelPosition(origin);
+      panelDragRef.current = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        originX: origin.x,
+        originY: origin.y,
+        lastX: origin.x,
+        lastY: origin.y,
+        dragged: false,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setIsPanelDragging(true);
+    },
+    [panelPosition],
+  );
+
+  const movePanelDrag = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = panelDragRef.current;
+    const panel = minimizedPanelRef.current;
+    if (!drag || !panel || drag.pointerId !== event.pointerId) return;
+
+    const rect = panel.getBoundingClientRect();
+    const next = clampCallPanelPosition(
+      drag.originX + event.clientX - drag.startX,
+      drag.originY + event.clientY - drag.startY,
+      rect.width,
+      rect.height,
+    );
+    drag.lastX = next.x;
+    drag.lastY = next.y;
+    if (Math.abs(event.clientX - drag.startX) > 4 || Math.abs(event.clientY - drag.startY) > 4) {
+      drag.dragged = true;
+      suppressPanelExpandRef.current = true;
+    }
+    setPanelPosition(next);
+  }, []);
+
+  const finishPanelDrag = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      const drag = panelDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+
+      const next = { x: drag.lastX, y: drag.lastY };
+      if (drag.dragged) persistPanelPosition(next);
+      panelDragRef.current = null;
+      setIsPanelDragging(false);
+      window.setTimeout(() => {
+        suppressPanelExpandRef.current = false;
+      }, 0);
+    },
+    [persistPanelPosition],
+  );
+
+  const expandMinimizedPanel = useCallback(() => {
+    if (suppressPanelExpandRef.current) return;
+    onExpand();
+  }, [onExpand]);
 
   const playCallMusic = useCallback(
     async (manual = false) => {
@@ -402,12 +566,30 @@ function LiveCallSurface({
           />
         )}
         <RoomAudioRenderer muted={speakerMuted} />
-        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-3 right-3 z-[130] mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-3xl border border-white/10 bg-surface-container-low/95 p-3 text-on-surface shadow-2xl backdrop-blur-2xl md:left-auto md:right-6 md:w-[32rem]">
-          <button type="button" onClick={onExpand} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-            <img alt="" src={avatar} className="h-11 w-11 rounded-2xl bg-surface-container object-cover" />
+        <div
+          ref={minimizedPanelRef}
+          className={`fixed z-[130] flex w-[min(22rem,calc(100vw-1.5rem))] items-center justify-between gap-2 rounded-3xl border border-white/10 bg-surface-container-low/95 p-3 text-on-surface shadow-2xl backdrop-blur-2xl md:w-[32rem] ${
+            panelPosition ? "" : "bottom-[calc(10.5rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6"
+          } ${isPanelDragging ? "select-none ring-2 ring-primary/35" : ""}`}
+          style={panelPosition ? { left: `${panelPosition.x}px`, top: `${panelPosition.y}px` } : undefined}
+        >
+          <button
+            type="button"
+            onPointerDown={startPanelDrag}
+            onPointerMove={movePanelDrag}
+            onPointerUp={finishPanelDrag}
+            onPointerCancel={finishPanelDrag}
+            className="flex h-11 w-7 shrink-0 touch-none cursor-grab items-center justify-center rounded-2xl text-on-surface-variant hover:bg-surface-container active:cursor-grabbing"
+            title="Drag call panel"
+            aria-label="Drag call panel"
+          >
+            <span className="material-symbols-outlined text-xl">drag_indicator</span>
+          </button>
+          <button type="button" onClick={expandMinimizedPanel} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+            <img alt="" src={avatar} className="h-10 w-10 rounded-2xl bg-surface-container object-cover md:h-11 md:w-11" />
             <div className="min-w-0">
               <p className="truncate text-sm font-black">{title}</p>
-              <p className="truncate text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+              <p className="truncate text-[10px] font-bold uppercase tracking-widest text-on-surface-variant md:text-[11px]">
                 {call?.mediaType || mediaType} call - {participants.length || 1} active
               </p>
             </div>
@@ -525,6 +707,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
 
   const expanded = pathname === "/call/active";
   const liveKitReady = Boolean(credentials?.serverUrl && credentials?.token && activeCallId);
+  const hasActiveCallSurface = Boolean(liveKitReady && currentUser);
 
   useEffect(() => {
     activeCallIdRef.current = activeCallId;
@@ -544,6 +727,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const clearCall = useCallback(() => {
+    const previousCallId = activeCallIdRef.current;
     setCall(null);
     setActiveCallId("");
     setCredentials(null);
@@ -556,6 +740,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     scopeRef.current = undefined;
     inFlightKeyRef.current = "";
     persistCall(null);
+    clearCallPanelPosition(previousCallId);
   }, [persistCall]);
 
   const startOrJoinCall = useCallback(
@@ -744,19 +929,20 @@ export default function CallProvider({ children }: { children: React.ReactNode }
       activeCallId,
       error,
       isConnecting,
+      hasActiveCallSurface,
       startOrJoinCall,
       leaveCall,
       minimizeCall,
       expandCall,
     }),
-    [activeCallId, call, error, expandCall, isConnecting, leaveCall, minimizeCall, startOrJoinCall],
+    [activeCallId, call, error, expandCall, hasActiveCallSurface, isConnecting, leaveCall, minimizeCall, startOrJoinCall],
   );
 
   return (
     <CallContext.Provider value={value}>
       {children}
       {error && !expanded && (
-        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-3 right-3 z-[135] mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl border border-error/30 bg-error-container p-4 text-on-error-container shadow-2xl md:right-6 md:left-auto">
+        <div className="fixed bottom-[calc(10.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[135] mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl border border-error/30 bg-error-container p-4 text-on-error-container shadow-2xl md:bottom-[calc(1rem+env(safe-area-inset-bottom))] md:left-auto md:right-6">
           <p className="text-sm font-bold">{error}</p>
           <button type="button" onClick={() => setError(null)} className="rounded-full p-1 hover:bg-error/10">
             <span className="material-symbols-outlined text-lg">close</span>

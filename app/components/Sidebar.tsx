@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import SidebarNav from './SidebarNav';
 import FocusSessionStatus from './FocusSessionStatus';
 
@@ -35,8 +36,15 @@ const fallbackMetrics: SidebarMetrics = {
 };
 
 export default function Sidebar() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [payload, setPayload] = useState<SidebarPayload | null>(null);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  const isChatConversation = pathname === "/chat" && Boolean(searchParams?.get("conversation"));
+  const isPersonalChat = pathname === "/chat/personal";
+  const isGroupDetail = Boolean(pathname?.startsWith("/groups/"));
+  const isChannelDetail = Boolean(pathname?.startsWith("/channels/"));
+  const hideMobileChrome = isChatConversation || isPersonalChat || isGroupDetail || isChannelDetail;
 
   useEffect(() => {
     let active = true;
@@ -54,6 +62,18 @@ export default function Sidebar() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (hideMobileChrome) {
+      document.body.dataset.mobileChromeHidden = "true";
+      return () => {
+        delete document.body.dataset.mobileChromeHidden;
+      };
+    }
+
+    delete document.body.dataset.mobileChromeHidden;
+    return undefined;
+  }, [hideMobileChrome]);
 
   useEffect(() => {
     let active = true;
@@ -161,7 +181,7 @@ export default function Sidebar() {
       </div>
     </aside>
 
-    <div className="fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-[#090A12]/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-16px_40px_rgba(0,0,0,0.36)] backdrop-blur-2xl md:hidden">
+    <div className={`fixed inset-x-0 bottom-0 z-[110] border-t border-white/10 bg-[#090A12]/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-16px_40px_rgba(0,0,0,0.36)] backdrop-blur-2xl transition-transform duration-200 md:hidden ${hideMobileChrome ? "pointer-events-none translate-y-full" : "translate-y-0"}`}>
       <div className="border-b border-white/10 px-3 py-2">
         <div className="flex items-center gap-3">
           <img alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20" src={avatarUrl} />

@@ -135,6 +135,11 @@
     padding-bottom: calc(10rem + env(safe-area-inset-bottom));
   }
 
+  body[data-mobile-chrome-hidden="true"] .app-main,
+  body[data-mobile-chrome-hidden="true"] .mobile-safe-bottom {
+    padding-bottom: 0;
+  }
+
   @media (min-width: 768px) {
     .mobile-safe-bottom {
       padding-bottom: 0;
