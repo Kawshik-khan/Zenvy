@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { invalidateStudyMetrics } from "@/lib/cache";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -62,6 +63,8 @@ export async function POST(request: Request) {
       endedAt: true,
     },
   });
+
+  await invalidateStudyMetrics(user.id);
 
   return Response.json({ session: sessionRecord });
 }

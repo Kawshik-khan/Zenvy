@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { getStudyMetrics } from "@/lib/study-metrics";
+import { getCachedStudyMetrics } from "@/lib/study-metrics-cache";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +20,10 @@ export async function GET() {
     return Response.json({ error: "User not found" }, { status: 404 });
   }
 
-  const metrics = await getStudyMetrics(user.id);
+  const metrics = await getCachedStudyMetrics(user.id);
 
   return Response.json({
     user,
     metrics,
   });
 }
-

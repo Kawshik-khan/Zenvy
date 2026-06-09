@@ -5,6 +5,7 @@ const { Server: ServerIO } = require('socket.io');
 const { PrismaClient } = require('@prisma/client');
 const { getToken } = require('next-auth/jwt');
 const { verifySocketToken } = require('./lib/socket-auth');
+const { invalidateStudyMetrics } = require('./lib/cache-runtime');
 const { canDmUsers, registerConversationHandlers } = require('./lib/conversation-socket');
 
 const prisma = new PrismaClient();
@@ -26,6 +27,16 @@ app.prepare().then(() => {
       console.error('Error occurred handling', req.url, err);
       res.statusCode = 500;
       res.end('internal server error');
+    }
+  });
+
+  // Attach Socket.io to the persistent HTTP Server!
+  const io = new ServerIO(server, {
+    path: '/api/socket',
+    addTrailingSlash: false,
+    cors: {
+      origin: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      methods: ["GET", "POST"]
     }
   });
 
@@ -60,16 +71,6 @@ app.prepare().then(() => {
     } catch (error) {
       console.error('Socket authentication error:', error);
       nextMiddleware(new Error('unauthorized'));
-    }
-  });
-
-  // Attach Socket.io to the persistent HTTP Server!
-  const io = new ServerIO(server, {
-    path: '/api/socket',
-    addTrailingSlash: false,
-    cors: {
-      origin: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-      methods: ["GET", "POST"]
     }
   });
 
@@ -239,6 +240,7 @@ app.prepare().then(() => {
           });
           data.message.id = savedMsg.id;
           data.message.timestamp = savedMsg.createdAt;
+          await invalidateStudyMetrics(userId);
           socket.emit('message_sent_success', { tempId, realId: savedMsg.id });
         } catch (e) {
           console.error('Failed to save message to db:', e);
@@ -257,6 +259,7 @@ app.prepare().then(() => {
         const msg = await prisma.message.findUnique({ where: { id: data.messageId } });
         if (msg && msg.senderId === userId && msg.roomId === data.roomId) {
           await prisma.message.delete({ where: { id: data.messageId } });
+          await invalidateStudyMetrics(userId);
           socket.to(data.roomId).emit('message_deleted', { messageId: data.messageId });
         }
       } catch (e) {
@@ -291,6 +294,7 @@ app.prepare().then(() => {
 
         data.message.id = savedMsg.id;
         data.message.timestamp = savedMsg.createdAt;
+        await invalidateStudyMetrics(userId);
         socket.emit('channel_message_sent_success', { tempId, realId: savedMsg.id });
       } catch (e) {
         console.error('Failed to save channel message:', e);
@@ -306,6 +310,7 @@ app.prepare().then(() => {
         const msg = await prisma.channelMessage.findUnique({ where: { id: data.messageId } });
         if (msg && msg.senderId === userId) {
           await prisma.channelMessage.delete({ where: { id: data.messageId } });
+          await invalidateStudyMetrics(userId);
           socket.to(`channel_${data.channelId}`).emit('channel_message_deleted', { messageId: data.messageId });
         }
       } catch (e) {
@@ -354,6 +359,7 @@ app.prepare().then(() => {
 
         data.message.id = savedMsg.id;
         data.message.timestamp = savedMsg.createdAt;
+        await invalidateStudyMetrics(userId);
         socket.emit('group_message_sent_success', { tempId, realId: savedMsg.id });
       } catch (e) {
         console.error('Failed to save group message:', e);
@@ -369,6 +375,7 @@ app.prepare().then(() => {
         const msg = await prisma.groupMessage.findUnique({ where: { id: data.messageId } });
         if (msg && msg.senderId === userId) {
           await prisma.groupMessage.delete({ where: { id: data.messageId } });
+          await invalidateStudyMetrics(userId);
           socket.to(`group_${data.groupId}`).emit('group_message_deleted', { messageId: data.messageId });
         }
       } catch (e) {

@@ -9,7 +9,7 @@ import ErrorView from "@/app/components/ErrorView";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import NotificationBell from "@/app/components/NotificationBell";
 import GlobalPeopleSearch from "@/app/components/GlobalPeopleSearch";
-import { getStudyMetrics } from "@/lib/study-metrics";
+import { getCachedStudyMetrics } from "@/lib/study-metrics-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
     const now = new Date();
     const groupIds = user.groupMemberships.map((membership) => membership.groupId);
     const [metrics, upcomingEvents, recentMessages, newMembers, popularGroups] = await Promise.all([
-      getStudyMetrics(user.id, now),
+      getCachedStudyMetrics(user.id, now),
       prisma.event.findMany({
         where: {
           startTime: { gte: now },

@@ -1,3 +1,4 @@
+import { invalidateConversationUnread, invalidateStudyMetrics } from "@/lib/cache";
 import { prisma } from "@/lib/prisma";
 
 export type ConversationMessagePayload = {
@@ -142,7 +143,7 @@ export async function createConversationMessage(params: {
   fileType?: string | null;
   fileName?: string | null;
 }) {
-  await assertCanAccessConversation(params.senderId, params.conversationId);
+  const conversation = await assertCanAccessConversation(params.senderId, params.conversationId);
 
   const message = await prisma.conversationMessage.create({
     data: {
@@ -165,6 +166,15 @@ export async function createConversationMessage(params: {
       lastMessageAt: message.createdAt,
     },
   });
+
+  await Promise.all([
+    invalidateStudyMetrics(params.senderId),
+    invalidateConversationUnread(
+      ...conversation.participants
+        .map((participant) => participant.userId)
+        .filter((userId) => userId !== params.senderId)
+    ),
+  ]);
 
   return formatConversationMessage(message, params.senderId);
 }

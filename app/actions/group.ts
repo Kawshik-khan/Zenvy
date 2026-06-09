@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { invalidateStudyMetrics } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -47,6 +48,8 @@ export async function createGroup(formData: FormData) {
     }
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/groups");
   return { success: true, groupId: group.id };
 }
@@ -82,6 +85,8 @@ export async function joinGroup(groupId: string) {
     }
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/groups");
   return { success: true };
 }
@@ -103,6 +108,8 @@ export async function leaveGroup(groupId: string) {
       }
     }
   });
+
+  await invalidateStudyMetrics(user.id);
 
   revalidatePath("/groups");
   return { success: true };

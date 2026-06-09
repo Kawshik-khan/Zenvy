@@ -7,6 +7,7 @@ import { verifySocketToken } from '../../lib/socket-auth';
 import { prisma } from '../../lib/prisma';
 import { canAccessChannel, canAccessGroup, canAccessMessageRoom, canSignalUser } from '../../lib/room-auth';
 import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '../../lib/calls';
+import { invalidateConversationUnread, invalidateStudyMetrics } from '../../lib/cache';
 import {
   assertCanAccessConversation,
   createConversationMessage,
@@ -182,7 +183,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       socket.on('conversation:join', async (data: { conversationId: string }) => {
         if (!userId) return;
         try {
-          await assertCanAccessConversation(userId, data.conversationId);
+          const conversation = await assertCanAccessConversation(userId, data.conversationId);
           socket.join(`conversation_${data.conversationId}`);
         } catch {
           socket.emit('conversation:error', { message: 'You are not allowed to join this conversation' });
@@ -225,7 +226,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         if (!userId) return;
 
         try {
-          await assertCanAccessConversation(userId, data.conversationId);
+          const conversation = await assertCanAccessConversation(userId, data.conversationId);
           const message = await prisma.conversationMessage.findUnique({ where: { id: data.messageId } });
           if (!message || message.conversationId !== data.conversationId || message.senderId !== userId) return;
 
@@ -234,6 +235,11 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
             data: { status: 'DELETED', content: '' },
           });
 
+          await invalidateConversationUnread(
+            ...conversation.participants
+              .map((participant) => participant.userId)
+              .filter((participantUserId) => participantUserId !== userId)
+          );
           io.to(`conversation_${data.conversationId}`).emit('message:deleted', { messageId: data.messageId });
           await emitConversationUpdated(data.conversationId);
         } catch (error: any) {
@@ -247,6 +253,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
           where: { conversationId: data.conversationId, userId },
           data: { lastReadAt: new Date() },
         });
+        await invalidateConversationUnread(userId);
         await emitConversationUpdated(data.conversationId);
       });
 
@@ -315,6 +322,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
             });
             data.message.id = savedMsg.id;
             data.message.timestamp = savedMsg.createdAt;
+            await invalidateStudyMetrics(senderId);
             socket.emit('message_sent_success', { tempId, realId: savedMsg.id });
           } catch (e) {
             console.error('Failed to save message to db:', e);
@@ -335,6 +343,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
           const msg = await prisma.message.findUnique({ where: { id: data.messageId } });
           if (msg && msg.senderId === socket.data.user.sub && msg.roomId === data.roomId) {
             await prisma.message.delete({ where: { id: data.messageId } });
+            await invalidateStudyMetrics(socket.data.user.sub);
             socket.to(data.roomId).emit('message_deleted', { messageId: data.messageId });
           }
         } catch (e) {
@@ -385,6 +394,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
 
           data.message.id = savedMsg.id;
           data.message.timestamp = savedMsg.createdAt;
+          await invalidateStudyMetrics(senderId);
           socket.emit('channel_message_sent_success', { tempId, realId: savedMsg.id });
         } catch (e) {
           console.error('Failed to save channel message:', e);
@@ -401,6 +411,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
           const msg = await prisma.channelMessage.findUnique({ where: { id: data.messageId } });
           if (msg && msg.senderId === socket.data.user.sub) {
             await prisma.channelMessage.delete({ where: { id: data.messageId } });
+            await invalidateStudyMetrics(socket.data.user.sub);
             socket.to(`channel_${data.channelId}`).emit('channel_message_deleted', { messageId: data.messageId });
           }
         } catch (e) {
@@ -451,6 +462,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
 
           data.message.id = savedMsg.id;
           data.message.timestamp = savedMsg.createdAt;
+          await invalidateStudyMetrics(senderId);
           socket.emit('group_message_sent_success', { tempId, realId: savedMsg.id });
         } catch (e) {
           console.error('Failed to save group message:', e);
@@ -467,6 +479,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
           const msg = await prisma.groupMessage.findUnique({ where: { id: data.messageId } });
           if (msg && msg.senderId === socket.data.user.sub) {
             await prisma.groupMessage.delete({ where: { id: data.messageId } });
+            await invalidateStudyMetrics(socket.data.user.sub);
             socket.to(`group_${data.groupId}`).emit('group_message_deleted', { messageId: data.messageId });
           }
         } catch (e) {

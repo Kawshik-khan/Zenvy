@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { cacheKeys, getJsonCache, setJsonCache } from "@/lib/cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,12 @@ export async function GET() {
   }
 
   try {
+    const cacheKey = cacheKeys.conversationUnread(session.user.id);
+    const cachedUnreadCount = await getJsonCache<number>(cacheKey);
+    if (typeof cachedUnreadCount === "number") {
+      return NextResponse.json({ unreadCount: cachedUnreadCount });
+    }
+
     const [row] = await prisma.$queryRaw<UnreadCountRow[]>`
       SELECT COUNT(*) AS "unreadCount"
       FROM "ConversationMessage" message
@@ -28,7 +35,10 @@ export async function GET() {
         AND message."createdAt" > COALESCE(participant."lastReadAt", to_timestamp(0))
     `;
 
-    return NextResponse.json({ unreadCount: Number(row?.unreadCount || 0) });
+    const unreadCount = Number(row?.unreadCount || 0);
+    await setJsonCache(cacheKey, unreadCount, 15);
+
+    return NextResponse.json({ unreadCount });
   } catch (error) {
     console.error("Unread conversations count error:", error);
     return NextResponse.json({ error: "Unable to load unread chat count" }, { status: 500 });

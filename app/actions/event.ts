@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { invalidateStudyMetrics } from "@/lib/cache";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -106,6 +107,8 @@ export async function createEvent(formData: FormData) {
     },
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/events");
   revalidatePath("/scheduling");
   revalidatePath("/dashboard");
@@ -133,6 +136,8 @@ export async function rsvpEvent(eventId: string, status: "GOING" | "MAYBE" | "DE
     create: { eventId, userId: user.id, status },
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/events");
   revalidatePath("/scheduling");
   revalidatePath("/dashboard");
@@ -143,7 +148,7 @@ export async function cancelEvent(eventId: string) {
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    include: { group: true },
+    include: { group: true, attendees: { select: { userId: true } } },
   });
   if (!event) throw new Error("Event not found");
 
@@ -158,6 +163,8 @@ export async function cancelEvent(eventId: string) {
   }
 
   await prisma.event.delete({ where: { id: eventId } });
+
+  await invalidateStudyMetrics(event.creatorId, ...event.attendees.map((attendee) => attendee.userId));
 
   revalidatePath("/events");
   revalidatePath("/scheduling");

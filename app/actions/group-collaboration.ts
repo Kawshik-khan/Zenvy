@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { invalidateStudyMetrics } from "@/lib/cache";
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import { getSafeFileExtension, validateChatAttachment } from "@/lib/upload-validation";
@@ -122,6 +123,8 @@ export async function acceptGroupInvite(notificationId: string) {
       data: { read: true },
     }),
   ]);
+
+  await invalidateStudyMetrics(user.id);
 
   revalidatePath(`/groups/${invite.groupId}`);
   revalidatePath("/groups");
@@ -247,6 +250,8 @@ export async function createGroupResource(formData: FormData) {
     },
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath(`/groups/${groupId}`);
 }
 
@@ -265,6 +270,8 @@ export async function toggleGroupResourcePinned(resourceId: string) {
     data: { pinned: !resource.pinned },
   });
 
+  await invalidateStudyMetrics(resource.creatorId);
+
   revalidatePath(`/groups/${resource.groupId}`);
 }
 
@@ -281,6 +288,8 @@ export async function deleteGroupResource(resourceId: string) {
   await prisma.groupResource.delete({
     where: { id: resource.id },
   });
+
+  await invalidateStudyMetrics(resource.creatorId);
 
   revalidatePath(`/groups/${resource.groupId}`);
 }

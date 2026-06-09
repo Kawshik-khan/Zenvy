@@ -22,6 +22,7 @@
     "@prisma/engines": "^5.22.0",
     "@supabase/supabase-js": "^2.100.0",
     "@types/simple-peer": "^9.11.9",
+    "@upstash/redis": "^1.38.0",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.0.0",
     "livekit-client": "^2.19.1",

@@ -3,6 +3,7 @@ const { Server: ServerIO } = require('socket.io');
 const { PrismaClient } = require('@prisma/client');
 const { getToken } = require('next-auth/jwt');
 const { verifySocketToken } = require('./lib/socket-auth');
+const { invalidateStudyMetrics } = require('./lib/cache-runtime');
 const { canDmUsers, registerConversationHandlers } = require('./lib/conversation-socket');
 
 // Initialize Prisma
@@ -269,6 +270,7 @@ io.on('connection', (socket) => {
         });
         data.message.id = savedMsg.id;
         data.message.timestamp = savedMsg.createdAt;
+        await invalidateStudyMetrics(userId);
       } catch (e) {
         console.error('Failed to save message to db:', e);
       }
@@ -301,6 +303,7 @@ io.on('connection', (socket) => {
 
       data.message.id = savedMsg.id;
       data.message.timestamp = savedMsg.createdAt;
+      await invalidateStudyMetrics(userId);
     } catch (e) {
       console.error('Failed to save channel message:', e);
       return;

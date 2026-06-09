@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { invalidateConversationUnread } from "@/lib/cache";
 import { prisma } from "@/lib/prisma";
 import { assertCanAccessConversation } from "@/lib/conversations";
 
@@ -12,12 +13,13 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const userId = session.user.id;
   const { id, messageId } = await params;
 
   try {
-    await assertCanAccessConversation(session.user.id, id);
+    const conversation = await assertCanAccessConversation(userId, id);
     const message = await prisma.conversationMessage.findUnique({ where: { id: messageId } });
-    if (!message || message.conversationId !== id || message.senderId !== session.user.id) {
+    if (!message || message.conversationId !== id || message.senderId !== userId) {
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
@@ -25,6 +27,12 @@ export async function DELETE(
       where: { id: messageId },
       data: { status: "DELETED", content: "" },
     });
+
+    await invalidateConversationUnread(
+      ...conversation.participants
+        .map((participant) => participant.userId)
+        .filter((participantUserId) => participantUserId !== userId)
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

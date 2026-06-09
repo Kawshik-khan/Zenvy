@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { invalidateStudyMetrics } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -61,6 +62,8 @@ export async function createChannel(formData: FormData) {
     },
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/channels");
   return { success: true, channelId: channel.id };
 }
@@ -92,6 +95,8 @@ export async function joinChannel(channelId: string) {
     },
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/channels");
   revalidatePath(`/channels/${channelId}`);
   return { success: true };
@@ -118,6 +123,8 @@ export async function leaveChannel(channelId: string) {
     },
   });
 
+  await invalidateStudyMetrics(user.id);
+
   revalidatePath("/channels");
   revalidatePath(`/channels/${channelId}`);
   return { success: true };
@@ -137,6 +144,8 @@ export async function deleteChannel(channelId: string) {
   if (channel.creatorId !== user.id) throw new Error("Only the creator can delete this channel");
 
   await prisma.channel.delete({ where: { id: channelId } });
+
+  await invalidateStudyMetrics(user.id);
 
   revalidatePath("/channels");
   return { success: true };
@@ -161,6 +170,8 @@ export async function removeChannelMember(channelId: string, memberId: string) {
       channelId_userId: { channelId, userId: memberId },
     },
   });
+
+  await invalidateStudyMetrics(memberId);
 
   revalidatePath(`/channels/${channelId}`);
   return { success: true };
