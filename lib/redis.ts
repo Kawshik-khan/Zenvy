@@ -1,4 +1,7 @@
+import { loadEnvConfig } from "@next/env";
 import { Redis } from "@upstash/redis";
+
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 
 let redis: Redis | null | undefined;
 
