@@ -3,6 +3,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import { socket } from '@/lib/socket';
+import { usePomodoro } from '@/app/components/PomodoroProvider';
+import CallToolsMenu from '@/app/components/call/CallToolsMenu';
+import CallNotePad from '@/app/components/call/CallNotePad';
+import { postCallNote, resolveCallNoteTarget } from '@/lib/call-notes';
 
 // Public free TURN servers for reliable NAT traversal and mobile networks
 const ICE_SERVERS = {
@@ -35,6 +39,15 @@ interface CallOverlayProps {
   isVideoCall: boolean;
   onClose: () => void;
   incomingSignal?: any;
+  onNotePosted?: (message: {
+    id: string;
+    senderId: string;
+    senderName: string;
+    content: string;
+    timestamp: Date;
+    isSelf: boolean;
+    fileType: string;
+  }) => void;
 }
 
 export default function CallOverlay({
@@ -44,8 +57,11 @@ export default function CallOverlay({
   isIncoming,
   isVideoCall,
   onClose,
-  incomingSignal
+  incomingSignal,
+  onNotePosted,
 }: CallOverlayProps) {
+  const { openPomodoro } = usePomodoro();
+  const [notePadOpen, setNotePadOpen] = useState(false);
   const [callStatus, setCallStatus] = useState<'INITIALIZING' | 'RINGING' | 'CONNECTED' | 'ENDED'>('INITIALIZING');
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(!isVideoCall);
@@ -245,6 +261,34 @@ export default function CallOverlay({
     onClose();
   };
 
+  const handleSaveCallNote = useCallback(async (content: string) => {
+    if (!socket.connected) socket.connect();
+
+    const target = resolveCallNoteTarget({ legacyRoomId: roomId });
+    if (!target) throw new Error('Unable to find chat for this call');
+
+    const tempId = `call_note_${Date.now()}`;
+    onNotePosted?.({
+      id: tempId,
+      senderId: currentUser.id,
+      senderName: currentUser.name || 'Scholar',
+      content,
+      timestamp: new Date(),
+      isSelf: true,
+      fileType: 'call_note',
+    });
+
+    await postCallNote({
+      target,
+      sender: {
+        id: currentUser.id,
+        name: currentUser.name || 'Scholar',
+        image: currentUser.image || null,
+      },
+      content,
+    });
+  }, [currentUser.id, currentUser.image, currentUser.name, onNotePosted, roomId]);
+
   return (
     <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in duration-300">
       <div className="relative w-full max-w-5xl h-full flex flex-col gap-4">
@@ -340,6 +384,11 @@ export default function CallOverlay({
              </button>
            )}
 
+           <CallToolsMenu
+             onOpenPomodoro={openPomodoro}
+             onOpenNote={() => setNotePadOpen(true)}
+           />
+
            <button
              onClick={endCall}
              className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/30 hover:scale-110 active:scale-95 transition-all"
@@ -348,6 +397,7 @@ export default function CallOverlay({
            </button>
         </div>
       </div>
+      <CallNotePad open={notePadOpen} onClose={() => setNotePadOpen(false)} onSave={handleSaveCallNote} />
     </div>
   );
 }

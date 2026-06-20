@@ -22,7 +22,11 @@ import {
 import { RoomEvent, Track } from "livekit-client";
 import { socket } from "@/lib/socket";
 import { focusTracks } from "@/lib/focus-audio";
+import { postCallNote, resolveCallNoteTarget } from "@/lib/call-notes";
 import FocusHeaderIndicator from "./FocusHeaderIndicator";
+import { usePomodoro } from "./PomodoroProvider";
+import CallToolsMenu from "./call/CallToolsMenu";
+import CallNotePad from "./call/CallNotePad";
 
 type CallParticipant = {
   userId: string;
@@ -143,32 +147,59 @@ function sameScope(a?: CallScope, b?: CallScope) {
 }
 
 function CallTiles() {
-  const tracks = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }], {
-    updateOnlyOn: [
-      RoomEvent.TrackSubscribed,
-      RoomEvent.TrackUnsubscribed,
-      RoomEvent.ParticipantConnected,
-      RoomEvent.ParticipantDisconnected,
-      RoomEvent.LocalTrackPublished,
-      RoomEvent.LocalTrackUnpublished,
+  const tracks = useTracks(
+    [
+      { source: Track.Source.ScreenShare, withPlaceholder: false },
+      { source: Track.Source.Camera, withPlaceholder: true },
     ],
+    {
+      updateOnlyOn: [
+        RoomEvent.TrackSubscribed,
+        RoomEvent.TrackUnsubscribed,
+        RoomEvent.ParticipantConnected,
+        RoomEvent.ParticipantDisconnected,
+        RoomEvent.LocalTrackPublished,
+        RoomEvent.LocalTrackUnpublished,
+      ],
+    },
+  );
+
+  const sortedTracks = [...tracks].sort((a, b) => {
+    if (a.source === Track.Source.ScreenShare && b.source !== Track.Source.ScreenShare) return -1;
+    if (b.source === Track.Source.ScreenShare && a.source !== Track.Source.ScreenShare) return 1;
+    return 0;
   });
+
+  const hasScreenShare = sortedTracks.some((trackRef) => trackRef.source === Track.Source.ScreenShare);
 
   return (
     <main
       className="grid flex-1 gap-3 overflow-y-auto p-3 md:gap-4 md:p-6"
-      style={{ gridTemplateColumns: tracks.length > 1 ? "repeat(auto-fit, minmax(260px, 1fr))" : "1fr" }}
+      style={{
+        gridTemplateColumns:
+          sortedTracks.length > 1 ? "repeat(auto-fit, minmax(260px, 1fr))" : "1fr",
+      }}
     >
-      {tracks.map((trackRef) => (
-        <div key={trackRef.participant.identity} className="min-h-52 overflow-hidden rounded-2xl glass-panel-subtle">
+      {sortedTracks.map((trackRef) => (
+        <div
+          key={`${trackRef.participant.identity}-${trackRef.source}`}
+          className={`relative min-h-52 overflow-hidden rounded-2xl glass-panel-subtle ${
+            trackRef.source === Track.Source.ScreenShare && hasScreenShare ? "md:col-span-2 md:min-h-72" : ""
+          }`}
+        >
           <ParticipantTile
             trackRef={trackRef}
             className="h-full min-h-52 bg-surface-container-low"
             disableSpeakingIndicator={false}
           />
+          {trackRef.source === Track.Source.ScreenShare && (
+            <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-on-primary">
+              Sharing screen
+            </span>
+          )}
         </div>
       ))}
-      {tracks.length === 0 && (
+      {sortedTracks.length === 0 && (
         <div className="flex min-h-52 items-center justify-center rounded-2xl glass-panel-subtle">
           <p className="text-sm font-bold text-on-surface-variant">Camera is off</p>
         </div>
@@ -185,6 +216,8 @@ function CallControls({
   onError,
   speakerMuted,
   onSpeakerMutedChange,
+  onOpenPomodoro,
+  onOpenNote,
   compact = false,
 }: {
   callId: string;
@@ -194,20 +227,35 @@ function CallControls({
   onError: (message: string) => void;
   speakerMuted: boolean;
   onSpeakerMutedChange: (muted: boolean) => void;
+  onOpenPomodoro: () => void;
+  onOpenNote: () => void;
   compact?: boolean;
 }) {
   const room = useRoomContext();
-  const { isCameraEnabled, isMicrophoneEnabled, localParticipant } = useLocalParticipant();
+  const { isCameraEnabled, isMicrophoneEnabled, localParticipant, isScreenShareEnabled } = useLocalParticipant();
   const [audioOutputs, setAudioOutputs] = useState<MediaDeviceInfo[]>([]);
-  const [mediaPending, setMediaPending] = useState<"audio" | "video" | "speaker" | null>(null);
+  const [mediaPending, setMediaPending] = useState<"audio" | "video" | "speaker" | "screen" | null>(null);
   const supportsAudioOutput = typeof HTMLMediaElement !== "undefined" && "setSinkId" in HTMLMediaElement.prototype;
 
   const emitMediaState = useCallback(
-    (next: { audioEnabled?: boolean; videoEnabled?: boolean }) => {
+    (next: { audioEnabled?: boolean; videoEnabled?: boolean; screenSharing?: boolean }) => {
       socket.emit("call:media-state", { callId, ...next });
     },
     [callId],
   );
+
+  useEffect(() => {
+    const handleUnpublished = (publication: { source?: Track.Source }) => {
+      if (publication.source === Track.Source.ScreenShare) {
+        emitMediaState({ screenSharing: false });
+      }
+    };
+
+    room.on(RoomEvent.LocalTrackUnpublished, handleUnpublished);
+    return () => {
+      room.off(RoomEvent.LocalTrackUnpublished, handleUnpublished);
+    };
+  }, [emitMediaState, room]);
 
   useEffect(() => {
     if (!navigator.mediaDevices?.enumerateDevices) return;
@@ -260,6 +308,19 @@ function CallControls({
       setMediaPending(null);
     }
   }, [audioOutputs, onSpeakerMutedChange, room, speakerMuted, supportsAudioOutput]);
+
+  const toggleScreenShare = useCallback(async () => {
+    setMediaPending("screen");
+    try {
+      const enabled = !isScreenShareEnabled;
+      await localParticipant.setScreenShareEnabled(enabled);
+      emitMediaState({ screenSharing: enabled });
+    } catch (error: any) {
+      onError(error?.message || "Unable to share screen");
+    } finally {
+      setMediaPending(null);
+    }
+  }, [emitMediaState, isScreenShareEnabled, localParticipant, onError]);
 
   const sizeClass = compact ? "h-10 w-10" : "h-14 w-14";
   const controlClass = `flex ${sizeClass} items-center justify-center rounded-full bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60`;
@@ -319,6 +380,19 @@ function CallControls({
       )}
       <button
         type="button"
+        onClick={toggleScreenShare}
+        disabled={mediaPending === "screen"}
+        className={`${controlClass} ${isScreenShareEnabled ? "bg-primary text-on-primary hover:bg-primary/90" : ""}`}
+        title={isScreenShareEnabled ? "Stop screen share" : "Share screen"}
+        aria-label={isScreenShareEnabled ? "Stop screen share" : "Share screen"}
+      >
+        <span className="material-symbols-outlined">
+          {isScreenShareEnabled ? "stop_screen_share" : "present_to_all"}
+        </span>
+      </button>
+      <CallToolsMenu compact={compact} onOpenPomodoro={onOpenPomodoro} onOpenNote={onOpenNote} />
+      <button
+        type="button"
         onClick={onLeave}
         className={`flex ${compact ? "h-11 w-11" : "h-16 w-16"} items-center justify-center rounded-full bg-error text-on-error hover:bg-error-dim`}
         title="Leave call"
@@ -337,6 +411,7 @@ function LiveCallSurface({
   scope,
   title,
   avatar,
+  currentUser,
   onLeave,
   onMinimize,
   onExpand,
@@ -349,12 +424,15 @@ function LiveCallSurface({
   scope?: CallScope;
   title: string;
   avatar: string;
+  currentUser: CurrentCallUser;
   onLeave: () => void;
   onMinimize: () => void;
   onExpand: () => void;
   onError: (message: string) => void;
   expanded: boolean;
 }) {
+  const { openPomodoro } = usePomodoro();
+  const [notePadOpen, setNotePadOpen] = useState(false);
   const participants = useParticipants();
   const selectedCallTrack = focusTracks[0];
   const callMusicRef = useRef<HTMLAudioElement | null>(null);
@@ -378,6 +456,24 @@ function LiveCallSurface({
   } | null>(null);
   const suppressPanelExpandRef = useRef(false);
   const isAloneInCall = participants.length <= 1;
+
+  const handleSaveCallNote = useCallback(
+    async (content: string) => {
+      const target = resolveCallNoteTarget({
+        conversationId: call?.conversationId,
+        groupId: call?.groupId,
+        channelId: call?.channelId,
+        scope,
+      });
+      if (!target) throw new Error("Unable to find chat for this call");
+      await postCallNote({
+        target,
+        sender: currentUser,
+        content,
+      });
+    },
+    [call?.channelId, call?.conversationId, call?.groupId, currentUser, scope],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined" || !callId) return;
@@ -602,9 +698,12 @@ function LiveCallSurface({
             onError={onError}
             speakerMuted={speakerMuted}
             onSpeakerMutedChange={setSpeakerMuted}
+            onOpenPomodoro={openPomodoro}
+            onOpenNote={() => setNotePadOpen(true)}
             compact
           />
         </div>
+        <CallNotePad open={notePadOpen} onClose={() => setNotePadOpen(false)} onSave={handleSaveCallNote} />
       </>
     );
   }
@@ -682,8 +781,11 @@ function LiveCallSurface({
           onError={onError}
           speakerMuted={speakerMuted}
           onSpeakerMutedChange={setSpeakerMuted}
+          onOpenPomodoro={openPomodoro}
+          onOpenNote={() => setNotePadOpen(true)}
         />
       </footer>
+      <CallNotePad open={notePadOpen} onClose={() => setNotePadOpen(false)} onSave={handleSaveCallNote} />
     </div>
   );
 }
@@ -970,6 +1072,7 @@ export default function CallProvider({ children }: { children: React.ReactNode }
             scope={scope}
             title={title}
             avatar={avatar || currentUser.image}
+            currentUser={currentUser}
             onLeave={leaveCall}
             onMinimize={minimizeCall}
             onExpand={expandCall}

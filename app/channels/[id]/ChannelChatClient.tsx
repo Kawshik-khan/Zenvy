@@ -6,6 +6,8 @@ import Link from 'next/link';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
+import CallNoteMessage from '@/app/components/call/CallNoteMessage';
+import { CALL_NOTE_FILE_TYPE } from '@/lib/call-notes';
 
 type Message = {
   id: string;
@@ -328,7 +330,13 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                               )}
                             </div>
                           )}
-                          {(msg.content !== `Attached: ${msg.fileName}`) && <p>{msg.content}</p>}
+                          {(msg.content !== `Attached: ${msg.fileName}`) && (
+                            msg.fileType === CALL_NOTE_FILE_TYPE ? (
+                              <CallNoteMessage content={msg.content} isSelf />
+                            ) : (
+                              <p>{msg.content}</p>
+                            )
+                          )}
                       </div>
                     </div>
                   </div>
@@ -369,7 +377,13 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
                             )}
                           </div>
                         )}
-                        {(msg.content !== `Attached: ${msg.fileName}`) && <p>{msg.content}</p>}
+                        {(msg.content !== `Attached: ${msg.fileName}`) && (
+                          msg.fileType === CALL_NOTE_FILE_TYPE ? (
+                            <CallNoteMessage content={msg.content} />
+                          ) : (
+                            <p>{msg.content}</p>
+                          )
+                        )}
                     </div>
                   </div>
                 </div>

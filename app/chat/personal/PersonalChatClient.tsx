@@ -7,6 +7,8 @@ import Sidebar from '@/app/components/Sidebar';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import CallOverlay from '../components/CallOverlay';
+import CallNoteMessage from '@/app/components/call/CallNoteMessage';
+import { CALL_NOTE_FILE_TYPE } from '@/lib/call-notes';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
 
 type Message = {
@@ -309,6 +311,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
           isVideoCall={activeCall.isVideo}
           incomingSignal={activeCall.signal}
           onClose={() => setActiveCall(null)}
+          onNotePosted={(message) => setMessages((prev) => [...prev, message])}
         />
       )}
 
@@ -465,7 +468,11 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
                               )}
                             </div>
                           )}
-                          {(!isAttachedText) && <p>{msg.content}</p>}
+                          {msg.fileType === CALL_NOTE_FILE_TYPE ? (
+                            <CallNoteMessage content={msg.content} isSelf />
+                          ) : (
+                            (!isAttachedText) && <p>{msg.content}</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -495,7 +502,11 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
                             )}
                           </div>
                         )}
-                        {(!isAttachedText) && <p>{msg.content}</p>}
+                        {msg.fileType === CALL_NOTE_FILE_TYPE ? (
+                          <CallNoteMessage content={msg.content} />
+                        ) : (
+                          (!isAttachedText) && <p>{msg.content}</p>
+                        )}
                       </div>
                     </div>
                   </div>

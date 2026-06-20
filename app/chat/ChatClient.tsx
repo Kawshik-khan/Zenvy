@@ -9,6 +9,8 @@ import Sidebar from '@/app/components/Sidebar';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
+import CallNoteMessage from '@/app/components/call/CallNoteMessage';
+import { CALL_NOTE_FILE_TYPE } from '@/lib/call-notes';
 
 type ConversationSummary = {
   id: string;
@@ -761,7 +763,11 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                                       )}
                                     </div>
                                   )}
-                                  <p className="break-words">{message.content}</p>
+                                  {message.fileType === CALL_NOTE_FILE_TYPE ? (
+                                    <CallNoteMessage content={message.content} isSelf={isSelf} />
+                                  ) : (
+                                    <p className="break-words">{message.content}</p>
+                                  )}
                                 </>
                               )}
                             </div>
