@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "coverage/**",
+      "test-results/**",
+      "playwright-report/**",
       "public/**",
       "designs/**",
       "next-env.d.ts",
@@ -28,7 +30,7 @@ const eslintConfig = [
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    files: ["*.js", "lib/**/*.js", "scripts/**/*.js", "scripts/**/*.mjs", "server.js", "standalone-socket.js", "test-db.js", "update_sidebars.js"],
+    files: ["*.js", "lib/**/*.js", "scripts/**/*.js", "scripts/**/*.mjs", "server.js", "standalone-socket.js"],
     rules: {
       "@typescript-eslint/no-require-imports": "off"
     }

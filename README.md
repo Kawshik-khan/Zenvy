@@ -66,13 +66,33 @@ RESEND_API_KEY="re_..."
 ### 3. Initialize Database
 ```bash
 npx prisma generate
-npx prisma db push
+npm run prisma:migrate
 ```
+See [docs/deployment.md](docs/deployment.md#database) for creating migrations and baselining existing databases.
 
 ### 4. Run Development Server
 ```bash
 npm run dev
 ```
+
+## 🧪 Testing
+
+```bash
+npm run test          # unit tests (Vitest)
+npm run test:e2e      # Playwright smoke tests against `next start`
+npm run test:visual   # full-page screenshots of every route (desktop + mobile) into test-results/
+```
+
+End-to-end tests need a production build and a **local/throwaway** database with seeded users:
+
+```bash
+npm run prisma:migrate
+npm run db:seed:e2e   # refuses non-local DB hosts unless ALLOW_E2E_SEED=true
+npm run build
+AUTH_TRUST_HOST=true npm run test:e2e
+```
+
+Feature flags live in `lib/flags.ts` (for example `FEATURE_JOBS=true`).
 
 ## 📂 Project Structure
 - `/app`: Next.js 15 app router pages and components.

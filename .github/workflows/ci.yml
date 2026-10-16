@@ -51,5 +51,88 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit tests
+        run: npm run test
+
       - name: Build
         run: npm run build
+
+  e2e:
+    name: End-to-end smoke
+    runs-on: ubuntu-latest
+    # Always runs against a throwaway Postgres service, never a shared database.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zenvy_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/zenvy_e2e
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/zenvy_e2e
+      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      AUTH_SECRET: ci-only-placeholder-secret-ci-only-placeholder-secret
+      NEXTAUTH_SECRET: ci-only-placeholder-secret-ci-only-placeholder-secret
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ci-placeholder-vapid-public-key
+      VAPID_PRIVATE_KEY: ci-placeholder-vapid-private-key
+      VAPID_EMAIL: admin@example.com
+      RESEND_API_KEY: re_ci_placeholder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply migrations
+        run: npm run prisma:migrate
+
+      - name: Check migrations match schema
+        run: npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url "$SHADOW_DATABASE_URL" --exit-code
+
+      - name: Seed e2e users
+        run: npm run db:seed:e2e
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Smoke tests
+        run: npm run test:e2e
+
+      - name: Baseline screenshots
+        if: success()
+        run: npm run test:visual
+
+      - name: Upload Playwright report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
