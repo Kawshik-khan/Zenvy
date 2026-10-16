@@ -79,6 +79,8 @@ Critical path: Phase 0 → Phase 1 primitives → Phase 2 shell → (Phase 3 ∥
 
 ## 5. Phase 1 — Design tokens + primitives (weeks 2–3)
 
+**Status:** P1-1 tokens, P1-2 fonts + `lucide-react`, P1-4 gallery (`/ui`), and the first primitives (Button, ButtonLink, IconButton, Card, CardHeader, Input, Textarea, Select, Checkbox, Badge, Chip, Avatar, AvatarStack, StatTile, ProgressBar, EmptyState) are done; see `docs/design-system.md`. Remaining: Radix-based Dialog/Sheet/Popover/Tabs/Toast, Skeleton move, ImageDropzone. The Material Symbols import stays until Phase 4. Implementation notes: custom classes use Tailwind v4 `@utility` (`border-nb`, `nb-press`, `nb-focus`), and new tokens avoid the legacy `rounded-lg/xl` overrides.
+
 ### P1-1 Tokens (`app/globals.css`)
 Add new tokens **alongside** the old ones (old ones are deleted in Phase 4):
 

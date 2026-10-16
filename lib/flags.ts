@@ -4,6 +4,8 @@
 
 const FLAG_ENV = {
   jobs: "FEATURE_JOBS",
+  // Exposes the /ui component gallery in production builds (previews, e2e).
+  uiGallery: "UI_GALLERY",
 } as const;
 
 export type FeatureFlag = keyof typeof FLAG_ENV;
