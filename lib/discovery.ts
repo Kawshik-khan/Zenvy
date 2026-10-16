@@ -147,11 +147,13 @@ export function recommendPeople<T extends UserDiscoveryInput>({
     }
   }
 
+  const hasQuery = Boolean(normalize(query));
+
   return candidates
     .filter((candidate) => candidate.id !== currentUser.id)
     .filter((candidate) => candidate.profile?.matchingAvailable !== false)
     .filter((candidate) => !candidate.profile?.id || !excludedProfileIds.has(candidate.profile.id))
-    .map((candidate) => {
+    .flatMap((candidate) => {
       const profile = candidate.profile;
       const overlap = interestOverlap(currentProfile?.interests, profile?.interests);
       const mutualGroups = (candidate.groupMemberships || []).filter((item) => currentGroups.has(item.groupId)).length;
@@ -185,15 +187,14 @@ export function recommendPeople<T extends UserDiscoveryInput>({
       }
 
       const textScore = searchScore(query, [candidate.name, profile?.major, profile?.college, profile?.interests, profile?.bio]);
-      if (query && !textScore) score = -1;
+      if (hasQuery && !textScore) return [];
 
-      return {
+      return [{
         ...candidate,
         discoveryScore: Math.max(0, Math.min(100, score + textScore)),
         discoveryReasons: reasons.length ? reasons.slice(0, 4) : ["Open to study partners"],
-      };
+      }];
     })
-    .filter((candidate) => candidate.discoveryScore >= 0)
     .sort((a, b) => b.discoveryScore - a.discoveryScore || normalize(a.name).localeCompare(normalize(b.name)));
 }
 
@@ -209,8 +210,10 @@ export function recommendGroups<T extends GroupDiscoveryInput>({
   const profile = currentUser.profile;
   const userInterests = splitList(profile?.interests).map(normalize);
 
+  const hasQuery = Boolean(normalize(query));
+
   return groups
-    .map((group) => {
+    .flatMap((group) => {
       const memberCount = group._count?.members ?? group.members.length;
       const isMember = group.members.some((member) => member.userId === currentUser.id);
       const subject = normalize(group.subject);
@@ -221,10 +224,10 @@ export function recommendGroups<T extends GroupDiscoveryInput>({
       );
       const activity = Math.min(((group._count?.messages || group.messages?.length || 0) > 0 ? 10 : 0) + ((group._count?.events || 0) > 0 ? 5 : 0), 15);
       const search = searchScore(query, [group.name, group.subject, group.description]);
+      if (hasQuery && !search) return [];
 
       let score = subjectFit + keywordFit + activity + sizeHealthScore(memberCount, 10) + recencyScore(group.createdAt, 5);
       if (!isMember) score += 5;
-      if (query && !search) score = -1;
 
       const reasons = [
         subjectFit ? "Matches your academic profile" : "",
@@ -233,13 +236,12 @@ export function recommendGroups<T extends GroupDiscoveryInput>({
         memberCount ? `${memberCount} member${memberCount === 1 ? "" : "s"}` : "",
       ].filter(Boolean);
 
-      return {
+      return [{
         ...group,
         discoveryScore: Math.max(0, Math.min(100, score + search)),
         discoveryReasons: reasons.length ? reasons.slice(0, 3) : ["Open study group"],
-      };
+      }];
     })
-    .filter((group) => group.discoveryScore >= 0)
     .sort((a, b) => b.discoveryScore - a.discoveryScore || a.name.localeCompare(b.name));
 }
 
@@ -254,18 +256,20 @@ export function recommendChannels<T extends ChannelDiscoveryInput>({
 }) {
   const userInterests = splitList(currentUser.profile?.interests).map(normalize);
 
+  const hasQuery = Boolean(normalize(query));
+
   return channels
-    .map((channel) => {
+    .flatMap((channel) => {
       const memberCount = channel._count?.members ?? channel.members.length;
       const isMember = channel.members.some((member) => member.userId === currentUser.id);
       const search = searchScore(query, [channel.tag, channel.name, channel.description]);
+      if (hasQuery && !search) return [];
       const text = `${normalize(channel.tag)} ${normalize(channel.name)} ${normalize(channel.description)}`;
       const interestFit = Math.min(userInterests.filter((interest) => text.includes(interest)).length * 7, 20);
       const activity = Math.min((channel._count?.messages || channel.messages?.length || 0) > 0 ? 20 : 0, 20);
 
       let score = interestFit + activity + sizeHealthScore(memberCount, 10) + recencyScore(channel.createdAt, 5);
       if (!isMember) score += 5;
-      if (query && !search) score = -1;
 
       const reasons = [
         interestFit ? "Matches your interests" : "",
@@ -273,12 +277,11 @@ export function recommendChannels<T extends ChannelDiscoveryInput>({
         memberCount ? `${memberCount} member${memberCount === 1 ? "" : "s"}` : "",
       ].filter(Boolean);
 
-      return {
+      return [{
         ...channel,
         discoveryScore: Math.max(0, Math.min(100, score + search)),
         discoveryReasons: reasons.length ? reasons.slice(0, 3) : ["Public channel"],
-      };
+      }];
     })
-    .filter((channel) => channel.discoveryScore >= 0)
     .sort((a, b) => b.discoveryScore - a.discoveryScore || a.tag.localeCompare(b.tag));
 }
