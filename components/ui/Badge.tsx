@@ -42,7 +42,7 @@ export function Chip({ selected = false, tone = "focus", className, type = "butt
       aria-pressed={selected}
       className={cx(
         "nb-focus inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border-nb px-4 font-grotesk text-[15px] font-bold transition-[box-shadow] duration-75",
-        selected ? cx(toneBg[tone], textOn(tone), "shadow-nb-sm") : "bg-card text-fg",
+        selected ? cx(toneBg[tone], textOn(tone), "shadow-nb-sm animate-nb-stamp") : "bg-card text-fg",
         className,
       )}
       {...props}

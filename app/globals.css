@@ -91,10 +91,106 @@
   --color-quiet-paper: #f4eee2;  /* focus / call ground */
   --color-quiet-card: #fbf8f1;
   --color-quiet-ink: #2b2b2b;
+  --color-quiet-shade: #e8dfcc;  /* skeleton shimmer */
   --color-muted: #4a4a4a;        /* secondary text on paper (8:1) */
 
   --radius-nb: 10px;
   --radius-nb-lg: 14px;
+
+  /* Motion: short, springy, physical. Every animate-nb-* is cut to ~0 under
+     prefers-reduced-motion (see the rule after the utilities). */
+  --ease-nb-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-nb-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-nb-pop-in: nb-pop-in 200ms var(--ease-nb-spring) both;
+  --animate-nb-pop-out: nb-pop-out 120ms ease-in both;
+  --animate-nb-fade-in: nb-fade-in 160ms ease-out both;
+  --animate-nb-fade-out: nb-fade-out 120ms ease-in both;
+  --animate-nb-rise: nb-rise 220ms var(--ease-nb-out) both;
+  --animate-nb-slide-in-right: nb-slide-in-right 240ms var(--ease-nb-out) both;
+  --animate-nb-slide-out-right: nb-slide-out-right 160ms ease-in both;
+  --animate-nb-slide-in-left: nb-slide-in-left 240ms var(--ease-nb-out) both;
+  --animate-nb-slide-out-left: nb-slide-out-left 160ms ease-in both;
+  --animate-nb-slide-in-bottom: nb-slide-in-bottom 260ms var(--ease-nb-out) both;
+  --animate-nb-slide-out-bottom: nb-slide-out-bottom 160ms ease-in both;
+  --animate-nb-toast-in: nb-toast-in 260ms var(--ease-nb-spring) both;
+  --animate-nb-toast-out: nb-toast-out 140ms ease-in both;
+  --animate-nb-stamp: nb-stamp 240ms var(--ease-nb-spring);
+  --animate-nb-shake: nb-shake 320ms ease-in-out;
+  --animate-nb-wobble: nb-wobble 900ms ease-in-out infinite alternate;
+  --animate-nb-shimmer: nb-shimmer 1.4s linear infinite;
+
+  @keyframes nb-pop-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.94) rotate(-1deg); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes nb-pop-out {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(6px) scale(0.96); }
+  }
+  @keyframes nb-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes nb-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes nb-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes nb-slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes nb-slide-out-right {
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
+  }
+  @keyframes nb-slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes nb-slide-out-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+  @keyframes nb-slide-in-bottom {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes nb-slide-out-bottom {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+  }
+  @keyframes nb-toast-in {
+    from { opacity: 0; transform: translateX(calc(100% + 24px)) rotate(2deg); }
+    to { opacity: 1; transform: translateX(0) rotate(0); }
+  }
+  @keyframes nb-toast-out {
+    from { opacity: 1; transform: translateX(var(--radix-toast-swipe-end-x, 0)); }
+    to { opacity: 0; transform: translateX(calc(100% + 24px)); }
+  }
+  @keyframes nb-stamp {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.9); }
+    70% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  @keyframes nb-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+  }
+  @keyframes nb-wobble {
+    from { transform: rotate(-0.6deg) scale(1.01); }
+    to { transform: rotate(0.6deg) scale(1.01); }
+  }
+  @keyframes nb-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
 }
 
 :root {
@@ -170,6 +266,14 @@
   &:focus-visible {
     outline: 3px solid var(--color-chat);
     outline-offset: 3px;
+  }
+}
+
+/* Reduced motion: keep enter/exit states (Radix waits for animationend) but make them instant. */
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-nb"] {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
