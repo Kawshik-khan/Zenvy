@@ -1,5 +1,36 @@
 import React from "react";
-import { SkeletonAvatar, SkeletonBlock, SkeletonCard, SkeletonText } from "@/app/components/Skeleton";
+
+// Legacy dark placeholders for the current (pre-redesign) screens. The Zenvy Brutal
+// versions live in components/ui/Skeleton; this file switches to them with the new
+// app shell in Phase 2.
+type BlockProps = { className?: string };
+
+function SkeletonBlock({ className = "" }: BlockProps) {
+  return <div aria-hidden="true" className={`loading-shimmer rounded-2xl ${className}`} />;
+}
+
+function SkeletonText({ className = "" }: BlockProps) {
+  return <SkeletonBlock className={`h-3 ${className}`} />;
+}
+
+function SkeletonAvatar({ className = "" }: BlockProps) {
+  return <SkeletonBlock className={`rounded-full ${className}`} />;
+}
+
+function SkeletonCard({ className = "" }: BlockProps) {
+  return (
+    <div className={`glass-panel-subtle rounded-[24px] p-5 ${className}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-3">
+          <SkeletonText className="w-24" />
+          <SkeletonBlock className="h-8 w-32" />
+          <SkeletonText className="w-40" />
+        </div>
+        <SkeletonBlock className="h-11 w-11 rounded-2xl" />
+      </div>
+    </div>
+  );
+}
 
 function SidebarSkeleton() {
   return (

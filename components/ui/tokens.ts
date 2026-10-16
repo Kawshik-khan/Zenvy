@@ -13,6 +13,7 @@ export const palette = {
   "quiet-paper": "#f4eee2",
   "quiet-card": "#fbf8f1",
   "quiet-ink": "#2b2b2b",
+  "quiet-shade": "#e8dfcc",
   muted: "#4a4a4a",
 } as const;
 
