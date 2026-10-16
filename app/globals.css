@@ -71,6 +71,108 @@
   --radius-full: 9999px;
 }
 
+/* ==========================================================================
+   Zenvy Brutal design system (docs/design-system.md)
+   Layer 1 — palette. Layer 2 — semantic tokens that switch with `.quiet`.
+   Layer 3 — component classes in components/ui/*.
+   The legacy tokens above are removed in Phase 4 once every screen is migrated.
+   ========================================================================== */
+
+@theme {
+  /* Layer 1: palette. Each accent carries one meaning across the app. */
+  --color-paper: #fff8ec;        /* page ground */
+  --color-ink: #111111;          /* text, borders, shadows */
+  --color-match: #ff6b9d;        /* people, matching */
+  --color-chat: #4d96ff;         /* messages */
+  --color-focus: #ffd23f;        /* timers, streaks */
+  --color-live: #3ddc97;         /* online, calls, success */
+  --color-alert: #ff5a36;        /* errors, leave, deadlines */
+  --color-career: #b794f6;       /* jobs */
+  --color-quiet-paper: #f4eee2;  /* focus / call ground */
+  --color-quiet-card: #fbf8f1;
+  --color-quiet-ink: #2b2b2b;
+  --color-muted: #4a4a4a;        /* secondary text on paper (8:1) */
+
+  --radius-nb: 10px;
+  --radius-nb-lg: 14px;
+}
+
+:root {
+  /* Layer 2: semantic values, overridden by the quiet volume below. */
+  --nb-canvas: var(--color-paper);
+  --nb-card: #ffffff;
+  --nb-line: var(--color-ink);
+  --nb-fg: var(--color-ink);
+  --nb-fg-muted: var(--color-muted);
+  --nb-border-width: 3px;
+  --nb-offset: 4px;
+}
+
+.quiet {
+  --nb-canvas: var(--color-quiet-paper);
+  --nb-card: var(--color-quiet-card);
+  --nb-line: var(--color-quiet-ink);
+  --nb-fg: var(--color-quiet-ink);
+  --nb-fg-muted: #4f4a42;
+  --nb-border-width: 2px;
+  --nb-offset: 3px;
+}
+
+@theme inline {
+  --color-canvas: var(--nb-canvas);
+  --color-card: var(--nb-card);
+  --color-line: var(--nb-line);
+  --color-fg: var(--nb-fg);
+  --color-fg-muted: var(--nb-fg-muted);
+
+  --shadow-nb-sm: calc(var(--nb-offset) * 0.75) calc(var(--nb-offset) * 0.75) 0 0 var(--nb-line);
+  --shadow-nb: var(--nb-offset) var(--nb-offset) 0 0 var(--nb-line);
+  --shadow-nb-md: calc(var(--nb-offset) * 1.5) calc(var(--nb-offset) * 1.5) 0 0 var(--nb-line);
+  --shadow-nb-lg: calc(var(--nb-offset) * 2) calc(var(--nb-offset) * 2) 0 0 var(--nb-line);
+
+  --font-grotesk: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-jetbrains: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* Standard edge: 3px ink (2px in quiet volume). */
+@utility border-nb {
+  border-style: solid;
+  border-width: var(--nb-border-width);
+  border-color: var(--nb-line);
+}
+
+/* Tactile press: lift on hover, sink on press. */
+@utility nb-press {
+  transition: transform 80ms ease, box-shadow 80ms ease;
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--nb-offset) + 2px) calc(var(--nb-offset) + 2px) 0 0 var(--nb-line);
+  }
+
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    transform: translate(var(--nb-offset), var(--nb-offset));
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover:not(:disabled),
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}
+
+/* Keyboard focus ring visible on every accent and on paper. */
+@utility nb-focus {
+  &:focus-visible {
+    outline: 3px solid var(--color-chat);
+    outline-offset: 3px;
+  }
+}
+
 @layer base {
   .material-symbols-outlined {
     direction: ltr;
