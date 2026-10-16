@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import CreateChannelModal from "@/app/components/CreateChannelModal";
 import JoinChannelButton from "@/app/components/JoinChannelButton";
 import Link from "next/link";
@@ -79,7 +78,6 @@ export default async function ChannelsPage(props: { searchParams?: Promise<Chann
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
-      <Sidebar />
       <main className="app-main">
         <header className="app-topbar">
           <div>

@@ -3,7 +3,6 @@ export const runtime = 'nodejs';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import Sidebar from '@/app/components/Sidebar';
 import GroupChatClient from './GroupChatClient';
 
 export default async function GroupChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -104,7 +103,6 @@ export default async function GroupChatPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-dvh">
-      <Sidebar />
       <GroupChatClient
         user={user}
         group={groupInfo}

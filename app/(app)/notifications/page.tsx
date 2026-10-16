@@ -4,7 +4,6 @@ import React from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Sidebar from "@/app/components/Sidebar";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import { prisma } from "@/lib/prisma";
 import { markAllNotificationsRead } from "@/app/actions/notifications";
@@ -42,7 +41,6 @@ export default async function NotificationsPage() {
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
-      <Sidebar />
       <main className="app-main">
         <header className="app-topbar">
           <div>

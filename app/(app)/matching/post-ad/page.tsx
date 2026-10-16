@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -27,7 +26,6 @@ export default async function PostStudyAdPage() {
 
   return (
     <div className="app-aurora antialiased overflow-x-hidden">
-      <Sidebar />
 
       <main className="app-main">
         <header className="app-topbar font-sans text-sm">

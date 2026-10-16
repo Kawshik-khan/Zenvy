@@ -4,7 +4,6 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProfileClient from './ProfileClient';
-import Sidebar from '@/app/components/Sidebar';
 import { getStudyMetrics } from '@/lib/study-metrics';
 import { revalidatePath } from 'next/cache';
 
@@ -88,7 +87,6 @@ export default async function ProfilePage() {
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
-      <Sidebar />
       <ProfileClient user={user} metrics={metrics} updateProfile={updateProfile} />
     </div>
   );

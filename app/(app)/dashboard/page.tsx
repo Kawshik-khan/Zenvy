@@ -2,7 +2,6 @@ import React from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Sidebar from "@/app/components/Sidebar";
 import { prisma } from "@/lib/prisma";
 import QuickJoinButton from "./QuickJoinButton";
 import ErrorView from "@/app/components/ErrorView";
@@ -198,9 +197,8 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <Sidebar />
 
-        <main className="mobile-safe-bottom min-h-screen w-full max-w-full px-4 py-4 relative z-10 md:ml-[280px] md:px-4 md:py-6 md:pr-8">
+        <main className="mobile-safe-bottom min-h-screen w-full max-w-full px-4 py-4 relative z-10 md:px-4 md:py-6 md:pr-8">
           <header className="mb-6 flex items-center justify-between gap-3 md:mb-8 md:gap-6">
             <GlobalPeopleSearch className="min-w-0 flex-1 md:max-w-xl" />
 

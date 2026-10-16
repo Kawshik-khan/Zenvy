@@ -226,7 +226,7 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
   };
 
   return (
-    <div className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col bg-transparent relative md:ml-[280px]">
+    <div className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col bg-transparent relative">
       {/* Channel Header */}
       <header className="app-topbar shrink-0">
         <div className="flex min-w-0 items-center gap-3 md:gap-4">

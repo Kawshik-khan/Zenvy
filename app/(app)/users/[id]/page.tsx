@@ -5,9 +5,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
-import ConnectButton from "@/app/matching/ConnectButton";
+import ConnectButton from "@/app/(app)/matching/ConnectButton";
 
 function makeAvatar(name?: string | null, image?: string | null) {
   if (image) return image;
@@ -87,7 +86,6 @@ export default async function PublicUserProfilePage({
 
   return (
     <div className="app-aurora min-h-screen antialiased selection:bg-primary/30 selection:text-on-surface">
-      <Sidebar />
       <main className="app-main">
         <header className="app-topbar">
           <div>

@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
 import ConnectButton from "./ConnectButton";
 import Link from "next/link";
@@ -296,7 +295,6 @@ export default async function MatchingPage(props: { searchParams?: Promise<Searc
 
   return (
     <div className="app-aurora antialiased overflow-x-hidden">
-      <Sidebar />
 
       <main className="app-main">
         <header className="app-topbar font-sans text-sm">

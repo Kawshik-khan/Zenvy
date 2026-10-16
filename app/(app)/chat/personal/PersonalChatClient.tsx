@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import Link from 'next/link';
-import Sidebar from '@/app/components/Sidebar';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import CallOverlay from '../components/CallOverlay';
@@ -300,7 +299,6 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
 
   return (
     <div className="bg-background text-on-surface antialiased overflow-hidden flex h-dvh">
-      <Sidebar />
 
       {activeCall && (
         <CallOverlay
@@ -351,7 +349,7 @@ export default function PersonalChatClient({ currentUser, targetUser }: Personal
         </div>
       )}
 
-      <main className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col relative md:ml-[280px]">
+      <main className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col relative">
         <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 w-full h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm shrink-0">
           <div className="flex items-center gap-4 w-1/2 md:w-1/3">
             <div className="relative w-full max-w-sm">

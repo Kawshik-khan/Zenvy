@@ -5,7 +5,6 @@ export const dynamic = "force-dynamic";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import ErrorView from "@/app/components/ErrorView";
@@ -45,7 +44,6 @@ export default async function StudyStatsPage() {
 
     return (
       <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
-        <Sidebar />
         <main className="app-main">
           <header className="app-topbar">
             <div>

@@ -6,7 +6,6 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import ErrorView from "@/app/components/ErrorView";
@@ -46,7 +45,6 @@ export default async function BookmarksPage() {
 
     return (
       <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
-        <Sidebar />
         <main className="app-main">
           <header className="app-topbar">
             <div>

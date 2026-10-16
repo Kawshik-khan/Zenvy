@@ -3,7 +3,6 @@ export const runtime = 'nodejs';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import Sidebar from '@/app/components/Sidebar';
 import ChannelChatClient from './ChannelChatClient';
 
 export default async function ChannelChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,7 +50,6 @@ export default async function ChannelChatPage({ params }: { params: Promise<{ id
 
   return (
     <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-dvh">
-      <Sidebar />
       <ChannelChatClient
         user={user}
         channel={channelInfo}

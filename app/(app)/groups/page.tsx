@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import Sidebar from "@/app/components/Sidebar";
 import JoinGroupButton from "@/app/components/JoinGroupButton";
 import CreateGroupModal from "@/app/components/CreateGroupModal";
 import ErrorView from "@/app/components/ErrorView";
@@ -80,7 +79,6 @@ export default async function StudyGroupsPage(props: { searchParams?: Promise<Gr
 
   return (
     <div className="app-aurora antialiased selection:bg-primary/30 selection:text-on-surface">
-      <Sidebar />
       <main className="app-main">
         <header className="app-topbar">
           <div>

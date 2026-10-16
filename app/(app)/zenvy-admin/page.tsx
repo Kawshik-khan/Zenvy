@@ -4,7 +4,6 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import Sidebar from '@/app/components/Sidebar';
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -22,7 +21,6 @@ export default async function AdminDashboardPage() {
   return (
     <div className="bg-surface text-on-surface selection:bg-primary-container min-h-screen antialiased">
       {/* SideNavBar Shell */}
-      <Sidebar />
 
       {/* Main Content Area */}
       <main className="app-main min-h-screen">

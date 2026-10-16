@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { socket } from '@/lib/socket';
-import Sidebar from '@/app/components/Sidebar';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
@@ -441,7 +440,6 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
         <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
       </div>
 
-      <Sidebar />
 
       {incomingCall && (
         <div className="fixed inset-x-4 top-4 z-[120] mx-auto max-w-md rounded-[28px] bg-[#141C30]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.4)] p-4 flex items-center justify-between">
@@ -477,7 +475,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
         </div>
       )}
 
-      <main className="mobile-safe-bottom h-dvh w-full relative z-10 max-w-full flex flex-col gap-3 p-3 md:ml-[280px] md:gap-6 md:py-6 md:pl-4 md:pr-8">
+      <main className="mobile-safe-bottom h-dvh w-full relative z-10 max-w-full flex flex-col gap-3 p-3 md:gap-6 md:py-6 md:pl-4 md:pr-8">
         {/* Top Header */}
         <header className={`${activeConversation ? 'hidden md:flex' : 'flex'} h-14 shrink-0 items-center justify-between gap-3`}>
           <div className="flex items-center gap-4">

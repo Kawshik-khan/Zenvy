@@ -3,7 +3,6 @@ export const runtime = "nodejs";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import Sidebar from "@/app/components/Sidebar";
 import NotificationBell from "@/app/components/NotificationBell";
 import EventDateTimePicker from "@/app/components/EventDateTimePicker";
 import { cancelEvent, createEvent, rsvpEvent } from "@/app/actions/event";
@@ -47,7 +46,6 @@ export default async function SchedulingPage() {
 
   return (
     <div className="app-aurora antialiased">
-      <Sidebar />
       <main className="app-main">
         <header className="app-topbar">
           <div>
