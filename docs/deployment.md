@@ -23,15 +23,33 @@ This project uses Prisma with Supabase Postgres.
 
 - Use `DATABASE_URL` with the Supabase transaction pooler URL for app runtime: port `6543` with `pgbouncer=true&connection_limit=1&pool_timeout=20`.
 - Use `DIRECT_URL` for direct database access.
-- After changing `prisma/schema.prisma`, run:
+- Schema changes go through **Prisma Migrate** (`prisma/migrations/`). Do not use `prisma db push` against shared databases.
+
+Changing the schema (locally, against a dev database):
 
 ```bash
-npx prisma validate
-npx prisma generate
-npx prisma db push
+npm run prisma:migrate:dev -- --name describe_your_change   # creates prisma/migrations/<timestamp>_describe_your_change
 ```
 
-Only push schema changes after reviewing the Prisma diff for destructive changes.
+Review the generated SQL for destructive statements, commit it with the schema change, then apply it in each environment:
+
+```bash
+npm run prisma:migrate   # prisma migrate deploy (uses DIRECT_URL)
+```
+
+CI checks that `prisma/migrations` and `schema.prisma` match.
+
+### One-time baseline for existing databases
+
+Databases created earlier with `db push` already have the tables from `0_init`. Mark that migration as applied instead of running it, then deploy the rest (`1_people_search_indexes` only uses `IF NOT EXISTS`, so it is safe whether or not those indexes were created by hand):
+
+```bash
+npx prisma migrate diff --from-url "$DIRECT_URL" --to-schema-datamodel prisma/schema.prisma --script   # should print an empty migration
+npx prisma migrate resolve --applied 0_init
+npm run prisma:migrate
+```
+
+If the first command prints anything other than an empty migration, the database has drifted from the schema; resolve that before marking the baseline as applied.
 
 ## Realtime And Calls
 

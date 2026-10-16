@@ -1,5 +1,5 @@
--- Optional Supabase/Postgres indexes for Discord-style people search.
--- Run this once against the production database after reviewing it.
+-- Indexes for Discord-style people search (previously applied by hand from prisma/search-indexes.sql).
+-- Every statement uses IF NOT EXISTS so this is safe on databases that already have them.
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 

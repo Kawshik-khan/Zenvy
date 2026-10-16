@@ -166,8 +166,9 @@ model GroupMember {
   group     StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   joinedAt  DateTime   @default(now())
-  
+
   @@unique([groupId, userId])
+  @@index([userId, groupId], map: "group_member_user_group_idx")
 }
 
 model Conversation {
@@ -355,6 +356,7 @@ model ChannelMember {
   joinedAt  DateTime @default(now())
 
   @@unique([channelId, userId])
+  @@index([userId, channelId], map: "channel_member_user_channel_idx")
 }
 
 model ChannelMessage {
