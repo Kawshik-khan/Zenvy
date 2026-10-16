@@ -21,6 +21,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { isEnabled } from "@/lib/flags";
+import { InteractiveDemos } from "./InteractiveDemos";
 
 export const metadata: Metadata = {
   title: "UI gallery · Zenvy",
@@ -215,6 +216,8 @@ export default function UiGalleryPage() {
             />
           </div>
         </Section>
+
+        <InteractiveDemos />
 
         <section className="quiet flex flex-col gap-5 rounded-nb-lg border-nb bg-canvas p-6 md:p-8">
           <h2 className="m-0 font-grotesk text-3xl font-bold tracking-tight">Quiet volume</h2>

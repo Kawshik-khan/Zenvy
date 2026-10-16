@@ -36,6 +36,7 @@ the work (focus, calls, long chat threads).
 | career | `#b794f6` | Jobs | `bg-career` |
 | muted | `#4a4a4a` | Secondary text | (use `text-fg-muted`) |
 | quiet-paper / quiet-card / quiet-ink | `#f4eee2` / `#fbf8f1` / `#2b2b2b` | Quiet volume | (via `.quiet`) |
+| quiet-shade | `#e8dfcc` | Skeleton shimmer highlight | (inside `Skeleton*`) |
 
 Ink on every accent and every text pair above passes WCAG AA (4.5:1). This is
 enforced by `components/ui/tokens.test.ts`, which also fails if `tokens.ts` and
@@ -81,9 +82,47 @@ Wrap a whole screen (or section) in `className="quiet"` to switch volume.
 | `StatTile` | Dashboard numbers | `label`, `value`, `detail`, `tone`, `icon` |
 | `ProgressBar` | Progress with `role="progressbar"` | `label` (required), `value`, `max`, `tone` |
 | `EmptyState` | Nothing-here-yet panels | `title`, `description`, `icon`, `action` |
+| `Dialog` (+ `DialogTrigger`, `DialogContent`, `DialogFooter`, `DialogClose`) | Modal decisions ("Leave this call?") | `title` (required), `description`, `size`; focus trap, Escape/backdrop close, focus returns to trigger |
+| `Sheet` (+ `SheetTrigger`, `SheetContent`, `SheetClose`) | Edge panels: mobile filters, nav, details | `side` right/left/bottom, `title`, `description` |
+| `Popover` (+ `PopoverTrigger`, `PopoverContent`) | Anchored cards: profile previews, quick actions | Radix props (`side`, `align`, …) |
+| `Tabs` (+ `TabsList`, `TabsTrigger`, `TabsContent`) | Segmented views (People / Groups / Channels) | `tone` on triggers; arrow-key navigation |
+| `ToastProvider` + `useToast()` | Feedback after an action | `toast({ title, description, tone: info/success/error, action, duration })`; max 3 visible, swipe to dismiss, errors announced assertively and stay longer |
+| `SkeletonBlock`, `SkeletonText`, `SkeletonAvatar`, `SkeletonCard` | Loading placeholders | `className` for size; mark the loading region `aria-busy` |
+| `ImageDropzone` | Profile photo (`variant="avatar"`) and job images (`variant="gallery"`) | `id`, `name`, `label`, `maxFiles`, `maxSizeMB`, `accept`, `initialUrl`, `error`, `onFilesChange` |
+
+`Dialog`, `Sheet`, `Popover`, `Tabs`, `Toast` and `ImageDropzone` are client components (Radix
+underneath). Mount `ToastProvider` once; the app shell does this in Phase 2.
 
 Icons: `lucide-react`, stroke style, passed as `icon` props.
 
-### Still to come (Phase 1, next PR)
+### ImageDropzone notes
 
-Radix-based `Dialog`, `Sheet`, `Popover`, `Tabs`, `Toast`; moving `Skeleton` into `components/ui`; `ImageDropzone`.
+- Works inside a normal `<form>` or server action: chosen files are written back into a real
+  `<input type="file" name=…>`, so `formData.getAll(name)` returns them.
+- Keyboard: Tab focuses the hidden input (the ring shows on the drop surface), Enter or Space opens
+  the picker. Remove buttons return focus to the input. Additions, removals and errors are announced.
+- Client checks (type, size, count) are for quick feedback only. The server must validate again
+  (`lib/upload-validation.ts`; strip EXIF and resize server-side per plan task J3).
+- Files picked before the page hydrates are picked up on mount.
+
+## Motion
+
+Short, springy and physical, like pressing a sticker. CSS only (no animation library), driven by
+Radix `data-state` attributes so exit animations finish before elements unmount.
+
+| Utility | Duration / easing | Used for |
+|---|---|---|
+| `nb-press` | 80ms | Hover lifts 2px, press sinks into the shadow |
+| `animate-nb-pop-in` / `-pop-out` | 200ms spring / 120ms | Dialogs, popovers, new thumbnails |
+| `animate-nb-fade-in` / `-fade-out` | 160 / 120ms | Overlays |
+| `animate-nb-slide-in-{right,left,bottom}` / `-slide-out-*` | 240–260ms ease-out / 160ms | Sheets |
+| `animate-nb-toast-in` / `-toast-out` | 260ms spring / 140ms | Toasts (plus swipe) |
+| `animate-nb-stamp` | 240ms spring | Selecting a chip or tab |
+| `animate-nb-rise` | 220ms | Tab panel change |
+| `animate-nb-shake` | 320ms | Rejected input (drop zone, wrong code) |
+| `animate-nb-wobble` | 900ms loop | Drop zone while files are dragged over it |
+| `animate-nb-shimmer` | 1.4s loop | Skeletons |
+
+Easings: `--ease-nb-spring` (slight overshoot) for things arriving, `--ease-nb-out` for things sliding.
+Under `prefers-reduced-motion: reduce`, every `animate-nb-*` runs in 1ms for one iteration and
+`nb-press` stops moving; states still change instantly. An e2e test checks this.
