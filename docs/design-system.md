@@ -91,7 +91,19 @@ Wrap a whole screen (or section) in `className="quiet"` to switch volume.
 | `ImageDropzone` | Profile photo (`variant="avatar"`) and job images (`variant="gallery"`) | `id`, `name`, `label`, `maxFiles`, `maxSizeMB`, `accept`, `initialUrl`, `error`, `onFilesChange` |
 
 `Dialog`, `Sheet`, `Popover`, `Tabs`, `Toast` and `ImageDropzone` are client components (Radix
-underneath). Mount `ToastProvider` once; the app shell does this in Phase 2.
+underneath). `ToastProvider` is mounted by the app shell, so `useToast()` works on every
+signed-in screen.
+
+## App shell (`components/shell`)
+
+- `app/(app)/layout.tsx` wraps every signed-in screen in `AppShell`. Put new signed-in routes
+  (for example `/jobs`) inside `app/(app)/`; do not render your own sidebar or bottom bar.
+- Navigation lives in `components/shell/nav.ts` (labels, routes, which paths light each item,
+  accent per item, feature flags). Add destinations there, not in components.
+- Mobile: the bottom bar hides on chat conversations and group/channel rooms
+  (`hidesMobileBar`). Pages should leave about 6rem of bottom padding on phones
+  (`.app-main` / `.mobile-safe-bottom` do this for legacy screens).
+- Public pages are listed in `lib/routes.ts`; everything else requires sign-in via `middleware.ts`.
 
 Icons: `lucide-react`, stroke style, passed as `icon` props.
 

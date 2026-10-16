@@ -135,6 +135,8 @@ Each: typed props, `variant`/`size`, `volume: 'loud' | 'quiet'` where relevant, 
 
 ## 6. Phase 2 — App shell & navigation (week 4)
 
+**Status: Phase 2 done.** Signed-in screens live in `app/(app)/` (URLs unchanged) under one layout that renders `components/shell/AppShell` (desktop sidebar with Home · Find partners · Messages · Jobs (flagged) · Focus · Profile, a "More" list, focus widget and user card; mobile bottom bar with Home · Partners · Messages · Focus · More sheet) and mounts `ToastProvider`. The per-page `Sidebar`, `SidebarNav` and `FocusSessionStatus` are deleted. `middleware.ts` + `auth.config.ts` now guard every page except the public list in `lib/routes.ts`, and post-login redirects return users to the page they asked for. S-3 (one shared header) is deferred: page headers still hold page-specific titles and actions, so search / bell / profile menu move into the shell screen by screen in Phase 3. `/call/*`, `/onboarding` and the auth pages stay outside the shell. Until Phase 3, the cream shell sits next to the old dark page content, so don't release Phase 2 to users on its own.
+
 | ID | Task | Files | AC |
 |---|---|---|---|
 | S-1 | Route group `app/(app)/layout.tsx` with new `AppShell` (sidebar ≥ 1024px, bottom tab bar on mobile) and move authenticated routes into it | `app/(app)/**`, `components/shell/*` | URLs unchanged; one layout instead of per-page sidebars |

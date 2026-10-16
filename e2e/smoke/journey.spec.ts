@@ -13,11 +13,8 @@ test("signed-in student can reach the core screens", async ({ page }) => {
     await expectNoAppError(page);
   }
 
-  // The focus timer is opened from the sidebar rather than a route.
+  // The focus timer is opened from the shell rather than a route.
   await page.goto("/dashboard");
-  const focusLink = page.getByRole("link", { name: /focus timer/i }).first();
-  if (await focusLink.isVisible()) {
-    await focusLink.click();
-    await expectNoAppError(page);
-  }
+  await page.getByRole("navigation", { name: "Main" }).first().getByRole("button", { name: "Focus" }).click();
+  await expectNoAppError(page);
 });

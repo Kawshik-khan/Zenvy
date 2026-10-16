@@ -16,9 +16,11 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "smoke", testMatch: /smoke\/.*\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
-    { name: "visual-desktop", testMatch: /visual\/.*\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
-    { name: "visual-mobile", testMatch: /visual\/.*\.spec\.ts/, use: { ...devices["Pixel 7"] } },
+    // Signs in once and saves the session (e2e/.auth/student.json) for the other projects.
+    { name: "setup", testMatch: /auth\.setup\.ts/, use: { ...devices["Desktop Chrome"] } },
+    { name: "smoke", testMatch: /smoke\/.*\.spec\.ts/, dependencies: ["setup"], use: { ...devices["Desktop Chrome"] } },
+    { name: "visual-desktop", testMatch: /visual\/.*\.spec\.ts/, dependencies: ["setup"], use: { ...devices["Desktop Chrome"] } },
+    { name: "visual-mobile", testMatch: /visual\/.*\.spec\.ts/, dependencies: ["setup"], use: { ...devices["Pixel 7"] } },
   ],
   // Expects a production build (`npm run build`). Set E2E_BASE_URL to test an already running server.
   webServer: process.env.E2E_BASE_URL

@@ -19,10 +19,12 @@
    `next build`. The `/dashboard` and `/profile` matcher in `proxy.ts` therefore does
    nothing; those pages are protected only by their own `auth()` + `redirect()` calls
    (verified by the e2e test "signed-out users are sent to login from the dashboard").
-   - Fixing this is plan task **S-4**. `auth.ts` imports Prisma and bcrypt, which cannot
-     run in the Edge runtime that middleware uses by default. Use the Auth.js split-config
-     pattern (an edge-safe `auth.config.ts` without the Credentials/Prisma pieces used by
-     `middleware.ts`) rather than renaming the file as-is.
+   - **Fixed in Phase 2 (S-4).** `auth.ts` imports Prisma and bcrypt, which cannot run in
+     the Edge runtime middleware uses, so the config is split: `auth.config.ts` (Edge-safe:
+     JWT session, sign-in page, `authorized` callback using `lib/routes.ts`) is used by
+     `middleware.ts`, and `auth.ts` spreads it and adds the Prisma adapter and Credentials
+     provider. `proxy.ts` is deleted. The build now lists `ƒ Middleware`, and e2e tests
+     check the 307 redirect, the callback round-trip, 401s for APIs and unguarded static files.
 2. **Server Actions body size** defaults to 1 MB. Job image uploads (plan J3, up to
    4 × 5 MB) need either `experimental.serverActions.bodySizeLimit` in `next.config.ts`
    or a dedicated route handler.
