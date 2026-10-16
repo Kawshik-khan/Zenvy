@@ -41,7 +41,7 @@
 | ADR-007 | Jobs writes go through server actions + a `lib/jobs/` service layer (zod-validated); no direct Prisma in pages | Single place for authz, moderation and rate limits |
 | ADR-008 | Adopt `prisma migrate` before the Jobs schema lands | Production schema changes must be reviewable and reversible |
 
-> ⚠️ **Framework check first.** `AGENTS.md` warns this Next.js version differs from common knowledge (the repo already uses `proxy.ts` instead of `middleware.ts`). Before writing code, run `npm ci` and read `node_modules/next/dist/docs/` for: route groups/layouts, server actions, `next/font`, image config (`remotePatterns` for Supabase), and the proxy matcher.
+> ✅ **Framework check done (F-1).** Installed Next.js is **15.5.19**; there is no bundled `node_modules/next/dist/docs/`, so standard Next 15 docs apply. `proxy.ts` (a Next 16 name) is **not loaded** — route protection relies on per-page `auth()` checks until S-4 adds an edge-safe `middleware.ts`. Details: [`docs/adr/000-nextjs-notes.md`](../adr/000-nextjs-notes.md).
 
 ---
 
@@ -62,6 +62,8 @@ Critical path: Phase 0 → Phase 1 primitives → Phase 2 shell → (Phase 3 ∥
 ---
 
 ## 4. Phase 0 — Foundations (week 1)
+
+**Status:** F-1 to F-7 done. Screenshot baselines are produced by `npm run test:visual` and uploaded as a CI artifact rather than committed. Remaining manual step: baseline the production database (`docs/deployment.md` → "One-time baseline").
 
 | ID | Task | Files | Acceptance criteria |
 |---|---|---|---|
