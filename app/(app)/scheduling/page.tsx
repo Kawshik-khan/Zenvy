@@ -3,7 +3,7 @@ export const runtime = "nodejs";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import NotificationBell from "@/app/components/NotificationBell";
+import NotificationBell from "@/components/shell/NotificationBell";
 import EventDateTimePicker from "@/app/components/EventDateTimePicker";
 import { cancelEvent, createEvent, rsvpEvent } from "@/app/actions/event";
 

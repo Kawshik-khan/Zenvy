@@ -6,7 +6,7 @@ export { Card, CardHeader } from "./Card";
 export { cx } from "./cx";
 export { Dialog, DialogClose, DialogContent, DialogFooter, DialogTrigger } from "./Dialog";
 export { EmptyState } from "./EmptyState";
-export { Checkbox, Input, Select, Textarea } from "./Field";
+export { Checkbox, controlClasses, Input, Select, Textarea } from "./Field";
 export { IconButton } from "./IconButton";
 export { ImageDropzone } from "./ImageDropzone";
 export { acceptLabel, DEFAULT_IMAGE_TYPES, formatBytes, partitionImageFiles, type ImageRules } from "./image-files";

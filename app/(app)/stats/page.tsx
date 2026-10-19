@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import NotificationBell from "@/app/components/NotificationBell";
+import NotificationBell from "@/components/shell/NotificationBell";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import ErrorView from "@/app/components/ErrorView";
 import { getStudyMetrics } from "@/lib/study-metrics";

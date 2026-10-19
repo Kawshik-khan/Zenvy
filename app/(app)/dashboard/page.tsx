@@ -1,14 +1,15 @@
-import React from "react";
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { BadgeCheck, CalendarDays, Clock, Flame, GraduationCap, Plus, Users } from "lucide-react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import QuickJoinButton from "./QuickJoinButton";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import ErrorView from "@/app/components/ErrorView";
-import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
-import NotificationBell from "@/app/components/NotificationBell";
-import GlobalPeopleSearch from "@/app/components/GlobalPeopleSearch";
+import { AppHeader } from "@/components/shell/AppHeader";
+import { Avatar, ButtonLink, Card, CardHeader, EmptyState, ProgressBar, StatTile } from "@/components/ui";
+import { prisma } from "@/lib/prisma";
 import { getCachedStudyMetrics } from "@/lib/study-metrics-cache";
+import { formatEventDay, formatHours, formatTimeAgo } from "./format";
+import { Heatmap, StreakBars } from "./Heatmap";
+import QuickJoinButton from "./QuickJoinButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,34 +21,6 @@ type ActivityItem = {
   description: string;
   time: Date;
 };
-
-const cardClass = "bg-[#0E1525]/80 backdrop-blur-md border border-white/5 shadow-xl";
-const heatmapColors = ["bg-[#141C30]", "bg-[#7C83FF]/30", "bg-[#7C83FF]/60", "bg-[#7C83FF]", "bg-[#A855F7]"];
-
-function formatHours(hours: number) {
-  return `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`;
-}
-
-function formatEventDay(date: Date, now: Date) {
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const diffDays = Math.round((eventDay - today) / 86_400_000);
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Tomorrow";
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-function formatTimeAgo(date: Date) {
-  const diff = Date.now() - date.getTime();
-  const mins = Math.max(0, Math.floor(diff / 60000));
-  if (mins < 60) return `${mins}m ago`;
-
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
 
 export default async function DashboardPage() {
   let session;
@@ -148,337 +121,248 @@ export default async function DashboardPage() {
     const activeDayProgress = Math.min(100, Math.round((metrics.activeDaysLast28 / activeDayGoal) * 100));
     const attendanceDisplay = metrics.attendanceRate > 0 ? metrics.attendanceRate : 100;
 
-    const kpis = [
-      { value: formatHours(metrics.studyHours), label: "Study Hours", icon: "schedule", color: "#A855F7", detail: "Completed time" },
-      { value: metrics.completedSessions.toLocaleString(), label: "Sessions", icon: "school", color: "#7C83FF", detail: "Finished" },
-      { value: groupIds.length.toLocaleString(), label: "Groups", icon: "group", color: "#22D3EE", detail: "Active memberships" },
-      { value: `${attendanceDisplay}%`, label: "Attendance", icon: "verified", color: "#34D399", detail: "RSVP follow-through" },
-    ];
-
     const progressCards = [
       {
-        label: "Level Progress",
+        label: "Level progress",
         value: `${metrics.levelProgressPercent}%`,
         detail: `${metrics.xpForCurrentLevel.toLocaleString()} / ${metrics.xpForNextLevel.toLocaleString()} XP`,
-        icon: "military_tech",
-        color: "#7C83FF",
         progress: metrics.levelProgressPercent,
       },
       {
-        label: "Study Hours",
+        label: "Study hours",
         value: `${formatHours(metrics.studyHours)} / ${studyHourGoal}h`,
         detail: "Goal progress",
-        icon: "timer",
-        color: "#22D3EE",
         progress: studyHourProgress,
       },
       {
-        label: "Active Days",
+        label: "Active days",
         value: `${metrics.activeDaysLast28} / ${activeDayGoal}`,
         detail: "Last 28 days",
-        icon: "calendar_month",
-        color: "#34D399",
         progress: activeDayProgress,
       },
     ];
 
+    const today = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
     return (
-      <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex min-h-screen relative overflow-x-hidden font-sans">
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="absolute top-[-20%] right-[-10%] h-[70vw] w-[70vw] rounded-full bg-[#A855F7]/15 blur-[120px] mix-blend-screen opacity-60" />
-          <div className="absolute bottom-[-10%] left-[-10%] h-[50vw] w-[50vw] rounded-full bg-[#22D3EE]/10 blur-[100px] mix-blend-screen opacity-50" />
-          <div className="absolute top-[30%] left-[20%] h-[40vw] w-[40vw] rounded-full bg-[#7C83FF]/10 blur-[90px] mix-blend-screen opacity-40" />
-          <div
-            className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none"
-            style={{
-              backgroundImage:
-                'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")',
-            }}
-          />
-        </div>
-
-
-        <main className="mobile-safe-bottom min-h-screen w-full max-w-full px-4 py-4 relative z-10 md:px-4 md:py-6 md:pr-8">
-          <header className="mb-6 flex items-center justify-between gap-3 md:mb-8 md:gap-6">
-            <GlobalPeopleSearch className="min-w-0 flex-1 md:max-w-xl" />
-
-            <div className="flex shrink-0 items-center gap-2 md:gap-4">
-              <Link
-                href="/events"
-                className="hidden items-center gap-2 rounded-xl border border-white/10 bg-transparent px-4 py-2.5 text-sm font-semibold text-[#F8FAFC] transition-all hover:border-white/20 hover:bg-[#141C30] md:flex"
-              >
-                <span className="material-symbols-outlined text-[18px]">add</span>
+      <div className="min-h-dvh bg-canvas font-grotesk text-fg">
+        <AppHeader
+          actions={
+            <div className="hidden md:block">
+              <ButtonLink href="/events" variant="secondary" icon={<Plus size={18} />}>
                 Create
-              </Link>
-              <NotificationBell />
-              <HeaderProfileMenu userName={userName} imageUrl={user.image} />
+              </ButtonLink>
             </div>
-          </header>
+          }
+        />
 
-          <div className="space-y-6">
-            <section className={`${cardClass} overflow-hidden rounded-[28px] p-6 md:p-8`}>
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                <div>
-                  <p className="mb-3 text-[11px] font-black uppercase tracking-[0.24em] text-[#22D3EE]">Welcome Hero</p>
-                  <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] sm:text-4xl md:text-5xl">Good evening, {firstName}</h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#94A3B8] md:text-base">
-                    Keep your study momentum visible across sessions, groups, streaks, and daily activity.
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-[#141C30]/80 p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Level</p>
-                    <p className="mt-1 text-2xl font-black text-[#F8FAFC]">{metrics.level}</p>
-                  </div>
-                  <div className="rounded-2xl bg-[#141C30]/80 p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">XP</p>
-                    <p className="mt-1 text-2xl font-black text-[#F8FAFC]">{metrics.totalXp.toLocaleString()}</p>
-                  </div>
-                  <div className="rounded-2xl bg-[#141C30]/80 p-4">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Next</p>
-                    <p className="mt-1 truncate text-sm font-black text-[#F8FAFC]">{upcomingEvents[0]?.title || "Open slot"}</p>
-                  </div>
-                </div>
-              </div>
-            </section>
+        <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 pb-28 md:px-8 md:pb-10">
+          <section aria-labelledby="dash-hero" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="flex flex-col gap-2">
+              <p className="m-0 text-[15px] font-medium text-fg-muted">{today}</p>
+              <h1 id="dash-hero" className="m-0 text-4xl leading-[1.05] font-bold tracking-tight md:text-5xl">
+                Hey {firstName}, ready to study?
+              </h1>
+            </div>
+            <dl className="m-0 grid grid-cols-3 gap-3">
+              <Card padding="sm" shadow="sm">
+                <dt className="text-xs font-bold tracking-[0.08em] uppercase text-fg-muted">Level</dt>
+                <dd className="m-0 mt-1 font-jetbrains text-2xl font-bold">{metrics.level}</dd>
+              </Card>
+              <Card padding="sm" shadow="sm">
+                <dt className="text-xs font-bold tracking-[0.08em] uppercase text-fg-muted">XP</dt>
+                <dd className="m-0 mt-1 font-jetbrains text-2xl font-bold">{metrics.totalXp.toLocaleString()}</dd>
+              </Card>
+              <Card padding="sm" shadow="sm" tone="focus">
+                <dt className="text-xs font-bold tracking-[0.08em] uppercase">Next up</dt>
+                <dd className="m-0 mt-1 truncate text-base font-bold">{upcomingEvents[0]?.title || "Open slot"}</dd>
+              </Card>
+            </dl>
+          </section>
 
-            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {kpis.map((stat) => (
-                <div key={stat.label} className={`${cardClass} rounded-2xl p-5 transition-colors hover:bg-[#141C30]`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-[#94A3B8]">{stat.label}</p>
-                      <h2 className="mt-3 text-3xl font-black tracking-tight text-[#F8FAFC]">{stat.value}</h2>
-                      <p className="mt-1 truncate text-xs font-medium text-[#94A3B8]">{stat.detail}</p>
-                    </div>
-                    <div
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-lg"
-                      style={{ background: `linear-gradient(135deg, ${stat.color}33, ${stat.color}11)`, boxShadow: `0 4px 20px ${stat.color}22` }}
-                    >
-                      <span className="material-symbols-outlined" style={{ color: stat.color, fontVariationSettings: "'FILL' 1" }}>
-                        {stat.icon}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </section>
+          <section aria-label="Study summary" className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <StatTile label="Study hours" value={formatHours(metrics.studyHours)} detail="Completed time" tone="focus" icon={<Clock size={20} />} />
+            <StatTile label="Sessions" value={metrics.completedSessions.toLocaleString()} detail="Finished" icon={<GraduationCap size={20} />} />
+            <StatTile label="Groups" value={groupIds.length.toLocaleString()} detail="Active memberships" tone="chat" icon={<Users size={20} />} />
+            <StatTile label="Attendance" value={`${attendanceDisplay}%`} detail="RSVP follow-through" tone="live" icon={<BadgeCheck size={20} />} />
+          </section>
 
-            <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              <div className={`${cardClass} rounded-[24px] p-5 lg:col-span-4`}>
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#7C83FF]">Goal</p>
-                    <h2 className="text-base font-black text-[#F8FAFC]">Study Progress</h2>
-                  </div>
-                  <Link href="/stats" className="text-[11px] font-bold text-[#94A3B8] transition-colors hover:text-[#F8FAFC]">
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <Card padding="none" className="lg:col-span-5">
+              <CardHeader
+                title="Study progress"
+                tone="focus"
+                action={
+                  <ButtonLink href="/stats" variant="secondary" size="sm">
                     View stats
-                  </Link>
-                </div>
-                <div className="space-y-3">
-                  {progressCards.map((progress) => (
-                    <div key={progress.label} className="rounded-2xl border border-white/5 bg-[#141C30]/70 p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${progress.color}22` }}>
-                          <span className="material-symbols-outlined text-lg" style={{ color: progress.color }}>
-                            {progress.icon}
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="truncate text-sm font-bold text-[#F8FAFC]">{progress.label}</p>
-                            <p className="shrink-0 text-xs font-black text-[#F8FAFC]">{progress.value}</p>
-                          </div>
-                          <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-[#94A3B8]">{progress.detail}</p>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#0E1525]">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${progress.progress}%`,
-                                background: `linear-gradient(90deg, ${progress.color}, #22D3EE)`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                  </ButtonLink>
+                }
+              />
+              <ul className="m-0 flex list-none flex-col gap-5 p-5">
+                {progressCards.map((progress) => (
+                  <li key={progress.label} className="flex flex-col gap-2">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-bold">{progress.label}</span>
+                      <span className="font-jetbrains font-bold">{progress.value}</span>
                     </div>
-                  ))}
+                    <ProgressBar label={progress.label} value={progress.progress} />
+                    <span className="text-sm text-fg-muted">{progress.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card tone="focus" className="flex flex-col gap-4 lg:col-span-3">
+              <h2 className="m-0 text-sm font-bold tracking-[0.08em] uppercase">Streak</h2>
+              <div className="flex items-end gap-3">
+                <Flame aria-hidden="true" size={40} />
+                <div>
+                  <p className="m-0 font-jetbrains text-6xl leading-none font-bold">{metrics.currentStreakDays}</p>
+                  <p className="m-0 font-bold">day streak</p>
                 </div>
               </div>
+              <StreakBars days={metrics.heatmapDays.slice(-14)} />
+              <p className="m-0 text-sm">{metrics.activeDaysLast28} active days in the last 28 days.</p>
+            </Card>
 
-              <div className={`${cardClass} rounded-[24px] p-5 lg:col-span-3`}>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#A855F7]">Streak</p>
-                <div className="mt-5 flex items-end gap-3">
-                  <span className="material-symbols-outlined text-4xl text-[#A855F7]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    local_fire_department
-                  </span>
-                  <div>
-                    <p className="text-5xl font-black tracking-tight text-[#F8FAFC]">{metrics.currentStreakDays}</p>
-                    <p className="text-sm font-bold text-[#94A3B8]">day streak</p>
-                  </div>
-                </div>
-                <div className="mt-6 flex h-14 items-end gap-1.5">
-                  {metrics.heatmapDays.slice(-14).map((day) => (
-                    <div
-                      key={day.date}
-                      title={`${day.date}: ${day.activityCount} activities, ${formatHours(day.studyHours)}`}
-                      className={`w-full rounded-t-md ${heatmapColors[day.level]}`}
-                      style={{ height: `${Math.max(18, day.level * 12 + 12)}px` }}
-                    />
-                  ))}
-                </div>
-                <p className="mt-4 text-xs leading-relaxed text-[#94A3B8]">{metrics.activeDaysLast28} active days in the last 28 days.</p>
+            <Card className="flex flex-col gap-4 lg:col-span-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="m-0 text-xl font-bold">28-day activity</h2>
+                <span className="rounded-full border-2 border-line px-3 py-0.5 text-xs font-bold whitespace-nowrap">Last 4 weeks</span>
               </div>
+              <Heatmap days={metrics.heatmapDays} summary={`Study activity for the last 28 days: ${metrics.activeDaysLast28} active days.`} />
+            </Card>
+          </section>
 
-              <div className={`${cardClass} rounded-[24px] p-5 lg:col-span-5`}>
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#22D3EE]">Heatmap</p>
-                    <h2 className="text-base font-black text-[#F8FAFC]">28-Day Study Heatmap</h2>
-                  </div>
-                  <span className="rounded-full bg-[#141C30] px-3 py-1 text-[10px] font-bold text-[#94A3B8]">Last 4 weeks</span>
-                </div>
-                <div className="grid grid-cols-7 gap-1.5">
-                  {metrics.heatmapDays.map((day) => (
-                    <div
-                      key={day.date}
-                      title={`${day.date}: ${day.activityCount} activities, ${formatHours(day.studyHours)}`}
-                      className={`aspect-square rounded-[5px] ring-1 ring-white/5 transition-all hover:ring-white/50 ${heatmapColors[day.level]}`}
-                    />
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center gap-1.5 text-[9px] font-medium text-[#94A3B8]">
-                  Less
-                  <div className="flex gap-1">
-                    {heatmapColors.map((color) => (
-                      <span key={color} className={`h-2.5 w-2.5 rounded-sm ${color}`} />
-                    ))}
-                  </div>
-                  More
-                </div>
-              </div>
-            </section>
-
-            <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className={`${cardClass} rounded-[28px] p-6`}>
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-base font-bold text-[#F8FAFC]">Upcoming Sessions</h2>
-                  <Link href="/events" className="text-[11px] font-bold text-[#7C83FF] hover:underline">
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <Card padding="none">
+              <CardHeader
+                title="Upcoming sessions"
+                tone="chat"
+                action={
+                  <ButtonLink href="/events" variant="secondary" size="sm">
                     View all
-                  </Link>
+                  </ButtonLink>
+                }
+              />
+              {upcomingEvents.length === 0 ? (
+                <div className="p-4">
+                  <EmptyState title="Nothing scheduled" description="Sessions you create or RSVP to will show up here." className="py-6" />
                 </div>
-                <div className="space-y-3">
-                  {upcomingEvents.length === 0 ? (
-                    <p className="rounded-2xl bg-[#141C30]/70 p-4 text-sm text-[#94A3B8]">No upcoming sessions are on your calendar.</p>
-                  ) : (
-                    upcomingEvents.map((event) => (
-                      <div key={event.id} className="group flex items-center gap-3 rounded-2xl border border-transparent p-3 transition-colors hover:border-white/5 hover:bg-[#141C30]">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAB308]/15">
-                          <span className="material-symbols-outlined text-lg text-[#EAB308]">event</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-bold text-[#F8FAFC]">{event.title}</h3>
-                          <p className="truncate text-[11px] text-[#94A3B8]">{event.group?.name || "Personal"} · {event._count.attendees} attending</p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-[11px] font-bold text-[#F8FAFC]">{formatEventDay(event.startTime, now)}</p>
-                          <p className="text-[10px] text-[#94A3B8]">{event.startTime.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className={`${cardClass} rounded-[28px] p-6`}>
-                <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-base font-bold text-[#F8FAFC]">Joined Groups</h2>
-                  <Link href="/groups" className="text-[11px] font-bold text-[#7C83FF] hover:underline">
-                    View all
-                  </Link>
-                </div>
-                <div className="space-y-3">
-                  {user.groupMemberships.length === 0 ? (
-                    <p className="rounded-2xl bg-[#141C30]/70 p-4 text-sm text-[#94A3B8]">Join a group to see it here.</p>
-                  ) : (
-                    user.groupMemberships.slice(0, 4).map((membership, index) => {
-                      const colors = ["#3B82F6", "#EC4899", "#EAB308", "#8B5CF6"];
-                      const color = colors[index % colors.length];
-                      return (
-                        <Link key={membership.id} href={`/groups/${membership.groupId}`} className="flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-[#141C30]">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold text-white shadow-lg" style={{ backgroundColor: color }}>
-                            <span className="material-symbols-outlined text-lg">group</span>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h3 className="truncate text-sm font-bold text-[#F8FAFC]">{membership.group.name}</h3>
-                            <p className="text-[10px] text-[#94A3B8]">{membership.group.subject || "Study group"}</p>
-                          </div>
-                          <span className="material-symbols-outlined text-[18px] text-[#94A3B8]">arrow_forward</span>
-                        </Link>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              <div className={`${cardClass} rounded-[28px] p-6`}>
-                <h2 className="mb-5 text-base font-bold text-[#F8FAFC]">Recent Activity</h2>
-                <div className="space-y-4">
-                  {activities.length === 0 ? (
-                    <p className="rounded-2xl bg-[#141C30]/70 p-4 text-sm text-[#94A3B8]">Recent group activity will appear here.</p>
-                  ) : (
-                    activities.slice(0, 5).map((activity) => (
-                      <div key={activity.id} className="flex gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-[#141C30] to-[#2D3748]">
-                          <span className="material-symbols-outlined text-[14px] text-[#7C83FF]">{activity.type === "MESSAGE" ? "chat" : "person_add"}</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-[#F8FAFC]">{activity.title}</p>
-                          <p className="truncate text-xs text-[#94A3B8]">{activity.description}</p>
-                        </div>
-                        <span className="shrink-0 text-[10px] font-medium text-[#94A3B8]">{formatTimeAgo(activity.time)}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-base font-bold text-[#F8FAFC]">Popular Groups</h2>
-                <Link href="/groups" className="text-[11px] font-bold text-[#94A3B8] transition-colors hover:text-[#F8FAFC]">
-                  View all
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {popularGroups.map((group, index) => {
-                  const colors = ["#3B82F6", "#06B6D4", "#EC4899", "#8B5CF6"];
-                  const color = colors[index % colors.length];
-                  return (
-                    <div key={group.id} className={`${cardClass} flex items-center gap-4 rounded-2xl p-4 transition-all hover:border-white/10 hover:bg-[#141C30]`}>
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg" style={{ background: `linear-gradient(135deg, ${color}44, ${color}11)` }}>
-                        <span className="material-symbols-outlined text-3xl" style={{ color }}>
-                          group
-                        </span>
-                      </div>
+              ) : (
+                <ul className="m-0 flex list-none flex-col p-0">
+                  {upcomingEvents.map((event) => (
+                    <li key={event.id} className="flex items-center gap-3 border-b-2 border-line px-5 py-4 last:border-b-0">
+                      <span aria-hidden="true" className="inline-flex size-10 shrink-0 items-center justify-center rounded-nb border-nb bg-focus text-ink">
+                        <CalendarDays size={18} />
+                      </span>
                       <div className="min-w-0 flex-1">
-                        <h3 className="mb-1 truncate text-sm font-bold text-[#F8FAFC]">{group.name}</h3>
-                        <p className="mb-2 truncate text-[10px] text-[#94A3B8]">{group.subject || "Study community"}</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <Link href={`/groups/${group.id}`} className="text-[10px] font-bold text-[#7C83FF] hover:underline">
-                            Open
-                          </Link>
-                          <QuickJoinButton groupId={group.id} />
+                        <h3 className="m-0 truncate text-base font-bold">{event.title}</h3>
+                        <p className="m-0 truncate text-sm text-fg-muted">
+                          {event.group?.name || "Personal"} · {event._count.attendees} attending
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="m-0 text-sm font-bold">{formatEventDay(event.startTime, now)}</p>
+                        <p className="m-0 font-jetbrains text-xs text-fg-muted">
+                          {event.startTime.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card padding="none">
+              <CardHeader
+                title="Joined groups"
+                tone="live"
+                action={
+                  <ButtonLink href="/groups" variant="secondary" size="sm">
+                    View all
+                  </ButtonLink>
+                }
+              />
+              {user.groupMemberships.length === 0 ? (
+                <div className="p-4">
+                  <EmptyState title="No groups yet" description="Join a group from Popular groups below." className="py-6" />
+                </div>
+              ) : (
+                <ul className="m-0 flex list-none flex-col p-0">
+                  {user.groupMemberships.slice(0, 4).map((membership) => (
+                    <li key={membership.id} className="border-b-2 border-line last:border-b-0">
+                      <Link href={`/groups/${membership.groupId}`} className="nb-focus flex items-center gap-3 px-5 py-4 text-fg no-underline hover:bg-canvas">
+                        <Avatar name={membership.group.name} shape="square" size="md" />
+                        <div className="min-w-0 flex-1">
+                          <h3 className="m-0 truncate text-base font-bold">{membership.group.name}</h3>
+                          <p className="m-0 truncate text-sm text-fg-muted">{membership.group.subject || "Study group"}</p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card padding="none">
+              <CardHeader title="Recent activity" />
+              {activities.length === 0 ? (
+                <div className="p-4">
+                  <EmptyState title="Quiet for now" description="Messages and new members in your groups will appear here." className="py-6" />
+                </div>
+              ) : (
+                <ul className="m-0 flex list-none flex-col p-0">
+                  {activities.slice(0, 5).map((activity) => (
+                    <li key={activity.id} className="flex items-start gap-3 border-b-2 border-line px-5 py-3.5 last:border-b-0">
+                      <div className="min-w-0 flex-1">
+                        <p className="m-0 font-bold">{activity.title}</p>
+                        <p className="m-0 truncate text-sm text-fg-muted">{activity.description}</p>
+                      </div>
+                      <span className="shrink-0 font-jetbrains text-xs text-fg-muted">{formatTimeAgo(activity.time)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </section>
+
+          <section aria-labelledby="popular-groups" className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="popular-groups" className="m-0 text-2xl font-bold">
+                Popular groups
+              </h2>
+              <ButtonLink href="/groups" variant="secondary" size="sm">
+                View all
+              </ButtonLink>
+            </div>
+
+            {popularGroups.length === 0 ? (
+              <EmptyState title="No groups to suggest" description="You have joined every group, or none exist yet." />
+            ) : (
+              <ul className="m-0 grid list-none grid-cols-1 gap-5 p-0 md:grid-cols-2 lg:grid-cols-4">
+                {popularGroups.map((group) => (
+                  <li key={group.id}>
+                    <Card padding="sm" className="flex h-full flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={group.name} shape="square" size="lg" />
+                        <div className="min-w-0">
+                          <h3 className="m-0 truncate text-base font-bold">{group.name}</h3>
+                          <p className="m-0 truncate text-sm text-fg-muted">{group.subject || "Study community"}</p>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
+                      <div className="mt-auto flex items-center justify-between gap-2">
+                        <ButtonLink href={`/groups/${group.id}`} variant="secondary" size="sm">
+                          Open
+                        </ButtonLink>
+                        <QuickJoinButton groupId={group.id} groupName={group.name} />
+                      </div>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </main>
       </div>
     );

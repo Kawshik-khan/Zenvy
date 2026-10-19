@@ -1,9 +1,11 @@
 "use client";
 
+import { Check, Plus } from "lucide-react";
 import { useState, useTransition } from "react";
 import { joinGroup } from "@/app/actions/group";
+import { Badge, Button } from "@/components/ui";
 
-export default function QuickJoinButton({ groupId }: { groupId: string }) {
+export default function QuickJoinButton({ groupId, groupName }: { groupId: string; groupName?: string }) {
   const [isPending, startTransition] = useTransition();
   const [joined, setJoined] = useState(false);
 
@@ -16,19 +18,15 @@ export default function QuickJoinButton({ groupId }: { groupId: string }) {
 
   if (joined) {
     return (
-      <div className="p-2 text-green-500 bg-green-50 rounded-full transition-colors flex items-center justify-center">
-        <span className="material-symbols-outlined">check_circle</span>
-      </div>
+      <Badge tone="live" size="sm">
+        <Check aria-hidden="true" size={14} /> Joined
+      </Badge>
     );
   }
 
   return (
-    <button 
-      onClick={handleJoin}
-      disabled={isPending}
-      className="p-2 text-primary hover:bg-primary/10 rounded-full transition-colors disabled:opacity-50"
-    >
-      <span className="material-symbols-outlined">{isPending ? "hourglass_empty" : "add_circle"}</span>
-    </button>
+    <Button size="sm" variant="live" onClick={handleJoin} loading={isPending} icon={isPending ? undefined : <Plus size={16} />} aria-label={groupName ? `Join ${groupName}` : "Join group"}>
+      Join
+    </Button>
   );
 }

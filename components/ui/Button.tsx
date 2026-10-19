@@ -23,24 +23,34 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "min-h-14 px-7 text-lg gap-2.5",
 };
 
+// Icon-only buttons are a fixed square. They must not also carry the horizontal padding from
+// sizeClasses: two competing padding utilities on one element is decided by stylesheet order.
+const squareClasses: Record<ButtonSize, string> = {
+  sm: "size-11 p-0",
+  md: "size-12 p-0",
+  lg: "size-14 p-0",
+};
+
 type StyleOptions = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  /** Fixed square for icon-only buttons and links. */
+  square?: boolean;
   className?: string;
 };
 
 /** Class list shared by Button and ButtonLink. */
-export function buttonClasses({ variant = "primary", size = "md", fullWidth, className }: StyleOptions = {}) {
+export function buttonClasses({ variant = "primary", size = "md", fullWidth, square, className }: StyleOptions = {}) {
   const isGhost = variant === "ghost";
   return cx(
-    "nb-focus inline-flex items-center justify-center rounded-nb font-grotesk font-bold leading-none",
+    "nb-focus inline-flex items-center justify-center rounded-nb font-grotesk font-bold leading-none whitespace-nowrap [&>svg]:shrink-0",
     "cursor-pointer select-none no-underline",
     isGhost ? "border-[length:var(--nb-border-width)] border-transparent" : "border-nb nb-press shadow-nb",
     "disabled:cursor-not-allowed disabled:border-dashed disabled:bg-quiet-paper disabled:text-fg-muted disabled:shadow-none",
     "aria-disabled:cursor-not-allowed aria-disabled:border-dashed aria-disabled:bg-quiet-paper aria-disabled:text-fg-muted aria-disabled:shadow-none",
     variantClasses[variant],
-    sizeClasses[size],
+    square ? squareClasses[size] : sizeClasses[size],
     fullWidth && "w-full",
     className,
   );

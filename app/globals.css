@@ -93,6 +93,12 @@
   --color-quiet-ink: #2b2b2b;
   --color-quiet-shade: #e8dfcc;  /* skeleton shimmer */
   --color-muted: #4a4a4a;        /* secondary text on paper (8:1) */
+  /* Activity heatmap scale, light to dark. Differs in lightness, not just hue. */
+  --color-heat-0: #efe8d8;
+  --color-heat-1: #ffe9a3;
+  --color-heat-2: #ffd23f;
+  --color-heat-3: #e0a800;
+  --color-heat-4: #111111;
 
   --radius-nb: 10px;
   --radius-nb-lg: 14px;

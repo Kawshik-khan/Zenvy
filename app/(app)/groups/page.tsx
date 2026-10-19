@@ -7,7 +7,7 @@ import Link from "next/link";
 import JoinGroupButton from "@/app/components/JoinGroupButton";
 import CreateGroupModal from "@/app/components/CreateGroupModal";
 import ErrorView from "@/app/components/ErrorView";
-import NotificationBell from "@/app/components/NotificationBell";
+import NotificationBell from "@/components/shell/NotificationBell";
 import { recommendGroups } from "@/lib/discovery";
 
 type GroupSearchParams = {

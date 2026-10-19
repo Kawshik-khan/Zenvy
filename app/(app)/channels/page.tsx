@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import CreateChannelModal from "@/app/components/CreateChannelModal";
 import JoinChannelButton from "@/app/components/JoinChannelButton";
 import Link from "next/link";
-import NotificationBell from "@/app/components/NotificationBell";
+import NotificationBell from "@/components/shell/NotificationBell";
 import { recommendChannels } from "@/lib/discovery";
 
 type ChannelSearchParams = {

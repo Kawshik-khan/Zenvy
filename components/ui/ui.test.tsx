@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   ButtonLink,
+  buttonClasses,
   Card,
   CardHeader,
   Checkbox,
@@ -228,5 +229,28 @@ describe("Alert", () => {
   it("hides its decorative icon from assistive tech", () => {
     const { container } = render(<Alert tone="error">Oops</Alert>);
     expect(container.querySelector('[aria-hidden="true"] svg')).not.toBeNull();
+  });
+});
+
+describe("buttonClasses", () => {
+  it("icon-only buttons are a fixed square with no competing horizontal padding", () => {
+    const classes = buttonClasses({ size: "md", square: true }).split(" ");
+    expect(classes).toContain("size-12");
+    expect(classes).toContain("p-0");
+    expect(classes.some((c) => /^px-/.test(c))).toBe(false);
+  });
+
+  it("regular buttons keep their padding and never wrap their label", () => {
+    const classes = buttonClasses({ size: "sm" }).split(" ");
+    expect(classes).toContain("px-3.5");
+    expect(classes).toContain("whitespace-nowrap");
+    expect(classes).toContain("[&>svg]:shrink-0");
+  });
+
+  it("IconButton uses the square sizing", () => {
+    render(<IconButton label="Search" icon={<svg />} size="sm" />);
+    const button = screen.getByRole("button", { name: "Search" });
+    expect(button).toHaveClass("size-11", "p-0");
+    expect(button.className).not.toMatch(/\bpx-/);
   });
 });

@@ -1,12 +1,12 @@
+import { Bell } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/auth";
+import { buttonClasses } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
 export default async function NotificationBell() {
   const session = await auth();
-  if (!session?.user?.id) {
-    return null;
-  }
+  if (!session?.user?.id) return null;
 
   const unreadCount = await prisma.notification.count({
     where: { userId: session.user.id, read: false },
@@ -16,11 +16,14 @@ export default async function NotificationBell() {
     <Link
       href="/notifications"
       aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"}
-      className="relative hover:bg-surface-container rounded-full p-2 transition-transform active:scale-95 text-on-surface-variant hover:text-on-surface inline-flex"
+      className={buttonClasses({ variant: "secondary", size: "md", square: true, className: "relative" })}
     >
-      <span className="material-symbols-outlined">notifications</span>
+      <Bell aria-hidden="true" size={20} />
       {unreadCount > 0 && (
-        <span className="absolute -right-1 -top-1 min-w-5 h-5 rounded-full bg-error px-1 text-[10px] font-black leading-5 text-white text-center">
+        <span
+          aria-hidden="true"
+          className="absolute -top-2 -right-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-line bg-alert px-1 font-grotesk text-xs font-bold text-ink"
+        >
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}

@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import NotificationBell from "@/app/components/NotificationBell";
+import NotificationBell from "@/components/shell/NotificationBell";
 import HeaderProfileMenu from "@/app/components/HeaderProfileMenu";
 import ErrorView from "@/app/components/ErrorView";
 import EventDateTimePicker from "@/app/components/EventDateTimePicker";

@@ -15,6 +15,11 @@ export const palette = {
   "quiet-ink": "#2b2b2b",
   "quiet-shade": "#e8dfcc",
   muted: "#4a4a4a",
+  "heat-0": "#efe8d8",
+  "heat-1": "#ffe9a3",
+  "heat-2": "#ffd23f",
+  "heat-3": "#e0a800",
+  "heat-4": "#111111",
 } as const;
 
 export type PaletteName = keyof typeof palette;
