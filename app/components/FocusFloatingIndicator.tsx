@@ -1,5 +1,6 @@
 "use client";
 
+import { Timer } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { usePomodoro } from "./PomodoroProvider";
@@ -77,16 +78,14 @@ export default function FocusFloatingIndicator() {
     <button
       type="button"
       onClick={openPomodoro}
-      className={`fixed bottom-[calc(9.75rem+env(safe-area-inset-bottom))] right-4 z-[120] inline-flex h-14 items-center justify-center rounded-full border border-tertiary/30 bg-surface-container-low/95 text-tertiary shadow-2xl shadow-black/30 backdrop-blur-2xl transition-all hover:bg-surface-container md:hidden ${
-        showTime ? "w-[7.25rem] gap-2 px-4" : "w-14"
+      className={`nb-focus nb-press fixed right-4 bottom-[calc(9.75rem+env(safe-area-inset-bottom))] z-[120] inline-flex h-14 cursor-pointer items-center justify-center rounded-full border-nb bg-focus text-ink shadow-nb md:hidden ${
+        showTime ? "w-[7.75rem] gap-2 px-4" : "w-14"
       }`}
       title="Focus session"
       aria-label="Open focus session"
     >
-      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-        timer
-      </span>
-      {showTime && <span className="font-mono text-sm font-black text-on-surface">{formatFocusTime(focusState.remainingSeconds)}</span>}
+      <Timer aria-hidden="true" size={22} />
+      {showTime && <span className="font-jetbrains text-sm font-bold">{formatFocusTime(focusState.remainingSeconds)}</span>}
     </button>
   );
 }

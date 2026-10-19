@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Music, Pause, Play } from "lucide-react";
+import { Alert, Button, Card, IconButton, Input, ProgressBar, Select, Sheet, SheetContent } from "@/components/ui";
 import { focusTracks } from "@/lib/focus-audio";
 import { FOCUS_STORAGE_KEY, notifyFocusStateChanged } from "./focus-session-state";
 
@@ -441,152 +443,135 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
           Open Focus Timer
         </button>
       )}
-      {isExpanded && (
-        <div className="fixed inset-0 z-[130]">
-          <button
-            type="button"
-            aria-label="Close Focus Timer"
-            onClick={() => updateExpanded(false)}
-            className="absolute inset-0 hidden bg-black/45 backdrop-blur-sm md:block"
-          />
-          <section className="absolute inset-x-0 bottom-0 max-h-[calc(100dvh-1rem)] rounded-t-[28px] border border-white/10 bg-[#0E1525]/98 p-4 pb-[max(env(safe-area-inset-bottom),1rem)] text-[#F8FAFC] shadow-[0_-24px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[350px] md:max-h-none md:rounded-none md:border-y-0 md:border-r-0 md:p-5">
-            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-white/20 md:hidden" />
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#22D3EE]">Focus Session</p>
-                <h2 className="mt-1 text-xl font-black">{modeLabel(mode)}</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => updateExpanded(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#141C30] text-[#94A3B8] transition-colors hover:text-white"
-                aria-label="Close Focus Timer"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
+      <Sheet open={isExpanded} onOpenChange={updateExpanded}>
+        <SheetContent
+          title={modeLabel(mode)}
+          description="Focus session"
+          side="right"
+          className="quiet"
+        >
+          <div className="flex flex-col gap-5">
+            <Card tone="paper" shadow="none" padding="md" className="text-center">
+              <p role="timer" aria-label="Time remaining" className="m-0 font-jetbrains text-6xl leading-none font-bold tracking-tight">
+                {formatTime(remainingSeconds)}
+              </p>
+              <ProgressBar value={progress} label="Session progress" tone="focus" className="mt-5" />
+              <p className="m-0 mt-3 text-[15px] font-bold" aria-live="polite">
+                {status === "RUNNING" ? "In progress" : status === "PAUSED" ? "Paused" : "Ready to begin"}
+              </p>
+            </Card>
 
-            <div className="rounded-3xl border border-white/5 bg-[#070B14]/70 p-5 text-center">
-              <p className="font-mono text-5xl font-black tracking-tight">{formatTime(remainingSeconds)}</p>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#141C30]">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#7C83FF] to-[#22D3EE]" style={{ width: `${progress}%` }} />
-              </div>
-              <p className="mt-3 text-xs font-bold text-[#94A3B8]">{status === "RUNNING" ? "Focus in progress" : status === "PAUSED" ? "Paused" : "Ready to begin"}</p>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button
-                type="button"
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="focus"
                 onClick={status === "RUNNING" ? pauseTimer : startTimer}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white transition-transform active:scale-95"
+                icon={status === "RUNNING" ? <Pause size={18} /> : <Play size={18} />}
               >
-                <span className="material-symbols-outlined text-lg">{status === "RUNNING" ? "pause" : "play_arrow"}</span>
                 {status === "RUNNING" ? "Pause" : status === "PAUSED" ? "Resume" : "Start"}
-              </button>
-              <button type="button" onClick={endSession} className="rounded-2xl bg-[#141C30] px-3 py-3 text-sm font-black text-[#CBD5E1] transition-colors hover:text-white">
-                End Session
-              </button>
+              </Button>
+              <Button variant="secondary" onClick={endSession}>
+                End session
+              </Button>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="rounded-2xl bg-[#141C30]/70 p-3">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">Today</p>
-                <p className="mt-1 text-sm font-black">{todaysFocusMinutes}m</p>
-              </div>
-              <div className="rounded-2xl bg-[#141C30]/70 p-3">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">Sessions</p>
-                <p className="mt-1 text-sm font-black">{focusSessionsCompleted}</p>
-              </div>
-              <div className="rounded-2xl bg-[#141C30]/70 p-3">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">Streak</p>
-                <p className="mt-1 text-sm font-black">{focusSessionsCompleted > 0 ? 1 : 0}d</p>
-              </div>
-            </div>
+            <dl className="m-0 grid grid-cols-2 gap-3">
+              <Card tone="card" shadow="none" padding="sm">
+                <dt className="text-sm font-bold text-fg-muted">Sessions done</dt>
+                <dd className="m-0 font-jetbrains text-2xl font-bold">{focusSessionsCompleted}</dd>
+              </Card>
+              <Card tone="card" shadow="none" padding="sm">
+                <dt className="text-sm font-bold text-fg-muted">Minutes focused</dt>
+                <dd className="m-0 font-jetbrains text-2xl font-bold">{todaysFocusMinutes}</dd>
+              </Card>
+            </dl>
 
-            <button
-              type="button"
-              onClick={() => setSettingsOpen((current) => !current)}
-              className="mt-4 flex w-full items-center justify-between rounded-2xl border border-white/5 bg-[#141C30]/70 px-4 py-3 text-left text-sm font-black text-[#F8FAFC]"
-            >
-              <span>Session Settings</span>
-              <span className="material-symbols-outlined text-lg text-[#94A3B8]">{settingsOpen ? "expand_less" : "expand_more"}</span>
-            </button>
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setSettingsOpen((current) => !current)}
+                aria-expanded={settingsOpen}
+                aria-controls="focus-settings"
+                icon={settingsOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                className="justify-between"
+              >
+                Session settings
+              </Button>
 
-            {settingsOpen && (
-              <div className="mt-3 space-y-3 rounded-2xl border border-white/5 bg-[#070B14]/60 p-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    ["focusMinutes", "Timer Length"],
-                    ["shortBreakMinutes", "Break Length"],
-                    ["longBreakMinutes", "Long Break"],
-                    ["longBreakEvery", "Cycle"],
-                  ].map(([key, label]) => (
-                    <label key={key} className="block rounded-2xl bg-[#141C30]/70 p-2">
-                      <span className="block text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">{label}</span>
-                      <input
+              {settingsOpen && (
+                <div id="focus-settings" className="flex flex-col gap-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      ["focusMinutes", "Focus (min)"],
+                      ["shortBreakMinutes", "Break (min)"],
+                      ["longBreakMinutes", "Long break (min)"],
+                      ["longBreakEvery", "Long break every"],
+                    ].map(([key, label]) => (
+                      <Input
+                        key={key}
+                        id={`focus-setting-${key}`}
                         type="number"
                         min="1"
+                        label={label}
                         value={settings[key as keyof TimerSettings]}
                         disabled={status === "RUNNING"}
                         onChange={(event) => updateSetting(key as keyof TimerSettings, Number(event.target.value))}
-                        className="mt-1 w-full bg-transparent text-sm font-black text-[#F8FAFC] outline-none disabled:opacity-50"
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-3 rounded-nb border-2 border-line bg-card p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="m-0 font-grotesk font-bold">Background sound</p>
+                        <p className="m-0 truncate text-sm text-fg-muted">{selectedTrack.title}</p>
+                      </div>
+                      <IconButton
+                        label={isMusicOn ? "Pause music" : "Play music"}
+                        icon={isMusicOn ? <Pause size={18} /> : <Music size={18} />}
+                        onClick={toggleMusic}
+                      />
+                    </div>
+                    <Select
+                      id="focus-track"
+                      label="Track"
+                      value={selectedTrackId}
+                      onChange={(event) => {
+                        setSelectedTrackId(event.target.value);
+                        setAudioError("");
+                        pauseMusic();
+                      }}
+                    >
+                      {focusTracks.map((track) => (
+                        <option key={track.id} value={track.id}>
+                          {track.title}
+                        </option>
+                      ))}
+                    </Select>
+                    <label className="flex flex-col gap-1.5 font-grotesk text-[15px] font-bold">
+                      Music volume
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={volume}
+                        onChange={(event) => setVolume(Number(event.target.value))}
+                        className="nb-focus h-6 w-full cursor-pointer accent-ink"
                       />
                     </label>
-                  ))}
-                </div>
-
-                <div className="rounded-2xl bg-[#141C30]/70 p-3">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-black">Sound Settings</p>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{selectedTrack.title}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={toggleMusic}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0E1525] text-[#22D3EE] transition-colors hover:text-white"
-                      aria-label={isMusicOn ? "Pause music" : "Play music"}
-                    >
-                      <span className="material-symbols-outlined text-lg">{isMusicOn ? "pause" : "music_note"}</span>
-                    </button>
+                    {audioError && <Alert tone="error">{audioError}</Alert>}
                   </div>
-                  <select
-                    value={selectedTrackId}
-                    onChange={(event) => {
-                      setSelectedTrackId(event.target.value);
-                      setAudioError("");
-                      pauseMusic();
-                    }}
-                    className="w-full rounded-xl border border-white/10 bg-[#0E1525] px-3 py-2 text-xs font-bold text-[#F8FAFC] outline-none"
-                  >
-                    {focusTracks.map((track) => (
-                      <option key={track.id} value={track.id}>
-                        {track.title}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    aria-label="Music volume"
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={volume}
-                    onChange={(event) => setVolume(Number(event.target.value))}
-                    className="mt-3 w-full accent-[#22D3EE]"
-                  />
-                  {audioError && <p className="mt-2 text-xs font-bold text-[#FB7185]">{audioError}</p>}
                 </div>
-              </div>
-            )}
-
-            <div className="mt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
-              <span>{saveState === "SAVING" ? "Saving" : saveState === "PENDING" || pendingCount > 0 ? "Save pending" : saveState === "SAVED" ? "Saved" : "Ready"}</span>
-              <span>{status.toLowerCase()}</span>
+              )}
             </div>
-          </section>
-        </div>
-      )}
+
+            <p className="m-0 flex items-center justify-between text-sm text-fg-muted" aria-live="polite">
+              <span>{saveState === "SAVING" ? "Saving" : saveState === "PENDING" || pendingCount > 0 ? "Save pending, will retry" : saveState === "SAVED" ? "Saved" : "Ready"}</span>
+              <span className="capitalize">{status.toLowerCase()}</span>
+            </p>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
