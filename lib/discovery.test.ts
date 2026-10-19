@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recommendPeople, searchScore, splitList, type UserDiscoveryInput } from "./discovery";
+import { recommendChannels, recommendGroups, recommendPeople, searchScore, splitList, type UserDiscoveryInput } from "./discovery";
 
 describe("splitList", () => {
   it("splits, trims and drops empty items", () => {
@@ -71,13 +71,44 @@ describe("recommendPeople", () => {
     expect(results[1].discoveryReasons).toEqual(["Open to study partners"]);
   });
 
-  it("ranks search matches first and zeroes non-matches", () => {
+  it("returns only the people that match a search", () => {
     const searched = recommendPeople({ currentUser: me, candidates: [strong, weak], query: "arif" });
-    // Current behaviour: non-matches are kept with score 0 because the -1 marker is
-    // clamped before the `>= 0` filter. Tracked as a separate fix.
-    expect(searched.map((r) => [r.id, r.discoveryScore])).toEqual([
-      ["u2", 100],
-      ["u1", 0],
-    ]);
+    expect(searched.map((r) => [r.id, r.discoveryScore])).toEqual([["u2", 100]]);
+  });
+
+  it("treats an empty or whitespace query as no search", () => {
+    expect(recommendPeople({ currentUser: me, candidates: [strong, weak], query: "   " }).map((r) => r.id)).toEqual(["u1", "u2"]);
+  });
+});
+
+const currentUser = { id: "me", name: "Me", profile: { id: "p-me", major: "Physics", interests: "math" } };
+
+describe("recommendGroups", () => {
+  const groups = [
+    { id: "g1", name: "Quantum Club", subject: "Physics", members: [] },
+    { id: "g2", name: "Cell Lab", subject: "Biology", members: [] },
+  ];
+
+  it("drops groups that do not match the query", () => {
+    expect(recommendGroups({ currentUser, groups, query: "cell" }).map((g) => g.id)).toEqual(["g2"]);
+  });
+
+  it("returns every group when the query is empty", () => {
+    expect(recommendGroups({ currentUser, groups })).toHaveLength(2);
+  });
+});
+
+describe("recommendChannels", () => {
+  const channels = [
+    { id: "c1", name: "Math Talk", tag: "math", members: [] },
+    { id: "c2", name: "Bio Corner", tag: "bio", members: [] },
+  ];
+
+  it("drops channels that do not match the query", () => {
+    expect(recommendChannels({ currentUser, channels, query: "bio" }).map((c) => c.id)).toEqual(["c2"]);
+  });
+
+  it("returns every channel when the query is empty", () => {
+    expect(recommendChannels({ currentUser, channels })).toHaveLength(2);
   });
 });
