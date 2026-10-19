@@ -3,14 +3,10 @@
 import { useState } from "react";
 import { createChannel } from "@/app/actions/channel";
 import { useRouter } from "next/navigation";
+import { Alert, Button, Dialog, DialogClose, DialogContent, DialogFooter, DialogTrigger, Input, Textarea } from "@/components/ui";
 
-export default function CreateChannelModal({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+/** Wrap a single button (or button-like element); clicking it opens the create-channel dialog. */
+export default function CreateChannelModal({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [nameValue, setNameValue] = useState("");
@@ -49,101 +45,49 @@ export default function CreateChannelModal({
   };
 
   return (
-    <>
-      <div onClick={() => setIsOpen(true)} className={`${className} cursor-pointer`}>
-        {children}
-      </div>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-          <div className="glass-panel w-full max-w-md rounded-[28px] overflow-hidden animate-scale-in">
-            {/* Header */}
-            <div className="px-6 pt-6 pb-4 border-b glass-divider">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-xl">tag</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-on-surface">Create Channel</h2>
-                  <p className="text-xs text-on-surface-variant">Public channel anyone can discover & join</p>
-                </div>
-              </div>
-            </div>
-
-            <form action={handleAction} className="p-6 space-y-5">
-              <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1.5 tracking-wide">
-                  Channel Name
-                </label>
-                <input
-                  required
-                  name="name"
-                  type="text"
-                  value={nameValue}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  className="app-input px-4 py-3 text-sm"
-                  placeholder="e.g. CS 101 Study Hall"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1.5 tracking-wide">
-                  Unique Tag
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold text-sm">#</span>
-                  <input
-                    required
-                    name="tag"
-                    type="text"
-                    value={tagValue}
-                    onChange={(e) => setTagValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                    className="app-input pl-8 pr-4 py-3 text-sm"
-                    placeholder="cs-101-study-hall"
-                  />
-                </div>
-                <p className="text-[10px] text-on-surface-variant mt-1.5">
-                  Others will find your channel by searching this tag
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-on-surface-variant mb-1.5 tracking-wide">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  className="app-input px-4 py-3 h-20 resize-none text-sm"
-                  placeholder="What's this channel about?"
-                />
-              </div>
-
-              {error && (
-                <div className="bg-error-container text-on-error-container text-xs font-medium px-4 py-3 rounded-xl">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setIsOpen(false); setError(""); }}
-                  className="px-6 py-2.5 rounded-full font-bold text-on-surface-variant hover:bg-surface-container transition-colors text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={pending}
-                  type="submit"
-                  className="px-6 py-2.5 rounded-full font-bold app-primary-button disabled:opacity-50 text-sm"
-                >
-                  {pending ? "Creating..." : "Create Channel"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) setError("");
+      }}
+    >
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent title="Create channel" description="A public channel anyone can discover and join.">
+        <form action={handleAction} className="flex flex-col gap-4">
+          <Input
+            id="new-channel-name"
+            required
+            name="name"
+            type="text"
+            label="Channel name"
+            value={nameValue}
+            onChange={(event) => handleNameChange(event.target.value)}
+            placeholder="e.g. CS 101 Study Hall"
+          />
+          <Input
+            id="new-channel-tag"
+            required
+            name="tag"
+            type="text"
+            label="Unique tag"
+            hint="Others find your channel by searching this tag. Lowercase letters, numbers and dashes."
+            value={tagValue}
+            onChange={(event) => setTagValue(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+            placeholder="cs-101-study-hall"
+          />
+          <Textarea id="new-channel-description" name="description" label="Description" rows={3} placeholder="What is this channel about?" />
+          {error && <Alert tone="error">{error}</Alert>}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" variant="chat" loading={pending}>
+              {pending ? "Creating" : "Create channel"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

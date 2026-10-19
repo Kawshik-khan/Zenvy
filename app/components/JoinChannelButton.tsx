@@ -2,15 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { joinChannel, leaveChannel } from "@/app/actions/channel";
+import { Badge, Button } from "@/components/ui";
 
 export default function JoinChannelButton({
   channelId,
   isMember,
   isCreator = false,
+  channelName,
 }: {
   channelId: string;
   isMember: boolean;
   isCreator?: boolean;
+  channelName?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [memberState, setMemberState] = useState(isMember);
@@ -29,31 +32,23 @@ export default function JoinChannelButton({
 
   if (isCreator) {
     return (
-      <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold">
+      <Badge tone="focus" size="sm">
         Creator
-      </span>
+      </Badge>
     );
   }
 
-  if (memberState) {
-    return (
-      <button
-        onClick={handleToggle}
-        disabled={isPending}
-        className="px-6 py-2 border border-outline-variant/50 text-on-surface-variant rounded-full text-xs font-bold hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 disabled:opacity-50"
-      >
-        {isPending ? "Updating..." : "Leave"}
-      </button>
-    );
-  }
+  const suffix = channelName ? ` ${channelName}` : "";
 
   return (
-    <button
+    <Button
+      variant={memberState ? "secondary" : "chat"}
+      size="sm"
       onClick={handleToggle}
-      disabled={isPending}
-      className="px-6 py-2 text-white rounded-full text-xs font-bold app-primary-button disabled:opacity-50"
+      loading={isPending}
+      aria-label={`${memberState ? "Leave" : "Join"} channel${suffix}`}
     >
-      {isPending ? "Joining..." : "Join Channel"}
-    </button>
+      {isPending ? (memberState ? "Leaving" : "Joining") : memberState ? "Leave" : "Join"}
+    </Button>
   );
 }

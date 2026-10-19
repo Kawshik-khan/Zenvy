@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ToastProvider } from "@/components/ui";
 import { AppSidebar } from "./AppSidebar";
 import { BottomBar } from "./BottomBar";
@@ -27,15 +27,6 @@ export function AppShell({ user, flags, children }: AppShellProps) {
   const { metrics, unreadCount } = useShellData();
   const items = visiblePrimaryNav(flags);
   const hideMobileBar = hidesMobileBar(pathname, Boolean(searchParams?.get("conversation")));
-
-  // Legacy screens read this to drop their bottom padding (globals.css .app-main / .mobile-safe-bottom).
-  useEffect(() => {
-    if (hideMobileBar) document.body.dataset.mobileChromeHidden = "true";
-    else delete document.body.dataset.mobileChromeHidden;
-    return () => {
-      delete document.body.dataset.mobileChromeHidden;
-    };
-  }, [hideMobileBar]);
 
   return (
     <ToastProvider>

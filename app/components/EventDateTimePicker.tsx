@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Alert, Chip, Input, Select } from "@/components/ui";
 
 const STEP_MINUTES = 15;
 const DURATION_OPTIONS = [
@@ -76,93 +77,49 @@ export default function EventDateTimePicker() {
   const invalid = durationMinutes <= 0 || startsInPast;
 
   return (
-    <div className="rounded-[24px] border border-outline-variant/30 bg-surface-container-low/50 p-4">
+    <fieldset className="m-0 flex flex-col gap-4 rounded-nb border-2 border-line bg-canvas p-4">
+      <legend className="px-1 font-grotesk text-[15px] font-bold">Date and time</legend>
       <input type="hidden" name="startTime" value={toLocalDateTimeValue(date, startMinutes)} />
       <input type="hidden" name="endTime" value={toLocalDateTimeValue(endDate, endMinutes)} />
       <input type="hidden" name="timezoneOffset" value={timezoneOffset} />
 
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">Date and Time</p>
-          <p className="mt-1 text-sm text-on-surface-variant">Choose a study date, start time, and duration.</p>
-        </div>
-        <span className="material-symbols-outlined text-primary">calendar_clock</span>
-      </div>
+      <Input id="event-date" type="date" label="Date" min={minDate} value={date} onChange={(event) => setDate(event.target.value)} />
 
-      <div className="grid gap-3">
-        <label className="space-y-2">
-          <span className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Date</span>
-          <input
-            type="date"
-            min={minDate}
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="app-input px-4 py-3"
-          />
-        </label>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="space-y-2">
-            <span className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Start</span>
-            <select
-              value={startMinutes}
-              onChange={(event) => setStartMinutes(Number(event.target.value))}
-              className="app-input px-4 py-3"
-            >
-              {timeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="space-y-2">
-            <span className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">End</span>
-            <select
-              value={durationMinutes}
-              onChange={(event) => setDurationMinutes(Number(event.target.value))}
-              className="app-input px-4 py-3"
-            >
-              {timeOptions
-                .filter((option) => option.value > startMinutes)
-                .map((option) => (
-                  <option key={option.value} value={option.value - startMinutes}>
-                    {option.label}
-                  </option>
-                ))}
-              {endMinutes >= 1440 && <option value={durationMinutes}>Next day {formatTimeValue(endMinutes)}</option>}
-            </select>
-          </label>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          {DURATION_OPTIONS.map((option) => (
-            <button
-              key={option.minutes}
-              type="button"
-              onClick={() => setDurationMinutes(option.minutes)}
-              className={`rounded-2xl px-3 py-2 text-xs font-black transition-colors ${
-                durationMinutes === option.minutes
-                  ? "bg-primary text-on-primary"
-                  : "bg-surface-container text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Select id="event-start" label="Start" value={startMinutes} onChange={(event) => setStartMinutes(Number(event.target.value))}>
+          {timeOptions.map((option) => (
+            <option key={option.value} value={option.value}>
               {option.label}
-            </button>
+            </option>
           ))}
-        </div>
+        </Select>
 
-        <div className="rounded-2xl bg-surface-container/70 px-4 py-3 text-sm font-bold text-on-surface">
-          {date} - {formatTimeValue(startMinutes)} to {endDate !== date ? `${endDate} ` : ""}{formatTimeValue(endMinutes)}
-        </div>
-
-        {invalid && (
-          <p className="text-xs font-bold text-error">
-            {startsInPast ? "Start time cannot be in the past." : "End time must be after the start time."}
-          </p>
-        )}
+        <Select id="event-end" label="End" value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))}>
+          {timeOptions
+            .filter((option) => option.value > startMinutes)
+            .map((option) => (
+              <option key={option.value} value={option.value - startMinutes}>
+                {option.label}
+              </option>
+            ))}
+          {endMinutes >= 1440 && <option value={durationMinutes}>Next day {formatTimeValue(endMinutes)}</option>}
+        </Select>
       </div>
-    </div>
+
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Duration">
+        {DURATION_OPTIONS.map((option) => (
+          <Chip key={option.minutes} selected={durationMinutes === option.minutes} tone="focus" onClick={() => setDurationMinutes(option.minutes)}>
+            {option.label}
+          </Chip>
+        ))}
+      </div>
+
+      <p className="m-0 rounded-nb border-2 border-line bg-card px-4 py-3 text-[15px] font-bold" aria-live="polite">
+        {date}, {formatTimeValue(startMinutes)} to {endDate !== date ? `${endDate} ` : ""}
+        {formatTimeValue(endMinutes)}
+      </p>
+
+      {invalid && <Alert tone="warning">{startsInPast ? "Start time cannot be in the past." : "End time must be after the start time."}</Alert>}
+    </fieldset>
   );
 }

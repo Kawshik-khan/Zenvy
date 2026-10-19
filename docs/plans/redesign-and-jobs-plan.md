@@ -135,7 +135,7 @@ Each: typed props, `variant`/`size`, `volume: 'loud' | 'quiet'` where relevant, 
 
 ## 6. Phase 2 — App shell & navigation (week 4)
 
-**Status: Phase 2 done.** Signed-in screens live in `app/(app)/` (URLs unchanged) under one layout that renders `components/shell/AppShell` (desktop sidebar with Home · Find partners · Messages · Jobs (flagged) · Focus · Profile, a "More" list, focus widget and user card; mobile bottom bar with Home · Partners · Messages · Focus · More sheet) and mounts `ToastProvider`. The per-page `Sidebar`, `SidebarNav` and `FocusSessionStatus` are deleted. `middleware.ts` + `auth.config.ts` now guard every page except the public list in `lib/routes.ts`, and post-login redirects return users to the page they asked for. S-3 (one shared header) is deferred: page headers still hold page-specific titles and actions, so search / bell / profile menu move into the shell screen by screen in Phase 3. `/call/*`, `/onboarding` and the auth pages stay outside the shell. Until Phase 3, the cream shell sits next to the old dark page content, so don't release Phase 2 to users on its own.
+**Status: Phase 2 done.** Signed-in screens live in `app/(app)/` (URLs unchanged) under one layout that renders `components/shell/AppShell` (desktop sidebar with Home · Find partners · Messages · Jobs (flagged) · Focus · Profile, a "More" list, focus widget and user card; mobile bottom bar with Home · Partners · Messages · Focus · More sheet) and mounts `ToastProvider`. The per-page `Sidebar`, `SidebarNav` and `FocusSessionStatus` are deleted. `middleware.ts` + `auth.config.ts` now guard every page except the public list in `lib/routes.ts`, and post-login redirects return users to the page they asked for. S-3 (one shared header) is deferred: page headers still hold page-specific titles and actions, so search / bell / profile menu move into the shell screen by screen in Phase 3. `/call/*`, `/onboarding` and the auth pages stay outside the shell. 
 
 | ID | Task | Files | AC |
 |---|---|---|---|
@@ -148,6 +148,8 @@ Each: typed props, `variant`/`size`, `volume: 'loud' | 'quiet'` where relevant, 
 ---
 
 ## 7. Phase 3 — Screen migration (weeks 5–7)
+
+**Status: Phase 3 done.** All nine rows below are restyled on `components/ui`. Shared pieces added: `components/chat/*` (MessageBubble, Composer, RoomHeader, MembersSheet, TypingIndicator, ConnectionStatus, IncomingCallBanner) and `components/events/EventParts` (create form, upcoming and past lists shared by Events and Scheduling). Screens stay on the `AppHeader` + `min-h-dvh bg-canvas` wrapper pattern. The legacy theme, `.glass-*`/`.app-*` utilities, Material Symbols, Geist fonts, `framer-motion` and `simple-peer` are removed (that part of Phase 4 landed early because nothing used them any more). Content that was invented rather than real was removed or replaced; see the Phase 3 notes in `docs/design-system.md`. Calls and the chat transport could not be exercised end to end in CI (no LiveKit or socket server), so their tests cover layout, labels and keyboard use; do a manual call and chat pass before release.
 
 **Rule for every screen PR:** restyle using `components/ui` only; **no logic/data changes**; delete glass/gradient classes in touched files; attach before/after screenshots; Playwright smoke passes.
 
@@ -167,7 +169,7 @@ Each: typed props, `variant`/`size`, `volume: 'loud' | 'quiet'` where relevant, 
 
 ## 8. Phase 4 — Cleanup & hardening (week 8)
 
-- Delete old `@theme` tokens, Material Symbols import, `designs/stitch_profile_management/*` alternative directions (archive the chosen one into `docs/design-system.md`).
+- (Done early, in Phase 3: old `@theme` tokens and the Material Symbols import.) Delete `designs/stitch_profile_management/*` alternative directions (archive the chosen one into `docs/design-system.md`).
 - CI guard: script failing on `backdrop-blur`, raw hex colours in `className`, or imports of deleted components.
 - Accessibility pass (axe in Playwright on core routes), Lighthouse budget check, visual-diff review against Phase 0 baselines.
 - Update `README.md` screenshots and the design-system doc.

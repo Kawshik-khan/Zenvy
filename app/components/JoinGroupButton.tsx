@@ -2,14 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { joinGroup, leaveGroup } from "@/app/actions/group";
+import { Button } from "@/components/ui";
 
-export default function JoinGroupButton({ 
-  groupId, 
-  isMember 
-}: { 
-  groupId: string; 
-  isMember: boolean;
-}) {
+export default function JoinGroupButton({ groupId, isMember, groupName }: { groupId: string; isMember: boolean; groupName?: string }) {
   const [isPending, startTransition] = useTransition();
   const [memberState, setMemberState] = useState(isMember);
 
@@ -25,25 +20,17 @@ export default function JoinGroupButton({
     });
   };
 
-  if (memberState) {
-    return (
-      <button 
-        onClick={handleToggle}
-        disabled={isPending}
-        className="px-6 py-2 border border-outline-variant/50 text-on-surface-variant rounded-full text-xs font-bold hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 disabled:opacity-50"
-      >
-        {isPending ? "Updating..." : "Leave Group"}
-      </button>
-    );
-  }
+  const suffix = groupName ? ` ${groupName}` : "";
 
   return (
-    <button 
+    <Button
+      variant={memberState ? "secondary" : "career"}
+      size="sm"
       onClick={handleToggle}
-      disabled={isPending}
-      className="px-6 py-2 text-white rounded-full text-xs font-bold app-primary-button disabled:opacity-50"
+      loading={isPending}
+      aria-label={`${memberState ? "Leave" : "Join"} group${suffix}`}
     >
-      {isPending ? "Joining..." : "Join Group"}
-    </button>
+      {isPending ? (memberState ? "Leaving" : "Joining") : memberState ? "Leave" : "Join"}
+    </Button>
   );
 }

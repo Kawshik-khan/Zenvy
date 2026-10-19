@@ -145,7 +145,7 @@ export function Calls() {
             { name: "Arif", tone: "bg-chat" },
             { name: "Maya", tone: "bg-live" },
           ].map((person) => (
-            <div key={person.name} className="relative flex aspect-video items-center justify-center rounded-nb-lg border-2 border-paper bg-[#1d1d1d]">
+            <div key={person.name} className="relative flex aspect-video items-center justify-center rounded-nb-lg border-2 border-paper bg-quiet-ink">
               <span className={cx("inline-flex size-16 items-center justify-center rounded-full border-2 border-ink text-2xl font-bold text-ink", person.tone)}>
                 {person.name[0]}
               </span>

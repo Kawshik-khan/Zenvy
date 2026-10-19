@@ -48,7 +48,6 @@ const bottomNav = () => screen.getAllByRole("navigation", { name: "Main" })[1];
 
 beforeEach(() => {
   openPomodoro.mockClear();
-  delete document.body.dataset.mobileChromeHidden;
 });
 
 describe("AppShell", () => {
@@ -125,13 +124,12 @@ describe("mobile bottom bar", () => {
     expect(sheetScope.getByRole("button", { name: "Log out" })).toBeInTheDocument();
   });
 
-  it("hides itself inside a conversation and tells legacy screens", () => {
+  it("hides itself inside a conversation", () => {
     renderShell({ pathname: "/chat", search: "conversation=abc" });
     // Hidden navs leave the accessibility tree, so query the DOM directly.
     expect(screen.getAllByRole("navigation", { name: "Main" })).toHaveLength(1);
     const bar = document.querySelectorAll('nav[aria-label="Main"]')[1];
     expect(bar).toHaveAttribute("aria-hidden", "true");
     expect(bar).toHaveClass("translate-y-full");
-    expect(document.body.dataset.mobileChromeHidden).toBe("true");
   });
 });

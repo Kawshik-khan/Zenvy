@@ -4,73 +4,31 @@ import { useTransition } from "react";
 import { acceptMatchRequest, rejectMatchRequest } from "@/app/actions/connection";
 import { acceptGroupInvite, declineGroupInvite } from "@/app/actions/group-collaboration";
 import { markNotificationRead } from "@/app/actions/notifications";
+import { Button } from "@/components/ui";
 
 export function NotificationActions({ notificationId, type, read }: { notificationId: string; type: string; read: boolean }) {
   const [pending, startTransition] = useTransition();
 
-  if (type === "MATCH_REQUEST" && !read) {
+  if (read) return null;
+
+  if (type === "MATCH_REQUEST" || type === "GROUP_INVITE") {
+    const accept = type === "MATCH_REQUEST" ? acceptMatchRequest : acceptGroupInvite;
+    const decline = type === "MATCH_REQUEST" ? rejectMatchRequest : declineGroupInvite;
     return (
-      <div className="flex gap-2">
-        <button
-          disabled={pending}
-          onClick={() => startTransition(async () => {
-            await acceptMatchRequest(notificationId);
-          })}
-          className="px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-bold disabled:opacity-50"
-        >
+      <div className="flex shrink-0 gap-2">
+        <Button variant="live" size="sm" disabled={pending} onClick={() => startTransition(async () => void (await accept(notificationId)))}>
           Accept
-        </button>
-        <button
-          disabled={pending}
-          onClick={() => startTransition(async () => {
-            await rejectMatchRequest(notificationId);
-          })}
-          className="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold disabled:opacity-50"
-        >
-          Reject
-        </button>
+        </Button>
+        <Button variant="secondary" size="sm" disabled={pending} onClick={() => startTransition(async () => void (await decline(notificationId)))}>
+          {type === "MATCH_REQUEST" ? "Reject" : "Decline"}
+        </Button>
       </div>
     );
   }
 
-  if (type === "GROUP_INVITE" && !read) {
-    return (
-      <div className="flex gap-2">
-        <button
-          disabled={pending}
-          onClick={() => startTransition(async () => {
-            await acceptGroupInvite(notificationId);
-          })}
-          className="px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-bold disabled:opacity-50"
-        >
-          Accept
-        </button>
-        <button
-          disabled={pending}
-          onClick={() => startTransition(async () => {
-            await declineGroupInvite(notificationId);
-          })}
-          className="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold disabled:opacity-50"
-        >
-          Decline
-        </button>
-      </div>
-    );
-  }
-
-  if (!read) {
-    return (
-      <button
-        disabled={pending}
-        onClick={() => startTransition(async () => {
-          await markNotificationRead(notificationId);
-        })}
-        className="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold disabled:opacity-50"
-      >
-        Mark read
-      </button>
-    );
-  }
-
-  return null;
+  return (
+    <Button variant="secondary" size="sm" disabled={pending} onClick={() => startTransition(async () => void (await markNotificationRead(notificationId)))}>
+      Mark read
+    </Button>
+  );
 }
