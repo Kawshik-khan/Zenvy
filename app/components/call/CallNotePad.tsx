@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Alert, Button, Dialog, DialogContent, DialogFooter, Textarea } from "@/components/ui";
 import { CALL_NOTE_MAX_LENGTH } from "@/lib/call-notes";
 
 type CallNotePadProps = {
@@ -14,8 +15,6 @@ export default function CallNotePad({ open, onClose, onSave }: CallNotePadProps)
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
-
-  if (!open) return null;
 
   const trimmedLength = content.trim().length;
   const tooLong = trimmedLength > CALL_NOTE_MAX_LENGTH;
@@ -49,64 +48,37 @@ export default function CallNotePad({ open, onClose, onSave }: CallNotePadProps)
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/50 p-4 backdrop-blur-sm md:items-center">
-      <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-surface-container-low shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-tertiary">sticky_note_2</span>
-            <h2 className="text-base font-black text-on-surface">Call note</h2>
-          </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={saving}
-            className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container disabled:opacity-60"
-            aria-label="Close note pad"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        <div className="space-y-3 p-5">
-          <textarea
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
+      <DialogContent title="Call note" description="Shared with everyone in this chat." className="quiet">
+        <div className="flex flex-col gap-3">
+          <Textarea
+            id="call-note"
+            label="Note"
+            labelHidden
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            placeholder="Write a note to share in chat..."
+            placeholder="Write a note to share in chat"
             rows={6}
             maxLength={CALL_NOTE_MAX_LENGTH + 50}
             disabled={saving}
-            className="app-input w-full resize-none px-4 py-3 text-sm"
+            error={tooLong ? `Keep it under ${CALL_NOTE_MAX_LENGTH} characters.` : undefined}
             autoFocus
           />
-          <div className="flex items-center justify-between text-xs">
-            <p className={`font-bold ${tooLong ? "text-error" : "text-on-surface-variant"}`}>
-              {trimmedLength}/{CALL_NOTE_MAX_LENGTH}
-            </p>
-            <p className="text-on-surface-variant">Shared with everyone in this chat</p>
-          </div>
-          {error && <p className="text-sm font-bold text-error">{error}</p>}
-          {saved && <p className="text-sm font-bold text-accent-green">Note sent to chat</p>}
+          <p className="m-0 text-sm font-bold text-fg-muted" aria-live="polite">
+            {trimmedLength}/{CALL_NOTE_MAX_LENGTH}
+          </p>
+          {error && <Alert tone="error">{error}</Alert>}
+          {saved && <Alert tone="success">Note sent to chat.</Alert>}
         </div>
-
-        <div className="flex gap-3 border-t border-white/5 px-5 py-4">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={saving}
-            className="flex-1 rounded-2xl bg-surface-container px-4 py-3 text-sm font-bold text-on-surface hover:bg-surface-container-high disabled:opacity-60"
-          >
+        <DialogFooter>
+          <Button variant="secondary" onClick={handleClose} disabled={saving}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!content.trim() || tooLong || saving}
-            className="flex-1 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-on-primary hover:bg-primary/90 disabled:opacity-60"
-          >
-            {saving ? "Saving..." : "Save to chat"}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button variant="focus" onClick={handleSave} disabled={!content.trim() || tooLong} loading={saving}>
+            {saving ? "Saving" : "Save to chat"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

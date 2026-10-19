@@ -50,17 +50,17 @@ export default async function ActiveCallPage({
       }
       const peer = call.participants.find((participant) => participant.userId !== user.id)?.user;
       title = peer?.name || 'Direct Call';
-      avatar = peer?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+      avatar = peer?.image || '';
       scope = { type: 'dm', id: call.conversationId };
     } else if (call.type === 'GROUP' && call.groupId) {
       const group = await prisma.studyGroup.findUnique({ where: { id: call.groupId } });
       title = group?.name || 'Group Call';
-      avatar = group?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+      avatar = group?.avatar || '';
       scope = { type: 'group', id: call.groupId };
     } else if (call.type === 'CHANNEL' && call.channelId) {
       const channel = await prisma.channel.findUnique({ where: { id: call.channelId } });
       title = channel?.name || 'Channel Call';
-      avatar = channel?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+      avatar = channel?.avatar || '';
       scope = { type: 'channel', id: call.channelId };
     }
   } else if (type === 'dm' && id) {
@@ -82,20 +82,20 @@ export default async function ActiveCallPage({
     }
     const peer = conversation.participants.find((participant) => participant.userId !== user.id)?.user;
     title = peer?.name || 'Direct Call';
-    avatar = peer?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=random`;
+    avatar = peer?.image || '';
     scope = { type: 'dm', id };
   } else if (type === 'group' && id) {
     const group = await prisma.studyGroup.findUnique({ where: { id } });
     if (group) {
         title = group.name;
-        avatar = group.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(group.name)}&background=random`;
+        avatar = group.avatar || '';
         scope = { type: 'group', id };
     }
   } else if (type === 'channel' && id) {
     const channel = await prisma.channel.findUnique({ where: { id } });
     if (channel) {
         title = channel.name;
-        avatar = channel.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&background=random`;
+        avatar = channel.avatar || '';
         scope = { type: 'channel', id };
     }
   }
@@ -103,7 +103,7 @@ export default async function ActiveCallPage({
   const currentUser = {
     id: user.id,
     name: user.name || 'Anonymous',
-    image: user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=random`
+    image: user.image || ''
   };
 
   return (

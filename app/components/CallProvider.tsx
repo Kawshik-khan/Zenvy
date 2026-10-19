@@ -20,6 +20,24 @@ import {
   useTracks,
 } from "@livekit/components-react";
 import { RoomEvent, Track } from "livekit-client";
+import {
+  ArrowLeft,
+  GripVertical,
+  Mic,
+  MicOff,
+  Music,
+  Pause,
+  PhoneOff,
+  PictureInPicture2,
+  ScreenShare,
+  ScreenShareOff,
+  Video,
+  VideoOff,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react";
+import { Avatar, Badge, Button, cx, IconButton } from "@/components/ui";
 import { socket } from "@/lib/socket";
 import { focusTracks } from "@/lib/focus-audio";
 import { postCallNote, resolveCallNoteTarget } from "@/lib/call-notes";
@@ -183,25 +201,22 @@ function CallTiles() {
       {sortedTracks.map((trackRef) => (
         <div
           key={`${trackRef.participant.identity}-${trackRef.source}`}
-          className={`relative min-h-52 overflow-hidden rounded-2xl glass-panel-subtle ${
-            trackRef.source === Track.Source.ScreenShare && hasScreenShare ? "md:col-span-2 md:min-h-72" : ""
-          }`}
+          className={cx(
+            "relative min-h-52 overflow-hidden rounded-nb-lg border-nb bg-card",
+            trackRef.source === Track.Source.ScreenShare && hasScreenShare && "md:col-span-2 md:min-h-72",
+          )}
         >
-          <ParticipantTile
-            trackRef={trackRef}
-            className="h-full min-h-52 bg-surface-container-low"
-            disableSpeakingIndicator={false}
-          />
+          <ParticipantTile trackRef={trackRef} className="h-full min-h-52 bg-card" disableSpeakingIndicator={false} />
           {trackRef.source === Track.Source.ScreenShare && (
-            <span className="absolute left-3 top-3 rounded-full bg-primary/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-on-primary">
+            <Badge tone="chat" size="sm" className="absolute top-3 left-3">
               Sharing screen
-            </span>
+            </Badge>
           )}
         </div>
       ))}
       {sortedTracks.length === 0 && (
-        <div className="flex min-h-52 items-center justify-center rounded-2xl glass-panel-subtle">
-          <p className="text-sm font-bold text-on-surface-variant">Camera is off</p>
+        <div className="flex min-h-52 items-center justify-center rounded-nb-lg border-nb border-dashed bg-card">
+          <p className="m-0 font-grotesk font-bold">Camera is off</p>
         </div>
       )}
     </main>
@@ -322,84 +337,52 @@ function CallControls({
     }
   }, [emitMediaState, isScreenShareEnabled, localParticipant, onError]);
 
-  const sizeClass = compact ? "h-10 w-10" : "h-14 w-14";
-  const controlClass = `flex ${sizeClass} items-center justify-center rounded-full bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-60`;
-  const offClass = "bg-error text-on-error hover:bg-error-dim";
+  const size = compact ? "sm" : "md";
 
   return (
-    <div className={compact ? "flex items-center gap-2" : "flex items-center justify-center gap-3 md:gap-4"}>
-      <button
-        type="button"
+    <div className={compact ? "flex items-center gap-2" : "flex flex-wrap items-center justify-center gap-3 md:gap-4"}>
+      <IconButton
+        size={size}
+        variant={isMicrophoneEnabled ? "secondary" : "danger"}
+        label={isMicrophoneEnabled ? "Mute microphone" : "Unmute microphone"}
+        icon={isMicrophoneEnabled ? <Mic size={20} /> : <MicOff size={20} />}
         onClick={toggleMicrophone}
         disabled={mediaPending === "audio"}
-        className={`${controlClass} ${isMicrophoneEnabled ? "" : offClass}`}
-        title={isMicrophoneEnabled ? "Mute microphone" : "Unmute microphone"}
-        aria-label={isMicrophoneEnabled ? "Mute microphone" : "Unmute microphone"}
-      >
-        <span className="material-symbols-outlined">{isMicrophoneEnabled ? "mic" : "mic_off"}</span>
-      </button>
-      <button
-        type="button"
+      />
+      <IconButton
+        size={size}
+        variant={isCameraEnabled ? "secondary" : "danger"}
+        label={isCameraEnabled ? "Turn camera off" : "Start video"}
+        icon={isCameraEnabled ? <Video size={20} /> : <VideoOff size={20} />}
         onClick={toggleCamera}
         disabled={mediaPending === "video"}
-        className={`${controlClass} ${isCameraEnabled ? "" : offClass}`}
-        title={isCameraEnabled ? "Turn camera off" : "Start video"}
-        aria-label={isCameraEnabled ? "Turn camera off" : "Start video"}
-      >
-        <span className="material-symbols-outlined">{isCameraEnabled ? "videocam" : "videocam_off"}</span>
-      </button>
-      <button
-        type="button"
+      />
+      <IconButton
+        size={size}
+        variant={speakerMuted ? "secondary" : "live"}
+        label={speakerMuted ? "Turn speaker on" : "Mute speaker"}
+        icon={speakerMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         onClick={toggleSpeaker}
         disabled={mediaPending === "speaker"}
-        className={`${controlClass} ${!speakerMuted ? "bg-primary text-on-primary hover:bg-primary/90" : ""}`}
-        title={speakerMuted ? "Turn speaker on" : "Mute speaker"}
-        aria-label={speakerMuted ? "Turn speaker on" : "Mute speaker"}
-      >
-        <span className="material-symbols-outlined">{speakerMuted ? "volume_off" : "volume_up"}</span>
-      </button>
-      {onMinimize && (
-        <button
-          type="button"
-          onClick={onMinimize}
-          className={controlClass}
-          title="Minimize call"
-          aria-label="Minimize call"
-        >
-          <span className="material-symbols-outlined">picture_in_picture_alt</span>
-        </button>
-      )}
+      />
+      {onMinimize && <IconButton size={size} label="Minimize call" icon={<PictureInPicture2 size={20} />} onClick={onMinimize} />}
       {scope?.type === "group" && !compact && (
-        <button
-          type="button"
-          onClick={onMinimize}
-          className="hidden rounded-full bg-surface-container px-4 py-2 text-sm font-bold md:inline-flex"
-        >
-          Back to Group
-        </button>
+        <span className="hidden md:inline-flex">
+          <Button variant="secondary" size="sm" onClick={onMinimize}>
+            Back to group
+          </Button>
+        </span>
       )}
-      <button
-        type="button"
+      <IconButton
+        size={size}
+        variant={isScreenShareEnabled ? "live" : "secondary"}
+        label={isScreenShareEnabled ? "Stop screen share" : "Share screen"}
+        icon={isScreenShareEnabled ? <ScreenShareOff size={20} /> : <ScreenShare size={20} />}
         onClick={toggleScreenShare}
         disabled={mediaPending === "screen"}
-        className={`${controlClass} ${isScreenShareEnabled ? "bg-primary text-on-primary hover:bg-primary/90" : ""}`}
-        title={isScreenShareEnabled ? "Stop screen share" : "Share screen"}
-        aria-label={isScreenShareEnabled ? "Stop screen share" : "Share screen"}
-      >
-        <span className="material-symbols-outlined">
-          {isScreenShareEnabled ? "stop_screen_share" : "present_to_all"}
-        </span>
-      </button>
+      />
       <CallToolsMenu compact={compact} onOpenPomodoro={onOpenPomodoro} onOpenNote={onOpenNote} />
-      <button
-        type="button"
-        onClick={onLeave}
-        className={`flex ${compact ? "h-11 w-11" : "h-16 w-16"} items-center justify-center rounded-full bg-error text-on-error hover:bg-error-dim`}
-        title="Leave call"
-        aria-label="Leave call"
-      >
-        <span className={`material-symbols-outlined ${compact ? "text-xl" : "text-3xl"}`}>call_end</span>
-      </button>
+      <IconButton size={compact ? "sm" : "lg"} variant="danger" label="Leave call" icon={<PhoneOff size={compact ? 20 : 26} />} onClick={onLeave} />
     </div>
   );
 }
@@ -665,9 +648,13 @@ function LiveCallSurface({
         <RoomAudioRenderer muted={speakerMuted} />
         <div
           ref={minimizedPanelRef}
-          className={`fixed z-[130] flex w-[min(22rem,calc(100vw-1.5rem))] items-center justify-between gap-2 rounded-3xl border border-white/10 bg-surface-container-low/95 p-3 text-on-surface shadow-2xl backdrop-blur-2xl md:w-[32rem] ${
-            panelPosition ? "" : "bottom-[calc(10.5rem+env(safe-area-inset-bottom))] right-3 md:bottom-6 md:right-6"
-          } ${isPanelDragging ? "select-none ring-2 ring-primary/35" : ""}`}
+          role="region"
+          aria-label="Call in progress"
+          className={cx(
+            "quiet fixed z-[130] flex w-[min(22rem,calc(100vw-1.5rem))] items-center justify-between gap-2 rounded-nb-lg border-nb bg-card p-3 text-fg shadow-nb md:w-[32rem]",
+            !panelPosition && "right-3 bottom-[calc(10.5rem+env(safe-area-inset-bottom))] md:right-6 md:bottom-6",
+            isPanelDragging && "select-none outline-[3px] outline-offset-2 outline-ink",
+          )}
           style={panelPosition ? { left: `${panelPosition.x}px`, top: `${panelPosition.y}px` } : undefined}
         >
           <button
@@ -676,20 +663,20 @@ function LiveCallSurface({
             onPointerMove={movePanelDrag}
             onPointerUp={finishPanelDrag}
             onPointerCancel={finishPanelDrag}
-            className="flex h-11 w-7 shrink-0 touch-none cursor-grab items-center justify-center rounded-2xl text-on-surface-variant hover:bg-surface-container active:cursor-grabbing"
+            className="nb-focus flex h-11 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-nb active:cursor-grabbing"
             title="Drag call panel"
             aria-label="Drag call panel"
           >
-            <span className="material-symbols-outlined text-xl">drag_indicator</span>
+            <GripVertical aria-hidden="true" size={20} />
           </button>
-          <button type="button" onClick={expandMinimizedPanel} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-            <img alt="" src={avatar} className="h-10 w-10 rounded-2xl bg-surface-container object-cover md:h-11 md:w-11" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-black">{title}</p>
-              <p className="truncate text-[10px] font-bold uppercase tracking-widest text-on-surface-variant md:text-[11px]">
-                {call?.mediaType || mediaType} call - {participants.length || 1} active
-              </p>
-            </div>
+          <button type="button" onClick={expandMinimizedPanel} className="nb-focus flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-nb text-left">
+            <Avatar name={title} src={avatar} size="md" />
+            <span className="min-w-0">
+              <span className="block truncate font-grotesk font-bold">{title}</span>
+              <span className="block truncate text-sm text-fg-muted">
+                {(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, {participants.length || 1} active
+              </span>
+            </span>
           </button>
           <CallControls
             callId={callId}
@@ -709,7 +696,7 @@ function LiveCallSurface({
   }
 
   return (
-    <div className="fixed inset-0 z-[140] flex h-dvh flex-col overflow-hidden app-aurora">
+    <div role="region" aria-label="Call" className="quiet fixed inset-0 z-[140] flex h-dvh flex-col overflow-hidden bg-canvas text-fg">
       {selectedCallTrack && (
         <audio
           ref={callMusicRef}
@@ -724,25 +711,23 @@ function LiveCallSurface({
         />
       )}
       <RoomAudioRenderer muted={speakerMuted} />
-      <header className="app-topbar shrink-0">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b-[length:var(--nb-border-width)] border-line bg-canvas px-3 py-3 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <button onClick={onMinimize} className="rounded-full p-2 hover:bg-surface-container" title="Minimize call">
-            <span className="material-symbols-outlined">arrow_back</span>
-          </button>
-          <img alt="" src={avatar} className="h-10 w-10 rounded-xl bg-surface-container object-cover" />
+          <IconButton size="sm" label="Minimize call" icon={<ArrowLeft size={20} />} onClick={onMinimize} />
+          <Avatar name={title} src={avatar} size="md" />
           <div className="min-w-0">
-            <h1 className="truncate font-black">{title}</h1>
-            <p className="text-xs text-on-surface-variant">
-              {call?.mediaType || mediaType} call - {participants.length || 1} active
+            <h1 className="m-0 truncate font-grotesk text-lg font-bold">{title}</h1>
+            <p className="m-0 text-sm text-fg-muted">
+              {(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, {participants.length || 1} active
             </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <FocusHeaderIndicator />
           {call?.status && (
-            <span className="rounded-full bg-accent-green/15 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-accent-green">
-              {call.status}
-            </span>
+            <Badge tone="live" size="sm">
+              {call.status.charAt(0) + call.status.slice(1).toLowerCase()}
+            </Badge>
           )}
         </div>
       </header>
@@ -750,29 +735,25 @@ function LiveCallSurface({
       <CallTiles />
 
       {(isAloneInCall || callMusicOn || callMusicBlocked) && selectedCallTrack && (
-        <div className="flex shrink-0 flex-wrap items-center justify-center gap-3 border-t px-4 py-3 glass-panel-subtle glass-divider">
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-3 border-t-[length:var(--nb-border-width)] border-line bg-card px-4 py-3">
           <div className="min-w-0 text-center md:text-left">
-            <p className="truncate text-xs font-black text-on-surface">{selectedCallTrack.title}</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-              {callMusicBlocked ? "Autoplay blocked" : isAloneInCall ? "Waiting alone in call" : "Local music"}
+            <p className="m-0 truncate font-grotesk font-bold">{selectedCallTrack.title}</p>
+            <p className="m-0 text-sm text-fg-muted">
+              {callMusicBlocked ? "Autoplay blocked" : isAloneInCall ? "Waiting alone in the call" : "Local music"}
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant={callMusicOn ? "focus" : "secondary"}
+            size="sm"
+            icon={callMusicOn ? <Pause size={16} /> : <Music size={16} />}
             onClick={() => (callMusicOn ? pauseCallMusic(true) : playCallMusic(true))}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black transition-colors ${
-              callMusicOn
-                ? "bg-tertiary/15 text-tertiary ring-1 ring-tertiary/30"
-                : "bg-surface-container text-on-surface hover:bg-surface-container-high"
-            }`}
           >
-            <span className="material-symbols-outlined text-base">{callMusicOn ? "pause" : "music_note"}</span>
-            {callMusicOn ? "Pause Music" : callMusicBlocked ? "Music blocked - tap to play" : "Play Music"}
-          </button>
+            {callMusicOn ? "Pause music" : callMusicBlocked ? "Music blocked, tap to play" : "Play music"}
+          </Button>
         </div>
       )}
 
-      <footer className="flex min-h-24 shrink-0 items-center justify-center border-t px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 glass-panel-subtle glass-divider">
+      <footer className="flex min-h-24 shrink-0 items-center justify-center border-t-[length:var(--nb-border-width)] border-line bg-canvas px-3 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
         <CallControls
           callId={callId}
           scope={scope}
@@ -1048,11 +1029,12 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     <CallContext.Provider value={value}>
       {children}
       {error && !expanded && (
-        <div className="fixed bottom-[calc(10.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[135] mx-auto flex max-w-md items-center justify-between gap-3 rounded-2xl border border-error/30 bg-error-container p-4 text-on-error-container shadow-2xl md:bottom-[calc(1rem+env(safe-area-inset-bottom))] md:left-auto md:right-6">
-          <p className="text-sm font-bold">{error}</p>
-          <button type="button" onClick={() => setError(null)} className="rounded-full p-1 hover:bg-error/10">
-            <span className="material-symbols-outlined text-lg">close</span>
-          </button>
+        <div
+          role="alert"
+          className="quiet fixed right-3 bottom-[calc(10.5rem+env(safe-area-inset-bottom))] left-3 z-[135] mx-auto flex max-w-md items-center justify-between gap-3 rounded-nb-lg border-nb bg-alert p-3 pl-4 font-grotesk font-bold text-ink shadow-nb md:right-6 md:bottom-[calc(1rem+env(safe-area-inset-bottom))] md:left-auto"
+        >
+          <p className="m-0 text-[15px]">{error}</p>
+          <IconButton size="sm" label="Dismiss" icon={<X size={18} />} onClick={() => setError(null)} />
         </div>
       )}
       {liveKitReady && credentials && currentUser && (
