@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@livekit/components-styles";
 import "./globals.css";
 import PushManager from "./components/PushManager";
@@ -39,6 +40,7 @@ export default function RootLayout({
             {children}
           </CallProvider>
         </PomodoroProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
