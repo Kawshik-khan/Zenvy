@@ -169,14 +169,18 @@ Each: typed props, `variant`/`size`, `volume: 'loud' | 'quiet'` where relevant, 
 
 ## 8. Phase 4 — Cleanup & hardening (week 8)
 
-- (Done early, in Phase 3: old `@theme` tokens and the Material Symbols import.) Delete `designs/stitch_profile_management/*` alternative directions (archive the chosen one into `docs/design-system.md`).
-- CI guard: script failing on `backdrop-blur`, raw hex colours in `className`, or imports of deleted components.
-- Accessibility pass (axe in Playwright on core routes), Lighthouse budget check, visual-diff review against Phase 0 baselines.
-- Update `README.md` screenshots and the design-system doc.
+**Status: Phase 4 mostly done.**
+
+- Done: legacy `@theme` tokens and the Material Symbols import (early, in Phase 3); `designs/stitch_profile_management/*` deleted (the chosen direction is `docs/design-system.md`; the old files remain in git history).
+- Done: CI guard `npm run check:ui` (`scripts/check-ui-rules.mjs`) fails on `backdrop-blur`, raw hex colours in classes, legacy glass/app utilities, Material Symbols, ui-avatars.com and imports of deleted components. It runs in `npm run ci` and the CI lint job.
+- Done: axe (WCAG 2.1 A/AA) in Playwright over the signed-out and signed-in routes, the open dialogs, a conversation and both room types, and six screens at 375px (`e2e/smoke/a11y.spec.ts`). Not done: Lighthouse budget check, visual-diff review against the Phase 0 baselines, and a manual keyboard / screen reader pass. Axe finds roughly a third of accessibility problems, so treat a green run as a floor.
+- Done: design-system doc updated. README has no screenshots to replace.
 
 ---
 
 ## 9. Track B — Jobs portal
+
+**Status: core shipped behind `FEATURE_JOBS`** (J1–J6, most of J9, and J8's partner-saves count). Built: schema and migration `2_jobs_portal`; `lib/jobs/*` (validation, scam-signal scan, initial status by trust, ranking, image re-encoding, storage); feed with filters and "For you", post form, detail with apply panel, saved, my posts; admin queue at `/zenvy-admin/jobs` with notifications to the poster; auto-hide at 3 reports; `CRON_SECRET`-protected expiry route plus `vercel.json` cron. Not built yet: editing a post (authors can delete and repost), seed posts for dev, the per-user feed cache (J7), Upstash rate limits (the in-memory limiter is used, so limits reset on deploy and are per instance), "Prep together" and saved-filter push (J8), a `tsvector` search index, and a ban-poster shortcut. Image upload is covered by unit tests only: the test server has no storage bucket, so create the private `job-media` bucket and try a post with photos before enabling the flag.
 
 ### J1 Schema & migration (needs F-5)
 

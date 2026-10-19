@@ -5,7 +5,7 @@ export type PeopleSearchResult = {
   id: string;
   name: string;
   uniqueId: string | null;
-  avatar: string;
+  avatar: string | null;
   major: string;
   college: string;
   interests: string[];
@@ -65,11 +65,6 @@ function splitList(value?: string | null) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
-}
-
-function makeAvatar(name?: string | null, image?: string | null) {
-  if (image) return image;
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "U")}&background=random`;
 }
 
 function daysSince(value: Date) {
@@ -160,7 +155,7 @@ function serializeRow(row: RawPeopleSearchRow, currentUser: CurrentUser, query: 
     id: row.id,
     name,
     uniqueId: row.uniqueId,
-    avatar: makeAvatar(name, row.image),
+    avatar: row.image,
     major: row.major || "Student",
     college: row.college || "College not set",
     interests: splitList(row.interests).slice(0, 5),

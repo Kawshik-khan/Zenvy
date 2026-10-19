@@ -20,7 +20,7 @@ export function ApplyPanel({ method, target, title, authorId, authorName, isAuth
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  if (isAuthor) return <p className="m-0 text-[15px] text-fg-muted">This is your post. Applicants contact you through the method you chose.</p>;
+  if (isAuthor) return <p className="m-0 text-[15px]">This is your post. Applicants contact you through the method you chose.</p>;
 
   if (method === "EMAIL" && target) {
     return (

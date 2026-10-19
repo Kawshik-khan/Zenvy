@@ -46,7 +46,7 @@ export default async function ChatPage() {
     return {
       id: other.id,
       name: other.name || "Anonymous",
-      avatar: other.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(other.name || "U")}&background=random`,
+      avatar: other.image || null,
       major: other.profile?.major || "Student"
     };
   });

@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { appAlert, E2E_USER, expectNoAppError, login, loginWithForm, ownIpHeaders } from "../helpers";
 
@@ -122,7 +123,7 @@ test("an approved post appears in the feed and can be filtered, saved, opened an
 
   const save = card.getByRole("button", { name: `Save ${goodTitle}` });
   await save.click();
-  await expect(card.getByRole("button", { name: `Unsave ${goodTitle}` })).toHaveAttribute("aria-pressed", "true");
+  await expect(card.getByRole("button", { name: `Saved, remove ${goodTitle} from saved` })).toHaveAttribute("aria-pressed", "true");
 
   await page.goto("/jobs/saved");
   await expect(page.getByRole("heading", { name: goodTitle })).toBeVisible();
@@ -130,6 +131,14 @@ test("an approved post appears in the feed and can be filtered, saved, opened an
   await page.goto(`/jobs/${goodId}`);
   await expect(page.getByRole("heading", { level: 1, name: goodTitle })).toBeVisible();
   await expect(page.getByText("This is your post").locator("visible=true")).toBeVisible();
+
+  // The feed and detail page with real content have no WCAG A/AA violations.
+  for (const path of ["/jobs", `/jobs/${goodId}`, "/jobs/mine"]) {
+    await page.goto(path);
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    expect(results.violations.map((violation) => `${violation.id}: ${violation.nodes[0]?.target.join(" ")}`), path).toEqual([]);
+  }
+  await page.goto(`/jobs/${goodId}`);
 
   // Authors cannot report their own post.
   await expect(page.getByRole("button", { name: /^Report/ })).toHaveCount(0);

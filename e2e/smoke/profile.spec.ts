@@ -41,7 +41,7 @@ test("the photo drop zone rejects files that are not images, without uploading",
   await login(page);
   await page.goto("/profile");
 
-  const input = page.getByLabel("Profile photo");
+  const input = page.getByLabel("Profile photo").locator("visible=true");
   await input.setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("not an image") });
   await expect(page.getByText(/notes\.txt/).first()).toBeVisible();
   await expect(page.getByText(/JPG|PNG|WebP|image/i).first()).toBeVisible();

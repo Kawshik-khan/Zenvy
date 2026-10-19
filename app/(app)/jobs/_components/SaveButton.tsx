@@ -31,7 +31,7 @@ export function SaveButton({ jobId, title, initialSaved, size = "sm" }: { jobId:
       onClick={toggle}
       disabled={pending}
       aria-pressed={saved}
-      aria-label={`${saved ? "Unsave" : "Save"} ${title}`}
+      aria-label={saved ? `Saved, remove ${title} from saved` : `Save ${title}`}
       icon={saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
     >
       {saved ? "Saved" : "Save"}

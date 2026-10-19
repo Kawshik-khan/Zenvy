@@ -16,10 +16,11 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "db:seed:e2e": "node scripts/seed-e2e.mjs",
-    "ci": "npm run prisma:validate && npm run lint && npm run typecheck && npm run test && npm run build",
+    "ci": "npm run prisma:validate && npm run lint && npm run check:ui && npm run typecheck && npm run test && npm run build",
     "postinstall": "prisma generate",
     "start:custom": "node server.js",
-    "start:socket": "node standalone-socket.js"
+    "start:socket": "node standalone-socket.js",
+    "check:ui": "node scripts/check-ui-rules.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -49,6 +50,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/eslintrc": "^3.2.0",
     "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",

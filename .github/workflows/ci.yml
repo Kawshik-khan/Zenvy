@@ -48,6 +48,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: UI rules (no blur, raw hex, legacy utilities)
+        run: npm run check:ui
+
       - name: Typecheck
         run: npm run typecheck
 
