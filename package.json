@@ -7,22 +7,39 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc --noEmit",
+    "prisma:validate": "prisma validate",
+    "ci": "npm run prisma:validate && npm run lint && npm run typecheck && npm run build",
+    "postinstall": "prisma generate",
+    "start:custom": "node server.js",
+    "start:socket": "node standalone-socket.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@livekit/components-react": "^2.9.21",
+    "@livekit/components-styles": "^1.2.0",
     "@prisma/client": "^5.22.0",
     "@prisma/engines": "^5.22.0",
+    "@supabase/supabase-js": "^2.100.0",
     "@types/simple-peer": "^9.11.9",
+    "@upstash/redis": "^1.38.0",
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
+    "framer-motion": "^12.0.0",
+    "livekit-client": "^2.19.1",
+    "livekit-server-sdk": "^2.15.4",
+    "lru-cache": "^11.2.7",
     "next": "^15.1.8",
     "next-auth": "^5.0.0-beta.25",
     "react": "^19",
     "react-dom": "^19",
+    "resend": "^6.9.4",
     "simple-peer": "^9.11.1",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "web-push": "^3.6.7",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -30,10 +47,15 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "^15.1.8",
     "prisma": "^5.22.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "vite": "^7.3.7"
   }
 }

@@ -15,22 +15,22 @@ export default function ErrorView({
   resetPath = "/login"
 }: ErrorViewProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-10 text-center bg-slate-50">
-      <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6 text-red-600">
+    <div className="app-aurora flex flex-col items-center justify-center min-h-screen p-10 text-center">
+      <div className="w-20 h-20 rounded-full bg-error-container flex items-center justify-center mb-6 text-error">
         <span className="material-symbols-outlined text-4xl">database_off</span>
       </div>
-      <h1 className="text-3xl font-black text-slate-900 mb-4 tracking-tighter uppercase">{title}</h1>
-      <p className="text-slate-600 max-w-md mb-8">
+      <h1 className="text-3xl font-black text-on-surface mb-4 tracking-tighter uppercase">{title}</h1>
+      <p className="text-on-surface-variant max-w-md mb-8">
         {message}
       </p>
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-left w-full max-w-lg overflow-auto">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 italic">Technical Trace</p>
-        <pre className="text-[10px] text-slate-700 font-mono whitespace-pre-wrap leading-relaxed">
+      <div className="glass-panel-subtle p-6 rounded-xl text-left w-full max-w-lg overflow-auto">
+        <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3 italic">Technical Trace</p>
+        <pre className="text-[10px] text-on-surface font-mono whitespace-pre-wrap leading-relaxed">
           {String(error)}
         </pre>
       </div>
       <div className="mt-10">
-        <Link href={resetPath} className="px-8 py-3 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-slate-800 transition-all">
+        <Link href={resetPath} className="px-8 py-3 app-primary-button rounded-full font-bold text-sm">
           Return to Gateway
         </Link>
       </div>

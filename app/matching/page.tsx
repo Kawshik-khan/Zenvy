@@ -1,247 +1,520 @@
-import React, { Suspense } from 'react';
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import Link from 'next/link';
-import Sidebar from '@/app/components/Sidebar';
-import SearchInput from '@/app/components/SearchInput';
-import ConnectButton from './ConnectButton';
+import React from "react";
+export const runtime = "nodejs";
 
-// Extracted Hardcoded Data
-const PARTNERS = [
-  {
-    id: 'elena',
-    name: 'Elena Vance',
-    major: 'Applied Statistics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAsTCrc0yN-lZtLIEOXMm7EIyn2mWqJn7WQpkRmCp8phBfNqvqBZoTtUT_3kqXJkLLtm05ei-g1kdRwegMu9R2c0L-XXwmGyGRbokCno79Gnp4u0aESt8Jtnm85rFELgC75fW2Is9G9l6z6d-KN3yOy1IOw0NOmn5jwAQoreMEwEcNZL1zTBMmfufC_4pXuVuQP01PIUEuPt-SkQJW7M0JznVNJFSQMU1IkB448YvFaBGV5NqvfSgiwcRHFAnA9ieTlPIE3X13ezXI',
-    match: 98,
-    category: 'top',
-    skills: ['R Programming', 'Data Vis', 'SQL'],
-    schedule: 'Mon, Wed: 4pm - 8pm'
-  },
-  {
-    id: 'marcus',
-    name: 'Marcus Chen',
-    major: 'Data Science',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBUHJUEVjIjPPvl7Yyz8FKqEqDEn6rTW_RLg79-knacdE3DU3M7aU6Qe-FIAhVSKnOOQPCjGgD89kWfyQ2613yBXDB_FixMfTnUvAfjSbg8xPniC-5BkhUaikOzP-SceRdZIzKHkV-6J5NzMGcK6m0LwxHdRFBUHUTBdfTiG3ImpGH3eUspChT-1xz5MvvmE_UWGB-aPc7hpmlHPYEkEnSpclreLrdRb_V1YcrM4GN0XIeI-Y2_or6ZEGWhC1K1yO92wFshiC9UpPs',
-    match: 94,
-    category: 'top',
-    skills: ['Python', 'PyTorch'],
-    schedule: 'Weekends: 10am - 4pm'
-  },
-  {
-    id: 'sarah',
-    name: 'Sarah Jenkins',
-    major: 'Mathematics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBuBn4d_trSbvBQwBWPFljNtnq3bj2WntL1J6XTChwQM5BHCFJTY70Nu4dqDmTqloJN2pZR2rwv3TWVu9rvCaeBe19EWc21s2jRBKy7XhSCUmsXZcvGPVoMvkbiJTkmoH_vsP2wwk9goQvLpLLf-BOgStZ7RS76YMODH1Tx11oMEF3VkvnpGb5OcRD0ke93MnqMmRiNUg1Lj5zjG34efdGjlQjxCSfFM3m89FAL99yxAYpj7U87EpyPC0FJII3VHsNuoa2LKQAVX-A',
-    match: 89,
-    category: 'overlap',
-    skills: ['Calculus III', 'Matlab'],
-    schedule: 'Tues, Thurs: Morning'
-  },
-  {
-    id: 'jordan',
-    name: 'Jordan Smith',
-    major: 'Economics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCWv66HxLmrUqQ7oP_cHXzYd3Yc0mH6x5j6UXO3otpJKhoQMIWydErjRKSnKfIhUTVlz0eHru9d25ENyrwUM2lyojsh8kTIupqrue-lAuxjeGu-UgkJRj6TiJPc2JBu8dUossXXdmoBa6cFeKQYQmmwRj3yQ9nGfdIxrxniM9Dg34n7GptK3qrG2019ExsCFKPOVBYcS-Lb9OQzQVzdiwQCwTRO2iyVmkFA0cykln_9FVmceqSGEOr3qRB14C_oSS1hcCpzr_jrMI8',
-    match: 82,
-    category: 'overlap',
-    skills: ['Stata', 'Python'],
-    schedule: 'Daily: 7pm - 10pm'
-  },
-  {
-    id: 'maya',
-    name: 'Maya Rodriguez',
-    major: 'Biology & Genetics',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDaWzQ4VNIxoOeSYxlMjmQ6CD5ktSQn5rTS-u_0Ra_IbmKHME_E9o7NZs9Nne4AN9LVz8tVK3-EgDWWWWOdu0cCVqdRCjigK6NGnaGU9eR3-zPOEFr2yVHHZTr4Vy7jSvthRFzNO8SjqJI_uFXbb4xluemW-mvH8ynJKE9FFFS7avAGjlEphOfQe1u1SMt79wzASteUmxu58AGrIBXCnuzimqj0bAyj-sAGocYh3dpkwDw7CcBQKQzCqCc5n8xBZlpjSgoiAk2GH-Q',
-    match: 78,
-    category: 'active',
-    skills: ['Bioinformatics', 'Statistics'],
-    schedule: 'Studying at Main Library now'
-  }
-];
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import Sidebar from "@/app/components/Sidebar";
+import NotificationBell from "@/app/components/NotificationBell";
+import ConnectButton from "./ConnectButton";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { normalize, recommendPeople, splitList } from "@/lib/discovery";
 
-// Helper to render individual partner cards
-function PartnerCard({ partner }: { partner: any }) {
-  const isTertiary = partner.category === 'active';
-  const colorClass = isTertiary ? 'tertiary' : partner.category === 'overlap' ? 'secondary' : 'primary';
-  const matchColor = partner.match < 85 ? (isTertiary ? 'text-tertiary' : 'text-on-surface-variant/40') : `text-${colorClass}`;
-  
+type SearchParams = {
+  q?: string;
+  major?: string;
+  semester?: string;
+  skill?: string;
+  availability?: string;
+  min?: string;
+};
+
+type Partner = {
+  id: string;
+  name: string;
+  major: string;
+  semester: string;
+  college: string;
+  avatar: string;
+  match: number;
+  connectionStatus: string | null;
+  skills: string[];
+  schedule: string;
+  reasons: string[];
+  isAvailable: boolean;
+  bio: string;
+};
+
+function unique(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b));
+}
+
+function makeAvatar(name?: string | null, image?: string | null) {
+  if (image) return image;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "U")}&background=random`;
+}
+
+function formatMode(mode: string) {
+  const labels: Record<string, string> = {
+    ANY: "Any mode",
+    ONLINE: "Online",
+    IN_PERSON: "In person",
+    HYBRID: "Hybrid",
+  };
+  return labels[mode] || "Any mode";
+}
+
+function relativeDate(date: Date) {
+  const diffMs = Date.now() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays <= 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
   return (
-    <div className={`bg-surface-container-lowest rounded-lg p-6 shadow-sm hover:shadow-xl hover:shadow-${colorClass}/5 transition-all group ${partner.category === 'overlap' ? `border-l-4 border-secondary` : ''} ${isTertiary ? 'border border-tertiary/10 ring-4 ring-tertiary-container/20' : ''}`}>
-      <div className="flex justify-between items-start mb-6">
-        <div className="relative">
-          <img 
-            className={`w-16 h-16 rounded-xl object-cover transition-all ${isTertiary ? 'group-hover:scale-105' : 'grayscale group-hover:grayscale-0'}`} 
-            src={partner.avatar} 
-            alt={partner.name} 
-          />
-          {isTertiary && <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary-fixed border-2 border-white rounded-full"></span>}
-        </div>
-        <div className="text-right">
-          <div className={`text-2xl font-black ${matchColor} tracking-tighter`}>{partner.match}%</div>
-          <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest leading-none">Match</div>
-        </div>
+    <div className="glass-panel-subtle rounded-[24px] p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">{label}</span>
+        <span className="material-symbols-outlined text-lg text-primary">{icon}</span>
       </div>
-      <div className="mb-6">
-        <h4 className="text-xl font-bold text-on-surface tracking-tight">{partner.name}</h4>
-        <p className="text-sm text-on-surface-variant">{partner.major}</p>
-      </div>
-      <div className="flex flex-wrap gap-1.5 mb-6">
-        {partner.skills.map((skill: string) => (
-          <span key={skill} className={isTertiary && skill === partner.skills[0] ? "bg-tertiary-container/20 text-tertiary-dim px-3 py-1 rounded-full text-xs font-bold" : "bg-surface-container px-3 py-1 rounded-full text-xs font-medium"}>
-            {skill}
-          </span>
-        ))}
-      </div>
-      <div className={`flex items-center gap-2 text-xs mb-8 p-3 rounded-xl ${isTertiary ? 'text-tertiary-dim bg-tertiary-container/10 font-bold' : 'text-on-surface-variant bg-surface-container-low/50'}`}>
-        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: isTertiary ? "'FILL' 1" : undefined }}>
-          {isTertiary ? 'bolt' : 'schedule'}
-        </span>
-        {partner.schedule}
-      </div>
-      <div className="flex gap-2">
-        {isTertiary ? (
-          <Link href={`/chat/personal?name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-gradient-to-r from-primary to-secondary text-on-primary rounded-full font-bold text-xs hover:shadow-lg transition-all text-center inline-block">Quick DM</Link>
-        ) : (
-          <>
-            <Link href={`/chat/personal?name=${encodeURIComponent(partner.name)}&avatar=${encodeURIComponent(partner.avatar)}&major=${encodeURIComponent(partner.major)}`} className="flex-1 py-3 bg-primary-container text-on-primary-container rounded-full font-bold text-xs hover:bg-primary hover:text-white transition-colors text-center inline-block">DM</Link>
-            <ConnectButton partnerId={partner.id} buttonText="Add to Group" />
-          </>
-        )}
-      </div>
+      <p className="text-2xl font-black tracking-tight text-on-surface">{value}</p>
     </div>
   );
 }
 
-// NextJS expects searchParams pattern to be dynamic Promise for Page component params/searchParams
-export default async function MatchingPage(props: { searchParams?: Promise<{ q?: string }> }) {
-  const searchParams = await props.searchParams;
-  const q = searchParams?.q || '';
-  
-  const session = await auth();
-  if (!session?.user?.email) redirect('/login');
+function PartnerCard({ partner }: { partner: Partner }) {
+  return (
+    <article className="glass-panel-subtle glass-interactive flex h-full flex-col rounded-[28px] p-5">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative shrink-0">
+            <img className="h-14 w-14 rounded-2xl object-cover" src={partner.avatar} alt="" />
+            <span className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-surface ${partner.isAvailable ? "bg-tertiary-fixed" : "bg-outline"}`} />
+          </div>
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-black text-on-surface">{partner.name}</h2>
+            <p className="truncate text-sm text-on-surface-variant">{partner.major}</p>
+          </div>
+        </div>
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { profile: true },
-  });
+        <div className="rounded-2xl bg-primary-container/40 px-3 py-2 text-right">
+          <p className="text-xl font-black leading-none text-primary">{partner.match}%</p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Match</p>
+        </div>
+      </div>
+
+      <div className="mb-4 grid gap-2">
+        {partner.reasons.map((reason) => (
+          <div key={reason} className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
+            <span className="material-symbols-outlined text-sm text-tertiary-fixed">check_circle</span>
+            <span>{reason}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        {partner.skills.slice(0, 4).map((skill) => (
+          <span key={skill} className="rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
+            {skill}
+          </span>
+        ))}
+      </div>
+
+      <div className="mb-5 mt-auto rounded-2xl bg-surface-container-low/60 p-3 text-xs text-on-surface-variant">
+        <div className="mb-1 flex items-center gap-2 font-bold text-on-surface">
+          <span className="material-symbols-outlined text-sm">schedule</span>
+          Availability
+        </div>
+        <p className="line-clamp-2">{partner.schedule}</p>
+      </div>
+
+      <div className="flex gap-2">
+        <Link href={`/users/${partner.id}`} className="flex-1 rounded-full bg-primary-container py-3 text-center text-xs font-black text-on-primary-container transition-colors hover:bg-primary hover:text-white">
+          View Profile
+        </Link>
+        {partner.connectionStatus === "ACCEPTED" && (
+          <Link href={`/chat/personal?id=${partner.id}`} className="flex-1 rounded-full bg-surface-container py-3 text-center text-xs font-black text-on-surface-variant transition-colors hover:text-on-surface">
+            Message
+          </Link>
+        )}
+        <ConnectButton partnerId={partner.id} buttonText="Connect" initialStatus={partner.connectionStatus} />
+      </div>
+
+      <details className="mt-2 group/details">
+        <summary className="list-none cursor-pointer rounded-full bg-surface-container py-3 text-center text-xs font-black text-on-surface-variant transition-colors hover:text-on-surface">
+          Quick Preview
+        </summary>
+        <div className="mt-3 rounded-2xl border border-outline-variant/20 bg-surface-container-low/40 p-4 text-xs leading-5 text-on-surface-variant">
+          <p className="font-bold text-on-surface">{partner.college}</p>
+          <p>{partner.semester}</p>
+          <p className="mt-2">{partner.bio}</p>
+        </div>
+      </details>
+    </article>
+  );
+}
+
+export default async function MatchingPage(props: { searchParams?: Promise<SearchParams> }) {
+  const searchParams = (await props.searchParams) || {};
+  const q = searchParams.q || "";
+  const major = searchParams.major || "";
+  const semester = searchParams.semester || "";
+  const skill = searchParams.skill || "";
+  const availability = searchParams.availability || "";
+  const minMatch = Number(searchParams.min || 0) || 0;
+
+  const session = await auth();
+  if (!session?.user?.id && !session?.user?.email) redirect("/login");
+
+  const user = session.user.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: {
+          profile: true,
+          groupMemberships: { select: { groupId: true } },
+          channelMemberships: { select: { channelId: true } },
+        },
+      })
+    : await prisma.user.findUnique({
+        where: { email: session.user.email || "" },
+        include: {
+          profile: true,
+          groupMemberships: { select: { groupId: true } },
+          channelMemberships: { select: { channelId: true } },
+        },
+      });
+
+  if (!user) redirect("/login");
+
+  const [otherUsers, studyAds, suggestedGroups] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        NOT: { id: user.id },
+        blockedBy: { none: { blockerId: user.id } },
+        blocks: { none: { blockedId: user.id } },
+      },
+      include: {
+        profile: true,
+        groupMemberships: { select: { groupId: true } },
+        channelMemberships: { select: { channelId: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 80,
+    }),
+    prisma.studyAd.findMany({
+      where: { status: "ACTIVE" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            profile: { select: { major: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.studyGroup.findMany({
+      include: { _count: { select: { members: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+  ]);
+
+  const profileIds = [
+    user.profile?.id,
+    ...otherUsers.map((otherUser) => otherUser.profile?.id),
+  ].filter(Boolean) as string[];
+
+  const existingMatches = user.profile
+    ? await prisma.match.findMany({
+        where: {
+          OR: [
+            { profileId: user.profile.id, matchedProfileId: { in: profileIds } },
+            { matchedProfileId: user.profile.id, profileId: { in: profileIds } },
+          ],
+        },
+      })
+    : [];
+
+  const statusByProfileId = new Map<string, string>();
+  for (const matchRecord of existingMatches) {
+    const otherProfileId = matchRecord.profileId === user.profile?.id ? matchRecord.matchedProfileId : matchRecord.profileId;
+    statusByProfileId.set(otherProfileId, matchRecord.status);
+  }
+
+  const processedPartners: Partner[] = recommendPeople({
+    currentUser: user,
+    candidates: otherUsers,
+    existingMatches,
+    query: q,
+  })
+    .map((otherUser) => {
+      const otherInterests = splitList(otherUser.profile?.interests);
+      const isAvailable = Boolean(otherUser.profile?.matchingAvailable && otherUser.profile?.availability);
+
+      return {
+        id: otherUser.id,
+        name: otherUser.name || "Anonymous",
+        major: otherUser.profile?.major || "Undecided",
+        semester: otherUser.profile?.semester ? `Semester ${otherUser.profile.semester}` : "Semester not set",
+        college: otherUser.profile?.college || "College not set",
+        avatar: makeAvatar(otherUser.name, otherUser.image),
+        match: Math.round(otherUser.discoveryScore),
+        connectionStatus: otherUser.profile?.id ? statusByProfileId.get(otherUser.profile.id) || null : null,
+        skills: otherInterests.length ? otherInterests : ["Study Partner"],
+        schedule: otherUser.profile?.availability || "Availability not set",
+        reasons: otherUser.discoveryReasons,
+        isAvailable,
+        bio: otherUser.profile?.bio || "No bio added yet.",
+      };
+    })
+    .sort((a, b) => b.match - a.match || Number(b.isAvailable) - Number(a.isAvailable));
 
   const query = q.toLowerCase();
-  const filteredPartners = PARTNERS.filter(p => 
-    p.name.toLowerCase().includes(query) || 
-    p.major.toLowerCase().includes(query) ||
-    p.skills.some(s => s.toLowerCase().includes(query))
-  );
+  const filteredPartners = processedPartners.filter((partner) => {
+    const searchable = [partner.name, partner.major, partner.college, partner.schedule, partner.bio, ...partner.skills, ...partner.reasons].join(" ").toLowerCase();
+    const matchesQuery = !query || searchable.includes(query);
+    const matchesMajor = !major || major === "all" || partner.major === major;
+    const matchesSemester = !semester || semester === "all" || partner.semester === semester;
+    const matchesSkill = !skill || skill === "all" || partner.skills.includes(skill);
+    const matchesAvailability = !availability || availability === "all" || (availability === "available" ? partner.isAvailable : partner.schedule !== "Availability not set");
+    const matchesMin = partner.match >= minMatch;
+
+    return matchesQuery && matchesMajor && matchesSemester && matchesSkill && matchesAvailability && matchesMin;
+  });
+
+  const majorOptions = unique(processedPartners.map((partner) => partner.major).filter((value) => value !== "Undecided"));
+  const semesterOptions = unique(processedPartners.map((partner) => partner.semester).filter((value) => value !== "Semester not set"));
+  const skillOptions = unique(processedPartners.flatMap((partner) => partner.skills).filter((value) => value !== "Study Partner")).slice(0, 20);
+  const trendingSkills = skillOptions.slice(0, 8);
+  const onlinePartners = processedPartners.filter((partner) => partner.isAvailable).slice(0, 6);
+
+  const pendingRequests = user.profile
+    ? await prisma.match.count({
+        where: {
+          matchedProfileId: user.profile.id,
+          status: "PENDING",
+        },
+      })
+    : 0;
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen antialiased overflow-x-hidden">
+    <div className="app-aurora antialiased overflow-x-hidden">
       <Sidebar />
 
-      <header className="sticky top-0 z-40 flex justify-between items-center px-4 md:px-8 h-16 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-sm dark:shadow-none font-sans text-sm">
-        <div className="flex items-center flex-1 max-w-sm md:max-w-xl">
-          <div className="relative w-full group">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant z-10">search</span>
-            <Suspense fallback={<input className="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Search for potential study partners..." type="text" />}>
-               <SearchInput placeholder="Search by name, major, or skills..." />
-            </Suspense>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 mr-4">
-            <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-all active:scale-95">
-              <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-            </button>
-            <button className="hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full p-2 transition-all active:scale-95">
-              <span className="material-symbols-outlined text-on-surface-variant">settings</span>
-            </button>
-          </div>
-          <div className="flex items-center gap-3 border-l pl-4 border-outline-variant/20">
-            <div className="text-right hidden sm:block">
-              <p className="font-bold text-on-surface">{user?.name || "Alex Rivera"}</p>
-              <p className="text-xs text-on-surface-variant">{user?.profile?.major || "Computer Science"}</p>
-            </div>
-            <img className="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2cOqOiPj1l6qFzkTSxu_lWX2-9YGWDLkucM8ledDb2DJDFmZoz5oid8hlDTkMkU1EsKkTT5KiIfsc5zX5Qqv_xuvs4C0r2oa-Dgyrf1l0eh5JoQ4j5m-ltLwG9vbbm5M9hzr082EoK8d32PhGSxRLfZc-IvbXn1uxM1kjUoBcPn4JqHgowexA7OpOVsHwV3YgKs9hOM_YWDV1WZkyJ1aYUQSVc-V1iYasipHvio_6AkulbEDordxlgA4R17ejK5WaHBFAK1ueSx8" alt="Avatar" />
-          </div>
-        </div>
-      </header>
-
-      <main className="md:ml-20 pb-24 md:pb-0 p-4 md:p-12 min-h-[calc(100vh-64px)]">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8 md:mb-12">
-            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tighter text-on-surface mb-2">Find your tribe.</h2>
-            <p className="text-on-surface-variant text-base md:text-lg">Connect with peers whose skills and schedules complement your own.</p>
+      <main className="app-main">
+        <header className="app-topbar font-sans text-sm">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-primary">Matching</p>
+            <h1 className="truncate text-xl font-black tracking-tight text-on-surface">Find Your Tribe</h1>
           </div>
 
-          {filteredPartners.length === 0 ? (
-            <div className="py-20 text-center bg-surface-container-lowest rounded-3xl border border-dashed border-outline-variant/50">
-               <span className="material-symbols-outlined text-6xl text-on-surface-variant opacity-50 mb-4">search_off</span>
-               <h3 className="text-2xl font-bold text-on-surface mb-2">No matching peers found</h3>
-               <p className="text-on-surface-variant max-w-md mx-auto">Try adjusting your search criteria. You can search by their name, their major, or specific skills like "Python".</p>
-               <Link href="/matching" className="mt-6 inline-block px-6 py-2 bg-primary-container text-on-primary-container rounded-full font-bold text-sm hover:bg-primary hover:text-white transition-colors">Clear Search</Link>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <div className="hidden items-center gap-3 border-l pl-4 glass-divider sm:flex">
+              <div className="text-right">
+                <p className="font-bold text-on-surface">{user.name || "Student"}</p>
+                <p className="text-xs text-on-surface-variant">{user.profile?.major || "Undecided"}</p>
+              </div>
+              <img className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/20" src={makeAvatar(user.name, user.image)} alt="" />
             </div>
-          ) : query ? (
-            // Search Results Mode: Flattened Grid Layout
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredPartners.map(partner => <PartnerCard key={partner.id} partner={partner} />)}
-            </div>
-          ) : (
-            // Default Mode: 3 Categorized Columns
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-              {/* COLUMN Component helper */}
-              {[{ id: 'top', title: 'Top Synergy', color: 'primary', count: 4 },
-                { id: 'overlap', title: 'Skill Overlap', color: 'secondary', count: 12 },
-                { id: 'active', title: 'Active Now', color: 'tertiary-fixed', count: 'LIVE', isBadge: true }].map(col => {
-                const colPartners = filteredPartners.filter(p => p.category === col.id);
-                if (colPartners.length === 0) return null;
-                
-                return (
-                  <div key={col.id} className="space-y-6">
-                    <div className="flex items-center justify-between mb-4 px-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full bg-${col.color}`}></span>
-                        <h3 className="font-bold uppercase tracking-widest text-xs text-on-surface-variant">{col.title}</h3>
-                      </div>
-                      {col.isBadge ? (
-                        <span className="bg-tertiary-container text-on-tertiary-container px-2 py-0.5 rounded-full text-[10px] font-bold">{col.count}</span>
-                      ) : (
-                        <span className="bg-surface-container-high px-2 py-0.5 rounded-full text-[10px] font-bold">{col.count}</span>
-                      )}
-                    </div>
-                    {colPartners.map(partner => <PartnerCard key={partner.id} partner={partner} />)}
+          </div>
+        </header>
+
+        <div className="app-content min-h-[calc(100vh-64px)] p-4 md:p-8 xl:p-10">
+          <div className="mx-auto max-w-[1700px] space-y-6">
+            <section className="glass-panel-subtle overflow-hidden rounded-[32px] p-6 md:p-8">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                <div>
+                  <p className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-primary">Study Partner Network</p>
+                  <h2 className="text-3xl font-black tracking-tight text-on-surface md:text-5xl">Find Your Tribe</h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant md:text-base">
+                    Browse classmates by match strength, shared interests, schedule fit, and active study goals.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link href="/matching/post-ad" className="app-primary-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-black">
+                    <span className="material-symbols-outlined text-base">add</span>
+                    Post Study Ad
+                  </Link>
+                  <a href="#matches" className="inline-flex items-center justify-center gap-2 rounded-full bg-surface-container px-6 py-3 text-sm font-black text-on-surface-variant transition-colors hover:text-on-surface">
+                    <span className="material-symbols-outlined text-base">travel_explore</span>
+                    Find Study Partner
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            <form action="/matching" className="glass-panel-subtle rounded-[28px] p-4">
+              <div className="grid gap-3 md:grid-cols-[minmax(220px,1.4fr)_repeat(5,minmax(120px,1fr))_auto]">
+                <label className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                  <input name="q" defaultValue={q} className="app-input h-full rounded-2xl py-3 pl-10 pr-4 text-sm" placeholder="Search name, major, or skill" />
+                </label>
+
+                <select name="major" defaultValue={major || "all"} className="app-input rounded-2xl px-4 py-3 text-sm">
+                  <option value="all">Department</option>
+                  {majorOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+
+                <select name="semester" defaultValue={semester || "all"} className="app-input rounded-2xl px-4 py-3 text-sm">
+                  <option value="all">Semester</option>
+                  {semesterOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+
+                <select name="skill" defaultValue={skill || "all"} className="app-input rounded-2xl px-4 py-3 text-sm">
+                  <option value="all">Skills</option>
+                  {skillOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+
+                <select name="availability" defaultValue={availability || "all"} className="app-input rounded-2xl px-4 py-3 text-sm">
+                  <option value="all">Availability</option>
+                  <option value="available">Available now</option>
+                  <option value="with-schedule">Has schedule</option>
+                </select>
+
+                <select name="min" defaultValue={String(minMatch || 0)} className="app-input rounded-2xl px-4 py-3 text-sm">
+                  <option value="0">Match %</option>
+                  <option value="70">70%+</option>
+                  <option value="80">80%+</option>
+                  <option value="90">90%+</option>
+                </select>
+
+                <button className="app-primary-button rounded-2xl px-5 py-3 text-sm font-black">Apply</button>
+              </div>
+            </form>
+
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard label="Students" value={processedPartners.length.toLocaleString()} icon="groups" />
+              <StatCard label="Online Now" value={onlinePartners.length} icon="radio_button_checked" />
+              <StatCard label="New Matches" value={processedPartners.filter((partner) => partner.match >= 85).length} icon="auto_awesome" />
+              <StatCard label="Requests" value={pendingRequests} icon="notifications_active" />
+            </section>
+
+            <section id="matches" className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+              <div>
+                <div className="mb-4 flex items-end justify-between gap-4 px-1">
+                  <div>
+                    <h2 className="text-xl font-black text-on-surface">Recent Matches</h2>
+                    <p className="text-sm text-on-surface-variant">{filteredPartners.length} student{filteredPartners.length === 1 ? "" : "s"} match your filters.</p>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  {(q || major || semester || skill || availability || minMatch) && (
+                    <Link href="/matching" className="rounded-full bg-surface-container px-4 py-2 text-xs font-bold text-on-surface-variant transition-colors hover:text-on-surface">
+                      Clear filters
+                    </Link>
+                  )}
+                </div>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-slate-900 rounded-xl p-8 flex items-center justify-between group overflow-hidden relative">
-              <div className="z-10">
-                <h4 className="text-white text-2xl font-bold mb-2">Automatch Beta</h4>
-                <p className="text-slate-400 text-sm max-w-[280px]">Let our AI pair you with the perfect squad based on your syllabus.</p>
-                <button className="mt-6 px-6 py-2 bg-white text-slate-900 rounded-full font-bold text-sm hover:bg-indigo-100 transition-colors">Start Automatch</button>
+                {filteredPartners.length ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3 min-[1700px]:grid-cols-4">
+                    {filteredPartners.map((partner) => (
+                      <PartnerCard key={partner.id} partner={partner} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="glass-panel-subtle rounded-[28px] border border-dashed border-outline-variant/40 p-10 text-center">
+                    <span className="material-symbols-outlined mb-4 text-5xl text-on-surface-variant/60">search_off</span>
+                    <h3 className="text-2xl font-black text-on-surface">No matching peers found</h3>
+                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-on-surface-variant">
+                      Try fewer filters or post a study ad so interested classmates can find you.
+                    </p>
+                    <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                      <Link href="/matching" className="rounded-full bg-surface-container px-6 py-3 text-sm font-bold text-on-surface-variant transition-colors hover:text-on-surface">
+                        Clear Filters
+                      </Link>
+                      <Link href="/matching/post-ad" className="app-primary-button rounded-full px-6 py-3 text-sm font-black">
+                        Post Study Ad
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
-              <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 text-white/5 group-hover:text-primary/20 transition-all rotate-12">psychology</span>
-            </div>
-            <div className="bg-indigo-600 rounded-xl p-8 flex items-center justify-between group overflow-hidden relative">
-              <div className="z-10">
-                <h4 className="text-white text-2xl font-bold mb-2">Review Requests</h4>
-                <p className="text-indigo-100 text-sm max-w-[280px]">You have 3 students waiting to join your Statistics group.</p>
-                <button className="mt-6 px-6 py-2 bg-indigo-900 text-white rounded-full font-bold text-sm hover:bg-indigo-800 transition-colors">Open Requests</button>
-              </div>
-              <span className="material-symbols-outlined text-[120px] absolute -right-4 -bottom-4 text-white/5 group-hover:text-white/10 transition-all -rotate-12">notifications_active</span>
-            </div>
+
+              <aside className="hidden space-y-4 xl:block">
+                <div className="glass-panel-subtle rounded-[28px] p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-sm font-black text-on-surface">Online Now</h2>
+                    <span className="rounded-full bg-tertiary-container/30 px-2 py-1 text-[10px] font-black text-tertiary-fixed">LIVE</span>
+                  </div>
+                  <div className="space-y-3">
+                    {onlinePartners.length ? onlinePartners.map((partner) => (
+                      <Link key={partner.id} href={`/chat/personal?id=${partner.id}`} className="flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-surface-container">
+                        <span className="relative">
+                          <img className="h-9 w-9 rounded-xl object-cover" src={partner.avatar} alt="" />
+                          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-tertiary-fixed" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-on-surface">{partner.name}</span>
+                          <span className="block truncate text-xs text-on-surface-variant">{partner.major}</span>
+                        </span>
+                      </Link>
+                    )) : (
+                      <p className="text-sm leading-6 text-on-surface-variant">No students are marked available right now.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="glass-panel-subtle rounded-[28px] p-5">
+                  <h2 className="mb-4 text-sm font-black text-on-surface">Trending Skills</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {trendingSkills.length ? trendingSkills.map((item) => (
+                      <Link key={item} href={`/matching?skill=${encodeURIComponent(item)}`} className="rounded-full bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface-variant transition-colors hover:text-on-surface">
+                        #{item.replace(/\s+/g, "")}
+                      </Link>
+                    )) : (
+                      <p className="text-sm text-on-surface-variant">Skills appear here as profiles add interests.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="glass-panel-subtle rounded-[28px] p-5">
+                  <h2 className="mb-4 text-sm font-black text-on-surface">Suggested Groups</h2>
+                  <div className="space-y-3">
+                    {suggestedGroups.map((group) => (
+                      <Link key={group.id} href={`/groups/${group.id}`} className="flex items-center justify-between gap-3 rounded-2xl p-3 transition-colors hover:bg-surface-container">
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-on-surface">{group.name}</span>
+                          <span className="block truncate text-xs text-on-surface-variant">{group.subject || "Study group"}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-surface-container-high px-2 py-1 text-[10px] font-black text-on-surface-variant">
+                          {group._count.members}
+                        </span>
+                      </Link>
+                    ))}
+                    {!suggestedGroups.length && <p className="text-sm text-on-surface-variant">No groups have been created yet.</p>}
+                  </div>
+                </div>
+
+                <div className="glass-panel-subtle rounded-[28px] p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-sm font-black text-on-surface">Study Ads</h2>
+                    <Link href="/matching/post-ad" className="text-xs font-black text-primary">Post</Link>
+                  </div>
+                  <div className="space-y-3">
+                    {studyAds.map((ad) => (
+                      <div key={ad.id} className="rounded-2xl bg-surface-container-low/50 p-3">
+                        <div className="mb-2 flex items-center gap-2">
+                          <img className="h-7 w-7 rounded-lg object-cover" src={makeAvatar(ad.user.name, ad.user.image)} alt="" />
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-bold text-on-surface">{ad.user.name || "Student"}</p>
+                            <p className="truncate text-[11px] text-on-surface-variant">{ad.user.profile?.major || formatMode(ad.mode)} · {relativeDate(ad.createdAt)}</p>
+                          </div>
+                        </div>
+                        <h3 className="line-clamp-2 text-sm font-black text-on-surface">{ad.title}</h3>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-on-surface-variant">{ad.subjects}</p>
+                      </div>
+                    ))}
+                    {!studyAds.length && <p className="text-sm leading-6 text-on-surface-variant">No study ads yet. Be the first to post one.</p>}
+                  </div>
+                </div>
+              </aside>
+            </section>
           </div>
         </div>
       </main>
-
-      <div className="fixed bottom-24 md:bottom-10 right-6 md:right-10 z-50">
-        <button className="flex items-center gap-2 md:gap-3 bg-gradient-to-br from-primary to-secondary text-on-primary px-6 md:px-8 py-4 md:py-5 rounded-full shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>add</span>
-          <span className="font-bold tracking-tight hidden md:inline-block">Post Your Study Ad</span>
-        </button>
-      </div>
     </div>
   );
 }

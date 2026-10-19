@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
+
+const profileSchema = z.object({
+  college: z.string().max(100).optional().nullable(),
+  major: z.string().max(100).optional().nullable(),
+  semester: z.coerce.number().min(1).max(12).optional().nullable(),
+  bio: z.string().max(500).optional().nullable(),
+  interests: z.union([z.string().max(300), z.array(z.string().max(50))]).optional().nullable(),
+  availability: z.string().max(200).optional().nullable(),
+});
 
 export async function GET() {
   const session = await auth();
@@ -42,6 +52,13 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const validation = profileSchema.safeParse(data);
+    
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Invalid input data', details: validation.error.format() }, { status: 400 });
+    }
+    const validData = validation.data;
+
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     });
@@ -54,20 +71,20 @@ export async function POST(request: Request) {
       where: { userId: user.id },
       create: {
         userId: user.id,
-        college: data.college,
-        major: data.major,
-        semester: parseInt(data.semester),
-        bio: data.bio,
-        interests: Array.isArray(data.interests) ? data.interests.join(', ') : data.interests,
-        availability: data.availability,
+        college: validData.college,
+        major: validData.major,
+        semester: validData.semester || null,
+        bio: validData.bio,
+        interests: Array.isArray(validData.interests) ? validData.interests.join(', ') : validData.interests,
+        availability: validData.availability,
       },
       update: {
-        college: data.college,
-        major: data.major,
-        semester: parseInt(data.semester),
-        bio: data.bio,
-        interests: Array.isArray(data.interests) ? data.interests.join(', ') : data.interests,
-        availability: data.availability,
+        college: validData.college,
+        major: validData.major,
+        semester: validData.semester || null,
+        bio: validData.bio,
+        interests: Array.isArray(validData.interests) ? validData.interests.join(', ') : validData.interests,
+        availability: validData.availability,
       }
     });
 
