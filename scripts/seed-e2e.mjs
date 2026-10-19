@@ -38,6 +38,14 @@ const users = [
     profile: { college: "Zenvy University", major: "Mathematics", semester: 5, interests: "proofs, calculus", availability: "mornings", bio: "Seeded accepted match." },
   },
   {
+    // Admin for the jobs review queue. `role` is applied below (it is not part of the profile).
+    email: "e2e.admin@zenvy.test",
+    name: "E2E Admin",
+    uniqueId: "e2e_admin",
+    role: "ADMIN",
+    profile: { college: "Zenvy University", major: "Administration", semester: 8, interests: "operations", availability: "weekdays", bio: "Seeded admin." },
+  },
+  {
     // Empty profile: used by the onboarding test. The profile is reset on every seed run.
     email: "e2e.newbie@zenvy.test",
     name: "E2E Newbie",
@@ -52,11 +60,11 @@ async function main() {
   const password = await bcrypt.hash(E2E_PASSWORD, 10);
 
   try {
-    for (const { profile, ...user } of users) {
+    for (const { profile, role = "USER", ...user } of users) {
       const saved = await prisma.user.upsert({
         where: { email: user.email },
-        update: { name: user.name, password, emailVerified: new Date(), failedLoginAttempts: 0, lockedUntil: null },
-        create: { ...user, password, emailVerified: new Date() },
+        update: { name: user.name, role, password, emailVerified: new Date(), failedLoginAttempts: 0, lockedUntil: null },
+        create: { ...user, role, password, emailVerified: new Date() },
       });
       await prisma.profile.upsert({
         where: { userId: saved.id },
@@ -73,7 +81,8 @@ async function main() {
     await prisma.match.deleteMany({ where: { OR: [{ profileId: { in: profileIds } }, { matchedProfileId: { in: profileIds } }] } });
     await prisma.notification.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.studyAd.deleteMany({ where: { userId: { in: userIds } } });
-    console.log("Cleared matches, notifications and study ads for e2e users");
+    await prisma.jobPost.deleteMany({ where: { authorId: { in: userIds } } });
+    console.log("Cleared matches, notifications, study ads and job posts for e2e users");
 
     // Fixtures for the messaging screens: one accepted match, one study group, one channel.
     const byEmail = Object.fromEntries(

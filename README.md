@@ -94,6 +94,16 @@ AUTH_TRUST_HOST=true npm run test:e2e
 
 Feature flags live in `lib/flags.ts` (for example `FEATURE_JOBS=true`).
 
+### Jobs portal
+
+Off until `FEATURE_JOBS=true`. To use it you need:
+
+- the `2_jobs_portal` migration applied (`npm run prisma:migrate`),
+- a **private** Supabase Storage bucket named `job-media`, and `SUPABASE_SERVICE_ROLE_KEY` set on the server,
+- `CRON_SECRET` set, so the daily `/api/cron/expire-jobs` call in `vercel.json` can mark past-deadline posts as expired.
+
+First-time posters are reviewed at `/zenvy-admin/jobs`. Image uploads are re-encoded to WebP and stripped of location data before storage.
+
 ## 📂 Project Structure
 - `/app`: Next.js 15 app router pages and components.
 - `/prisma`: Database schema and migrations.

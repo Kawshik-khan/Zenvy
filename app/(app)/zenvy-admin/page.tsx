@@ -6,7 +6,8 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AppHeader } from "@/components/shell/AppHeader";
-import { Badge, Card, CardHeader, EmptyState, StatTile } from "@/components/ui";
+import { Badge, ButtonLink, Card, CardHeader, EmptyState, StatTile } from "@/components/ui";
+import { isEnabled } from "@/lib/flags";
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -49,6 +50,13 @@ export default async function AdminDashboardPage() {
             Admin overview
           </h1>
           <p className="m-0 text-lg text-fg-muted">Current totals, newest accounts and open reports.</p>
+          {isEnabled("jobs") && (
+            <div>
+              <ButtonLink href="/zenvy-admin/jobs" variant="career" size="sm">
+                Review job posts
+              </ButtonLink>
+            </div>
+          )}
         </section>
 
         <section aria-label="Totals" className="grid grid-cols-2 gap-4 lg:grid-cols-4">

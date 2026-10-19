@@ -53,6 +53,10 @@ model User {
   blocks             UserBlock[]     @relation("UserBlocking")
   blockedBy          UserBlock[]     @relation("UserBlocked")
   reports            Report[]        @relation("UserReporting")
+  posterTrust        PosterTrust     @default(STUDENT)
+  jobPosts           JobPost[]       @relation("JobAuthor")
+  jobSaves           JobSave[]
+  jobReports         JobReport[]
   reportedBy         Report[]        @relation("UserReported")
   createdChannels    Channel[]        @relation("ChannelCreator")
   channelMemberships ChannelMember[]
@@ -450,4 +454,110 @@ model CallParticipant {
   
   @@unique([callId, userId])
   @@index([userId, status])
+}
+
+
+// ============================================
+// JOBS PORTAL (behind FEATURE_JOBS)
+// ============================================
+
+enum JobType {
+  JOB
+  INTERNSHIP
+  PART_TIME
+  REFERRAL
+}
+
+enum WorkMode {
+  REMOTE
+  ONSITE
+  HYBRID
+}
+
+enum ApplyMethod {
+  LINK
+  EMAIL
+  MESSAGE
+}
+
+enum JobStatus {
+  PENDING_REVIEW
+  LIVE
+  REJECTED
+  EXPIRED
+  REMOVED
+}
+
+enum PosterTrust {
+  STUDENT
+  ALUMNI
+  VERIFIED_EMPLOYER
+}
+
+model JobPost {
+  id           String      @id @default(cuid())
+  authorId     String
+  author       User        @relation("JobAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  type         JobType
+  title        String      @db.VarChar(120)
+  company      String      @db.VarChar(120)
+  location     String      @db.VarChar(120)
+  workMode     WorkMode
+  pay          String?     @db.VarChar(80)
+  description  String      @db.VarChar(5000)
+  applyMethod  ApplyMethod
+  applyTarget  String?
+  tags         String[]
+  deadline     DateTime
+  status       JobStatus   @default(PENDING_REVIEW)
+  reviewNote   String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  scamSignals  String[]
+  reportCount  Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  media        JobMedia[]
+  saves        JobSave[]
+  reports      JobReport[]
+
+  @@index([status, deadline])
+  @@index([status, type, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model JobMedia {
+  id     String  @id @default(cuid())
+  jobId  String
+  job    JobPost @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  path   String
+  width  Int
+  height Int
+  order  Int
+
+  @@index([jobId, order])
+}
+
+model JobSave {
+  userId    String
+  jobId     String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       JobPost  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, jobId])
+  @@index([jobId])
+}
+
+model JobReport {
+  id         String   @id @default(cuid())
+  jobId      String
+  reporterId String
+  reason     String
+  details    String?  @db.VarChar(500)
+  job        JobPost  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([jobId, reporterId])
 }
