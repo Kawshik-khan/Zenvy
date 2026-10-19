@@ -58,6 +58,15 @@ async function main() {
       });
       console.log(`Seeded ${user.email}`);
     }
+
+    // Start every run from a clean slate: drop data that earlier test runs created.
+    const e2eUsers = await prisma.user.findMany({ where: { email: { in: users.map((user) => user.email) } }, select: { id: true, profile: { select: { id: true } } } });
+    const userIds = e2eUsers.map((user) => user.id);
+    const profileIds = e2eUsers.map((user) => user.profile?.id).filter(Boolean);
+    await prisma.match.deleteMany({ where: { OR: [{ profileId: { in: profileIds } }, { matchedProfileId: { in: profileIds } }] } });
+    await prisma.notification.deleteMany({ where: { userId: { in: userIds } } });
+    await prisma.studyAd.deleteMany({ where: { userId: { in: userIds } } });
+    console.log("Cleared matches, notifications and study ads for e2e users");
   } finally {
     await prisma.$disconnect();
   }

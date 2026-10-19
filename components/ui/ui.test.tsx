@@ -16,6 +16,7 @@ import {
   Chip,
   IconButton,
   initialsOf,
+  isGeneratedAvatar,
   Input,
   ProgressBar,
   Select,
@@ -252,5 +253,32 @@ describe("buttonClasses", () => {
     const button = screen.getByRole("button", { name: "Search" });
     expect(button).toHaveClass("size-11", "p-0");
     expect(button.className).not.toMatch(/\bpx-/);
+  });
+});
+
+describe("Avatar privacy", () => {
+  it.each([
+    ["https://ui-avatars.com/api/?name=Nadia&background=random", true],
+    ["http://ui-avatars.com/api/?name=x", true],
+    ["https://cdn.ui-avatars.com/api/", true],
+    ["https://example.supabase.co/storage/v1/object/public/avatars/me.png", false],
+    ["https://evil.com/ui-avatars.com/x.png", false],
+    [null, false],
+  ])("isGeneratedAvatar(%j) = %s", (url, expected) => {
+    expect(isGeneratedAvatar(url)).toBe(expected);
+  });
+
+  it("shows initials instead of loading a generated avatar", () => {
+    render(<Avatar name="Nadia Rahman" src="https://ui-avatars.com/api/?name=Nadia+Rahman" />);
+    expect(screen.queryByRole("img", { name: "Nadia Rahman" })?.tagName).toBe("SPAN");
+    expect(document.querySelector("img")).toBeNull();
+  });
+});
+
+describe("Field labelHidden", () => {
+  it("keeps the label for assistive tech but hides it visually", () => {
+    render(<Input id="q" label="Search" labelHidden />);
+    expect(screen.getByLabelText("Search")).toBeInTheDocument();
+    expect(screen.getByText("Search", { selector: "label" })).toHaveClass("sr-only");
   });
 });

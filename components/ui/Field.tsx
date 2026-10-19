@@ -7,6 +7,8 @@ type FieldProps = {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
+  /** Keep the label for assistive tech but hide it visually (compact filter bars). */
+  labelHidden?: boolean;
   className?: string;
 };
 
@@ -22,11 +24,11 @@ function describedBy(id: string, hint?: ReactNode, error?: ReactNode) {
   return ids.length ? ids.join(" ") : undefined;
 }
 
-function FieldFrame({ id, label, hint, error, className, children }: FieldProps & { children: ReactNode }) {
+function FieldFrame({ id, label, labelHidden, hint, error, className, children }: FieldProps & { children: ReactNode }) {
   return (
     <div className={cx("flex flex-col gap-1.5", className)}>
       {label && (
-        <label htmlFor={id} className="font-grotesk text-[15px] font-bold text-fg">
+        <label htmlFor={id} className={cx("font-grotesk text-[15px] font-bold text-fg", labelHidden && "sr-only")}>
           {label}
         </label>
       )}
@@ -50,9 +52,9 @@ function FieldFrame({ id, label, hint, error, className, children }: FieldProps 
 
 type InputProps = Omit<ComponentProps<"input">, "id"> & FieldProps;
 
-export function Input({ id, label, hint, error, className, ...props }: InputProps) {
+export function Input({ id, label, labelHidden, hint, error, className, ...props }: InputProps) {
   return (
-    <FieldFrame id={id} label={label} hint={hint} error={error} className={className}>
+    <FieldFrame id={id} label={label} labelHidden={labelHidden} hint={hint} error={error} className={className}>
       <input
         id={id}
         aria-invalid={error ? true : undefined}
@@ -66,9 +68,9 @@ export function Input({ id, label, hint, error, className, ...props }: InputProp
 
 type TextareaProps = Omit<ComponentProps<"textarea">, "id"> & FieldProps;
 
-export function Textarea({ id, label, hint, error, className, rows = 4, ...props }: TextareaProps) {
+export function Textarea({ id, label, labelHidden, hint, error, className, rows = 4, ...props }: TextareaProps) {
   return (
-    <FieldFrame id={id} label={label} hint={hint} error={error} className={className}>
+    <FieldFrame id={id} label={label} labelHidden={labelHidden} hint={hint} error={error} className={className}>
       <textarea
         id={id}
         rows={rows}
@@ -83,9 +85,9 @@ export function Textarea({ id, label, hint, error, className, rows = 4, ...props
 
 type SelectProps = Omit<ComponentProps<"select">, "id"> & FieldProps;
 
-export function Select({ id, label, hint, error, className, children, ...props }: SelectProps) {
+export function Select({ id, label, labelHidden, hint, error, className, children, ...props }: SelectProps) {
   return (
-    <FieldFrame id={id} label={label} hint={hint} error={error} className={className}>
+    <FieldFrame id={id} label={label} labelHidden={labelHidden} hint={hint} error={error} className={className}>
       <select
         id={id}
         aria-invalid={error ? true : undefined}

@@ -1,5 +1,5 @@
 export { Alert } from "./Alert";
-export { Avatar, AvatarStack, initialsOf, toneFor } from "./Avatar";
+export { Avatar, AvatarStack, initialsOf, isGeneratedAvatar, toneFor } from "./Avatar";
 export { Badge, Chip } from "./Badge";
 export { Button, ButtonLink, buttonClasses, type ButtonSize, type ButtonVariant } from "./Button";
 export { Card, CardHeader } from "./Card";
