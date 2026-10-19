@@ -1,8 +1,18 @@
-import React from "react";
-import Link from "next/link";
+import { AlertTriangle, Check, Hourglass, UserX } from "lucide-react";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { ButtonLink, Card } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+
+type VerifyTone = "chat" | "alert" | "live";
+
+const stateIcons = {
+  error: AlertTriangle,
+  expired: Hourglass,
+  "no-user": UserX,
+  success: Check,
+} as const;
 
 function VerifyState({
   icon,
@@ -10,32 +20,33 @@ function VerifyState({
   message,
   href,
   action,
-  tone = "primary",
+  tone = "chat",
 }: {
-  icon: string;
+  icon: keyof typeof stateIcons;
   title: string;
   message: string;
   href?: string;
   action?: string;
-  tone?: "primary" | "error" | "success";
+  tone?: VerifyTone;
 }) {
-  const iconClass = tone === "error" ? "text-error" : tone === "success" ? "text-accent-green" : "text-primary";
+  const Icon = stateIcons[icon];
+  const iconTone = { chat: "bg-chat", alert: "bg-alert", live: "bg-live" }[tone];
 
   return (
-    <div className="app-aurora flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="glass-panel w-full max-w-md rounded-[32px] p-8 text-center md:p-10">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-outline-variant/30 bg-surface/55">
-          <span className={`material-symbols-outlined text-5xl ${iconClass}`}>{icon}</span>
-        </div>
-        <h1 className="text-3xl font-black tracking-tight text-on-surface">{title}</h1>
-        <p className="mt-4 text-sm leading-relaxed text-on-surface-variant">{message}</p>
+    <AuthShell>
+      <Card shadow="lg" padding="lg" className="flex flex-col items-center gap-5 text-center">
+        <span aria-hidden="true" className={`inline-flex size-20 items-center justify-center rounded-full border-nb text-ink ${iconTone}`}>
+          <Icon size={36} />
+        </span>
+        <h1 className="m-0 font-grotesk text-3xl font-bold tracking-tight">{title}</h1>
+        <p className="m-0 leading-relaxed text-fg-muted">{message}</p>
         {href && action && (
-          <Link href={href} className="app-primary-button mt-8 inline-flex w-full items-center justify-center rounded-full px-8 py-4 text-sm font-black">
+          <ButtonLink href={href} size="lg" fullWidth variant={tone === "live" ? "live" : "primary"}>
             {action}
-          </Link>
+          </ButtonLink>
         )}
-      </div>
-    </div>
+      </Card>
+    </AuthShell>
   );
 }
 
@@ -47,11 +58,11 @@ export default async function VerifyPage(props: { searchParams: Promise<{ token?
     return (
       <VerifyState
         icon="error"
-        title="Missing Token"
+        title="Missing token"
         message="The verification link is invalid. Please check your email again."
         href="/login"
-        action="Back to Login"
-        tone="error"
+        action="Back to log in"
+        tone="alert"
       />
     );
   }
@@ -61,12 +72,12 @@ export default async function VerifyPage(props: { searchParams: Promise<{ token?
   if (!existingToken || existingToken.expires < new Date()) {
     return (
       <VerifyState
-        icon="hourglass_disabled"
-        title="Link Expired"
+        icon="expired"
+        title="Link expired"
         message="This verification link has expired or has already been used."
         href="/register"
-        action="Try Registering Again"
-        tone="error"
+        action="Register again"
+        tone="alert"
       />
     );
   }
@@ -76,10 +87,10 @@ export default async function VerifyPage(props: { searchParams: Promise<{ token?
   if (!user) {
     return (
       <VerifyState
-        icon="person_off"
-        title="User Not Found"
+        icon="no-user"
+        title="User not found"
         message="We could not find a user associated with this verification token."
-        tone="error"
+        tone="alert"
       />
     );
   }
@@ -95,12 +106,12 @@ export default async function VerifyPage(props: { searchParams: Promise<{ token?
 
   return (
     <VerifyState
-      icon="check_circle"
-      title="Account Verified"
+      icon="success"
+      title="Account verified"
       message="Your Zenvy account is active. You can now sign in and join your peers."
       href="/login"
-      action="Sign In Now"
-      tone="success"
+      action="Sign in now"
+      tone="live"
     />
   );
 }

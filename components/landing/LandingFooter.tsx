@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "./LandingNav";
+import { Logo } from "@/components/brand/Logo";
 
 export function LandingFooter() {
   return (

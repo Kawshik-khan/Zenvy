@@ -1,9 +1,11 @@
 import React from "react";
 export const runtime = "nodejs";
 
-import Link from "next/link";
+import { CalendarClock, GraduationCap, Heart } from "lucide-react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { Badge, ButtonLink, Card, toneBg } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { cleanText, isProfileComplete } from "@/lib/profile-completion";
 import OnboardingForm from "./OnboardingForm";
@@ -78,50 +80,47 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <div className="app-aurora min-h-screen selection:bg-primary/30 selection:text-on-surface">
-      <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-4 py-6 md:px-8">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-secondary font-black text-white shadow-[0_0_18px_rgba(124,131,255,0.45)]">
-            Z
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-on-surface">Zenvy</span>
-        </Link>
-        <Link href="/profile" className="text-sm font-bold text-on-surface-variant transition-colors hover:text-primary">
+    <AuthShell
+      width="xl"
+      action={
+        <ButtonLink href="/profile" variant="ghost" size="sm">
           Profile
-        </Link>
-      </nav>
-
-      <main className="relative z-10 mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 pb-12 md:grid-cols-[0.8fr_1.2fr] md:px-8">
-        <section className="glass-panel-subtle rounded-[32px] p-6 md:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-primary">Almost Done</p>
-          <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight text-on-surface md:text-5xl">
-            Complete your study profile.
-          </h1>
-          <p className="mt-4 text-sm leading-6 text-on-surface-variant">
-            These details power partner matching, group suggestions, public profile previews, and study discovery.
+        </ButtonLink>
+      }
+    >
+      <div className="grid items-start gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <section className="flex flex-col gap-5">
+          <Badge tone="focus">Almost done</Badge>
+          <h1 className="m-0 font-grotesk text-4xl leading-[1.05] font-bold tracking-tight md:text-5xl">Complete your study profile.</h1>
+          <p className="m-0 leading-relaxed text-fg-muted">
+            These details power partner matching, group suggestions and what others see on your profile.
           </p>
-          <div className="mt-8 grid gap-3">
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {[
-              ["school", "Academic context"],
-              ["favorite", "Better partner matches"],
-              ["schedule", "Availability-aware recommendations"],
-            ].map(([icon, label]) => (
-              <div key={label} className="flex items-center gap-3 rounded-2xl bg-surface-container-low/60 p-4">
-                <span className="material-symbols-outlined text-primary">{icon}</span>
-                <span className="text-sm font-bold text-on-surface">{label}</span>
-              </div>
+              { icon: <GraduationCap size={22} />, label: "Academic context", tone: "chat" as const },
+              { icon: <Heart size={22} />, label: "Better partner matches", tone: "match" as const },
+              { icon: <CalendarClock size={22} />, label: "Availability-aware suggestions", tone: "live" as const },
+            ].map((item) => (
+              <li key={item.label}>
+                <Card padding="sm" shadow="sm" className="flex items-center gap-3">
+                  <span aria-hidden="true" className={`inline-flex size-11 shrink-0 items-center justify-center rounded-nb border-nb text-ink ${toneBg[item.tone]}`}>
+                    {item.icon}
+                  </span>
+                  <span className="font-bold">{item.label}</span>
+                </Card>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
-        <section className="glass-panel rounded-[32px] p-6 md:p-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-black text-on-surface">Needed information</h2>
-            <p className="mt-2 text-sm text-on-surface-variant">You can update this later from Profile Settings.</p>
+        <Card shadow="lg" padding="lg" className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1.5">
+            <h2 className="m-0 font-grotesk text-2xl font-bold">What we need</h2>
+            <p className="m-0 text-fg-muted">You can change any of this later in your profile settings.</p>
           </div>
           <OnboardingForm user={user} completeProfile={completeProfile} />
-        </section>
-      </main>
-    </div>
+        </Card>
+      </div>
+    </AuthShell>
   );
 }

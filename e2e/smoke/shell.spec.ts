@@ -1,5 +1,5 @@
 import { devices, expect, test } from "@playwright/test";
-import { expectNoAppError, login, loginWithForm } from "../helpers";
+import { expectNoAppError, login, loginWithForm, ownIpHeaders } from "../helpers";
 
 test.describe("route guard (middleware)", () => {
   for (const path of ["/matching", "/profile", "/onboarding", "/call/active", "/notifications"]) {
@@ -25,6 +25,11 @@ test.describe("route guard (middleware)", () => {
     const response = await request.get("/sw.js", { maxRedirects: 0 });
     expect(response.status()).toBe(200);
   });
+
+});
+
+test.describe("login callback", () => {
+  test.use({ extraHTTPHeaders: ownIpHeaders() });
 
   test("after login the user returns to the page they asked for", async ({ page }) => {
     await page.goto("/notifications");

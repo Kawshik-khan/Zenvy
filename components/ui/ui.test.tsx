@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
+  Alert,
   Avatar,
   AvatarStack,
   Badge,
@@ -208,5 +209,24 @@ describe("ProgressBar", () => {
   it("handles a zero max without dividing by zero", () => {
     render(<ProgressBar label="Empty" value={3} max={0} />);
     expect(screen.getByRole("progressbar").firstElementChild).toHaveStyle({ width: "3%" });
+  });
+});
+
+describe("Alert", () => {
+  it("announces errors and warnings immediately, and info/success politely", () => {
+    const { rerender } = render(<Alert tone="error">Wrong password</Alert>);
+    expect(screen.getByRole("alert")).toHaveTextContent("Wrong password");
+    rerender(<Alert tone="warning">Link expired</Alert>);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    rerender(<Alert tone="success" title="Saved">Profile updated</Alert>);
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    expect(screen.getByRole("status")).toHaveTextContent("Profile updated");
+    rerender(<Alert tone="info">FYI</Alert>);
+    expect(screen.getByRole("status")).toBeInTheDocument();
+  });
+
+  it("hides its decorative icon from assistive tech", () => {
+    const { container } = render(<Alert tone="error">Oops</Alert>);
+    expect(container.querySelector('[aria-hidden="true"] svg')).not.toBeNull();
   });
 });

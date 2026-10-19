@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import React, { useState, useTransition } from "react";
+import { Alert, Button, Card, Checkbox, Input, Select, Textarea } from "@/components/ui";
 
 type SaveResult = {
   success: boolean;
@@ -46,96 +48,81 @@ export default function OnboardingForm({ user, completeProfile }: OnboardingForm
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <label className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">College</span>
-          <input name="college" required className="app-input px-4 py-3" defaultValue={profile?.college || ""} placeholder="BRAC University" />
-        </label>
-        <label className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Major</span>
-          <input name="major" required className="app-input px-4 py-3" defaultValue={profile?.major || ""} placeholder="Computer Science" />
-        </label>
-        <label className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Semester</span>
-          <select name="semester" required className="app-input px-4 py-3" defaultValue={profile?.semester || ""}>
-            <option value="">Select semester</option>
-            {Array.from({ length: 12 }, (_, index) => index + 1).map((semester) => (
-              <option key={semester} value={semester}>
-                Semester {semester}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Study Style</span>
-          <select name="studyStyle" className="app-input px-4 py-3" defaultValue={profile?.studyStyle || ""}>
-            <option value="">Select study style</option>
-            <option value="Focused solo work">Focused solo work</option>
-            <option value="Pair programming">Pair programming</option>
-            <option value="Group discussion">Group discussion</option>
-            <option value="Exam prep">Exam prep</option>
-            <option value="Project collaboration">Project collaboration</option>
-          </select>
-        </label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <Input id="college" name="college" label="College" required defaultValue={profile?.college || ""} placeholder="BRAC University" />
+        <Input id="major" name="major" label="Major" required defaultValue={profile?.major || ""} placeholder="Computer Science" />
+        <Select id="semester" name="semester" label="Semester" required defaultValue={profile?.semester || ""}>
+          <option value="">Select semester</option>
+          {Array.from({ length: 12 }, (_, index) => index + 1).map((semester) => (
+            <option key={semester} value={semester}>
+              Semester {semester}
+            </option>
+          ))}
+        </Select>
+        <Select id="studyStyle" name="studyStyle" label="Study style" defaultValue={profile?.studyStyle || ""}>
+          <option value="">Select study style</option>
+          <option value="Focused solo work">Focused solo work</option>
+          <option value="Pair programming">Pair programming</option>
+          <option value="Group discussion">Group discussion</option>
+          <option value="Exam prep">Exam prep</option>
+          <option value="Project collaboration">Project collaboration</option>
+        </Select>
       </div>
 
-      <label className="block space-y-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Interests</span>
-        <input
-          name="interests"
-          required
-          className="app-input px-4 py-3"
-          defaultValue={profile?.interests || ""}
-          placeholder="React, Algorithms, Physics"
-        />
-        <span className="block text-xs text-on-surface-variant">Use comma-separated topics so recommendations can find better partners and groups.</span>
-      </label>
+      <Input
+        id="interests"
+        name="interests"
+        label="Interests"
+        required
+        defaultValue={profile?.interests || ""}
+        placeholder="React, Algorithms, Physics"
+        hint="Separate topics with commas so we can find better partners and groups."
+      />
 
-      <label className="block space-y-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Availability</span>
-        <textarea
-          name="availability"
-          required
-          className="app-input h-24 resize-none px-4 py-3"
-          defaultValue={profile?.availability || ""}
-          placeholder="Weeknights after 8 PM, Friday morning, weekend project sessions..."
-        />
-      </label>
+      <Textarea
+        id="availability"
+        name="availability"
+        label="Availability"
+        required
+        rows={3}
+        defaultValue={profile?.availability || ""}
+        placeholder="Weeknights after 8 PM, Friday morning, weekend project sessions..."
+      />
 
-      <label className="block space-y-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Short Bio</span>
-        <textarea
-          name="bio"
-          className="app-input h-24 resize-none px-4 py-3"
-          defaultValue={profile?.bio || ""}
-          placeholder="Share your study goals and what kind of classmates you want to work with."
-        />
-      </label>
+      <Textarea
+        id="bio"
+        name="bio"
+        label="Short bio"
+        rows={3}
+        defaultValue={profile?.bio || ""}
+        placeholder="Share your study goals and what kind of classmates you want to work with."
+      />
 
-      <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-outline-variant/30 bg-surface-container-low/50 p-4">
-        <input
+      <Card padding="sm" shadow="none" tone="paper">
+        <Checkbox
+          id="matchingAvailable"
           name="matchingAvailable"
-          type="checkbox"
           defaultChecked={profile?.matchingAvailable ?? true}
-          className="mt-1 h-5 w-5 rounded border-outline-variant accent-primary"
+          label={
+            <span>
+              <span className="block font-bold">Available for matching</span>
+              <span className="mt-0.5 block text-sm text-fg-muted">Keep this on so classmates can find your profile and send match requests.</span>
+            </span>
+          }
         />
-        <span>
-          <span className="block text-sm font-black text-on-surface">Available for matching</span>
-          <span className="mt-1 block text-xs leading-5 text-on-surface-variant">Keep this on so classmates can discover your profile and send match requests.</span>
-        </span>
-      </label>
+      </Card>
 
-      {result && (
-        <div className={`rounded-2xl px-4 py-3 text-sm font-bold ${result.success ? "bg-accent-green/10 text-accent-green" : "bg-error-container text-on-error-container"}`}>
-          {result.success ? "Profile completed successfully. Taking you to the dashboard..." : result.error || "Failed to save profile."}
-        </div>
-      )}
+      {result &&
+        (result.success ? (
+          <Alert tone="success">Profile completed. Taking you to the dashboard...</Alert>
+        ) : (
+          <Alert tone="error">{result.error || "Failed to save profile."}</Alert>
+        ))}
 
-      <button disabled={isPending} className="app-primary-button flex w-full items-center justify-center gap-2 rounded-full py-4 text-sm font-black disabled:opacity-60">
-        <span>{isPending ? "Saving..." : "Complete Profile"}</span>
-        <span className="material-symbols-outlined text-lg">arrow_forward</span>
-      </button>
+      <Button type="submit" variant="match" size="lg" fullWidth loading={isPending} icon={isPending ? undefined : <ArrowRight size={20} />}>
+        {isPending ? "Saving" : "Complete profile"}
+      </Button>
     </form>
   );
 }

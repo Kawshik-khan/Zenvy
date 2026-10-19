@@ -30,6 +30,13 @@ const users = [
     uniqueId: "e2e_partner",
     profile: { college: "Zenvy University", major: "Computer Science", semester: 4, interests: "graphs, algorithms", availability: "evenings", bio: "Seeded study partner." },
   },
+  {
+    // Empty profile: used by the onboarding test. The profile is reset on every seed run.
+    email: "e2e.newbie@zenvy.test",
+    name: "E2E Newbie",
+    uniqueId: "e2e_newbie",
+    profile: { college: null, major: null, semester: null, interests: null, availability: null, bio: null, studyStyle: null, matchingAvailable: true },
+  },
 ];
 
 async function main() {
