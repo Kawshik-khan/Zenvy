@@ -102,17 +102,15 @@ export default async function GroupChatPage({ params }: { params: Promise<{ id: 
   }));
 
   return (
-    <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-dvh">
-      <GroupChatClient
-        user={user}
-        group={groupInfo}
-        members={membersData}
-        isMember={isMember}
-        isAdmin={isAdmin}
-        resources={resourcesData}
-        pendingInvites={pendingInvitesData}
-        inviteCandidates={inviteCandidatesData}
-      />
-    </div>
+    <GroupChatClient
+      user={user}
+      group={groupInfo}
+      members={membersData}
+      isMember={isMember}
+      isAdmin={isAdmin}
+      resources={resourcesData}
+      pendingInvites={pendingInvitesData}
+      inviteCandidates={inviteCandidatesData}
+    />
   );
 }

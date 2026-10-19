@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
-import Link from 'next/link';
+import { Lock } from 'lucide-react';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
-import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
-import CallNoteMessage from '@/app/components/call/CallNoteMessage';
-import { CALL_NOTE_FILE_TYPE } from '@/lib/call-notes';
+import { Composer, ConnectionStatus, MembersSheet, MessageBubble, RoomHeader, TypingIndicator } from '@/components/chat';
+import { EmptyState } from '@/components/ui';
 
 type Message = {
   id: string;
@@ -48,7 +47,6 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [showMembers, setShowMembers] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -218,272 +216,61 @@ export default function ChannelChatClient({ user, channel, members, isMember }: 
     }, 2000);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
   return (
-    <div className="mobile-safe-bottom flex h-dvh min-w-0 flex-1 flex-col bg-transparent relative">
-      {/* Channel Header */}
-      <header className="app-topbar shrink-0">
-        <div className="flex min-w-0 items-center gap-3 md:gap-4">
-          <Link
-            href="/channels"
-            className="p-2 hover:bg-surface-container rounded-xl transition-colors"
-          >
-            <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
-          </Link>
-          <div className="min-w-0">
-            <h3 className="flex items-center gap-2 truncate text-base font-bold text-on-surface md:text-lg">
-              <span className="text-primary">#</span>
-              {channel.tag}
-            </h3>
-            <p className="flex items-center gap-2 truncate text-[11px] text-on-surface-variant">
-              {channel.name}
-              {isMember && (
-                isConnected ? (
-                  <span className="text-emerald-500 font-bold text-[10px] uppercase">● connected</span>
-                ) : (
-                  <span className="text-amber-500 font-bold text-[10px] uppercase">● connecting...</span>
-                )
-              )}
-            </p>
+    <main className="flex h-dvh min-w-0 flex-1 flex-col bg-canvas text-fg">
+      <RoomHeader
+        backHref="/channels"
+        backLabel="Back to channels"
+        backOnDesktop
+        title={`#${channel.tag}`}
+        subtitle={
+          <span className="flex items-center gap-2">
+            {channel.name}
+            {isMember && <ConnectionStatus connected={isConnected} />}
+          </span>
+        }
+        actions={
+          <>
+            <FocusHeaderIndicator />
+            <MembersSheet members={members} title="Members" roleLabels={{ CREATOR: 'Creator' }} />
+          </>
+        }
+      />
+
+      <div role="log" aria-label="Messages" tabIndex={0} className="quiet nb-focus flex-1 overflow-y-auto bg-canvas p-3 md:p-6">
+        <div className="flex flex-col gap-4">
+          <div className="mx-auto flex max-w-md flex-col items-center gap-1 py-4 text-center">
+            <p className="m-0 font-grotesk text-lg font-bold">Welcome to #{channel.tag}</p>
+            {channel.description && <p className="m-0 text-[15px] text-fg-muted">{channel.description}</p>}
           </div>
+
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {messages.map((msg) => (
+              <MessageBubble key={msg.id} message={msg} isSelf={msg.isSelf} onDelete={handleDeleteMessage} />
+            ))}
+          </ul>
+          <TypingIndicator names={Array.from(typingUsers)} />
+          <div ref={messagesEndRef} />
         </div>
+      </div>
 
-        <div className="flex shrink-0 items-center gap-1 md:gap-2">
-          <FocusHeaderIndicator />
-          <button
-            onClick={() => setShowMembers(!showMembers)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              showMembers
-                ? 'bg-primary/10 text-primary'
-                : 'text-on-surface-variant hover:bg-surface-container'
-            }`}
-          >
-            <span className="material-symbols-outlined text-lg">group</span>
-            <span>{members.length}</span>
-          </button>
-          
-          <div className="border-l pl-4 ml-2 glass-divider hidden sm:block">
-            <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
-          </div>
+      {isMember ? (
+        <Composer
+          id="channel-message-input"
+          label={`Message #${channel.tag}`}
+          placeholder={`Message #${channel.tag}`}
+          value={inputValue}
+          onChange={handleInputChange}
+          onSend={() => sendMessage()}
+          onFileChange={handleFileUpload}
+          fileInputRef={fileInputRef}
+          uploading={isUploading}
+        />
+      ) : (
+        <div className="shrink-0 border-t-[length:var(--nb-border-width)] border-line p-4">
+          <EmptyState icon={<Lock size={24} />} title="Join to send messages" description="You need to be a member of this channel to take part." />
         </div>
-      </header>
-
-      {/* Content */}
-      <section className="flex-1 flex overflow-hidden min-h-0">
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-8 space-y-5 md:space-y-6">
-            {/* Welcome Banner */}
-            <div className="flex flex-col items-center justify-center py-8 opacity-60">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl text-primary">tag</span>
-              </div>
-              <p className="text-sm font-bold text-on-surface">Welcome to #{channel.tag}</p>
-            </div>
-
-            {messages.map((msg) =>
-              msg.isSelf ? (
-                <div key={msg.id} className="flex items-start gap-3 flex-row-reverse animate-fade-in group">
-                  <img
-                    alt={msg.senderName}
-                    className="w-9 h-9 rounded-xl object-cover"
-                    src={
-                      user.image ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
-                    }
-                  />
-                  <div className="max-w-[82vw] space-y-1 text-right sm:max-w-md">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-[10px] text-on-surface-variant">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      <span className="font-bold text-xs">{msg.senderName}</span>
-                    </div>
-                    <div className="relative flex items-center justify-end gap-2 text-left">
-                      <button
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-on-surface-variant hover:text-red-500 transition-all rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
-                        title="Delete message"
-                      >
-                        <span className="material-symbols-outlined text-sm">delete</span>
-                      </button>
-                      <div className="bg-primary text-on-primary p-3 md:p-4 rounded-l-2xl rounded-br-2xl text-sm leading-relaxed flex flex-col gap-2 shadow-lg shadow-primary/20">
-                         {msg.fileUrl && (
-                            <div className="w-full">
-                              {msg.fileType === 'image' && <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
-                              {msg.fileType === 'video' && <video src={msg.fileUrl} controls className="max-h-64 rounded-xl" />}
-                              {msg.fileType !== 'image' && msg.fileType !== 'video' && (
-                                <a href={msg.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-on-primary/10 p-3 rounded-lg hover:bg-on-primary/20 transition-colors">
-                                  <span className="material-symbols-outlined text-xl">description</span>
-                                  <span className="truncate">{msg.fileName || 'Download File'}</span>
-                                </a>
-                              )}
-                            </div>
-                          )}
-                          {(msg.content !== `Attached: ${msg.fileName}`) && (
-                            msg.fileType === CALL_NOTE_FILE_TYPE ? (
-                              <CallNoteMessage content={msg.content} isSelf />
-                            ) : (
-                              <p>{msg.content}</p>
-                            )
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div key={msg.id} className="flex items-start gap-3 animate-fade-in">
-                   <div className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center font-bold text-on-surface-variant uppercase text-xs shrink-0">
-                    {msg.senderImage ? (
-                      <img
-                        alt={msg.senderName}
-                        className="w-full h-full rounded-xl object-cover"
-                        src={msg.senderImage}
-                      />
-                    ) : (
-                      msg.senderName.charAt(0)
-                    )}
-                  </div>
-                  <div className="max-w-[82vw] space-y-1 sm:max-w-md">
-                    <div className="flex items-center gap-2">
-                       <span className="font-bold text-xs">{msg.senderName}</span>
-                      <span className="text-[10px] text-on-surface-variant">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </div>
-                    <div className="glass-panel-subtle p-3 md:p-4 rounded-r-2xl rounded-bl-2xl text-sm leading-relaxed text-on-surface flex flex-col gap-2">
-                       {msg.fileUrl && (
-                          <div className="w-full">
-                            {msg.fileType === 'image' && <img src={msg.fileUrl} alt={msg.fileName || 'Image'} className="max-h-64 rounded-xl object-contain" />}
-                            {msg.fileType === 'video' && <video src={msg.fileUrl} controls className="max-h-64 rounded-xl" />}
-                            {msg.fileType !== 'image' && msg.fileType !== 'video' && (
-                              <a href={msg.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-surface-container p-3 rounded-lg hover:bg-surface-container-high transition-colors">
-                                <span className="material-symbols-outlined text-xl">description</span>
-                                <span className="truncate">{msg.fileName || 'Download File'}</span>
-                              </a>
-                            )}
-                          </div>
-                        )}
-                        {(msg.content !== `Attached: ${msg.fileName}`) && (
-                          msg.fileType === CALL_NOTE_FILE_TYPE ? (
-                            <CallNoteMessage content={msg.content} />
-                          ) : (
-                            <p>{msg.content}</p>
-                          )
-                        )}
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
-            
-            {typingUsers.size > 0 && (
-              <div className="flex items-center gap-2 text-xs font-medium text-on-surface-variant italic px-4 animate-in fade-in zoom-in duration-300">
-                 <div className="flex gap-1">
-                   <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                   <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                   <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce"></span>
-                 </div>
-                 {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="border-t p-3 glass-panel-subtle glass-divider md:p-6">
-            {isMember ? (
-              <div className="rounded-2xl border border-outline-variant/30 bg-surface/60 p-2">
-                <textarea
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  className="w-full bg-transparent border-none focus:ring-0 text-sm p-3 resize-none outline-none"
-                  placeholder={`Message #${channel.tag}...`}
-                  rows={1}
-                />
-                <div className="flex items-center justify-between px-3 py-2 border-t border-outline-variant/10">
-                  <div className="flex items-center gap-2">
-                    <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg disabled:opacity-50 transition-colors"
-                      title="Attach file (Max 10MB)"
-                    >
-                      <span className="material-symbols-outlined text-lg">{isUploading ? 'hourglass_empty' : 'attach_file'}</span>
-                    </button>
-                    <button className="p-1.5 hover:bg-surface-container text-on-surface-variant rounded-lg">
-                      <span className="material-symbols-outlined text-lg">mood</span>
-                    </button>
-                  </div>
-                  <button
-                    onClick={sendMessage}
-                    disabled={!inputValue.trim()}
-                    className="bg-primary text-on-primary w-10 h-10 flex items-center justify-center rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-lg">send</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-surface-container-low rounded-2xl p-6 text-center">
-                <span className="material-symbols-outlined text-3xl text-on-surface-variant/50 mb-2 block">lock</span>
-                <p className="text-sm font-medium text-on-surface mb-1">Join to send messages</p>
-                <p className="text-xs text-on-surface-variant">You need to be a member of this channel to participate</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Members Sidebar */}
-        {showMembers && (
-          <div className="w-72 border-l glass-divider glass-panel-subtle shrink-0 overflow-y-auto hidden lg:block animate-fade-in">
-            <div className="p-5 border-b border-outline-variant/10">
-              <h4 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
-                Members — {members.length}
-              </h4>
-            </div>
-            <div className="p-3 space-y-1">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-surface-container transition-colors"
-                >
-                  <img
-                    alt={member.name}
-                    className="w-8 h-8 rounded-full object-cover bg-surface-container"
-                    src={
-                      member.image ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=32`
-                    }
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-on-surface truncate">{member.name}</p>
-                    {member.role === 'CREATOR' && (
-                      <p className="text-[10px] text-primary font-bold uppercase">Creator</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-    </div>
+      )}
+    </main>
   );
 }

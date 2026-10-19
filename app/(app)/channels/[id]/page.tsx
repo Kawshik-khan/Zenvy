@@ -49,13 +49,11 @@ export default async function ChannelChatPage({ params }: { params: Promise<{ id
   }));
 
   return (
-    <div className="app-aurora selection:bg-primary/30 antialiased overflow-hidden flex h-dvh">
-      <ChannelChatClient
-        user={user}
-        channel={channelInfo}
-        members={membersData}
-        isMember={isMember}
-      />
-    </div>
+    <ChannelChatClient
+      user={user}
+      channel={channelInfo}
+      members={membersData}
+      isMember={isMember}
+    />
   );
 }

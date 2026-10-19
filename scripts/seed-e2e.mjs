@@ -31,6 +31,13 @@ const users = [
     profile: { college: "Zenvy University", major: "Computer Science", semester: 4, interests: "graphs, algorithms", availability: "evenings", bio: "Seeded study partner." },
   },
   {
+    // Already matched with the student, so messaging screens have someone to talk to.
+    email: "e2e.mate@zenvy.test",
+    name: "E2E Mate",
+    uniqueId: "e2e_mate",
+    profile: { college: "Zenvy University", major: "Mathematics", semester: 5, interests: "proofs, calculus", availability: "mornings", bio: "Seeded accepted match." },
+  },
+  {
     // Empty profile: used by the onboarding test. The profile is reset on every seed run.
     email: "e2e.newbie@zenvy.test",
     name: "E2E Newbie",
@@ -67,6 +74,39 @@ async function main() {
     await prisma.notification.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.studyAd.deleteMany({ where: { userId: { in: userIds } } });
     console.log("Cleared matches, notifications and study ads for e2e users");
+
+    // Fixtures for the messaging screens: one accepted match, one study group, one channel.
+    const byEmail = Object.fromEntries(
+      (await prisma.user.findMany({ where: { email: { in: users.map((user) => user.email) } }, select: { id: true, email: true, profile: { select: { id: true } } } })).map((user) => [user.email, user]),
+    );
+    const student = byEmail["e2e.student@zenvy.test"];
+    const mate = byEmail["e2e.mate@zenvy.test"];
+    await prisma.match.create({
+      data: { profileId: student.profile.id, matchedProfileId: mate.profile.id, status: "ACCEPTED", compatibility: 80 },
+    });
+
+    await prisma.studyGroup.deleteMany({ where: { name: "E2E Study Circle" } });
+    await prisma.studyGroup.create({
+      data: {
+        name: "E2E Study Circle",
+        subject: "Algorithms",
+        description: "Seeded group for end-to-end tests.",
+        adminId: student.id,
+        members: { create: [{ userId: student.id, role: "ADMIN" }, { userId: mate.id, role: "MEMBER" }] },
+      },
+    });
+
+    await prisma.channel.deleteMany({ where: { tag: "e2e-algorithms" } });
+    await prisma.channel.create({
+      data: {
+        name: "E2E Algorithms",
+        tag: "e2e-algorithms",
+        description: "Seeded channel for end-to-end tests.",
+        creatorId: student.id,
+        members: { create: [{ userId: student.id, role: "CREATOR" }, { userId: mate.id, role: "MEMBER" }] },
+      },
+    });
+    console.log("Seeded accepted match, study group and channel");
   } finally {
     await prisma.$disconnect();
   }

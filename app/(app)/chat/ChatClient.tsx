@@ -3,13 +3,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { socket } from '@/lib/socket';
+import { MessageSquarePlus, Phone, Radio, Search, Video } from 'lucide-react';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
-import HeaderProfileMenu from '@/app/components/HeaderProfileMenu';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
-import CallNoteMessage from '@/app/components/call/CallNoteMessage';
-import { CALL_NOTE_FILE_TYPE } from '@/lib/call-notes';
+import {
+  Composer,
+  ConnectionStatus,
+  conversationTypeLabel,
+  formatListTime,
+  IncomingCallBanner,
+  MessageBubble,
+  RoomHeader,
+  TypingIndicator,
+} from '@/components/chat';
+import { Avatar, Badge, Button, buttonClasses, cx, EmptyState, IconButton, Input } from '@/components/ui';
 
 type ConversationSummary = {
   id: string;
@@ -71,7 +79,6 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isConnected, setIsConnected] = useState(false);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
@@ -106,15 +113,6 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
     const suggestions = partners.filter((partner) => !existingPeerIds.has(partner.id));
     return suggestions.length > 0 ? suggestions : partners;
   }, [conversations, partners]);
-
-  const formatConversationTime = (value: string | Date | null) => {
-    if (!value) return '';
-    const date = new Date(value);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    if (isToday) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  };
 
   const getConversationPreview = (conversation: ConversationSummary) => {
     if (!conversation.lastMessage) return 'No messages yet';
@@ -279,12 +277,6 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
 
   const openConversation = (conversationId: string) => {
     router.push(`/chat?conversation=${conversationId}`);
-    setIsSidebarVisible(false);
-  };
-
-  const backToInbox = () => {
-    router.push('/chat');
-    setIsSidebarVisible(false);
   };
 
   const focusNewMessage = () => {
@@ -429,411 +421,265 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
     }
   };
 
+  const typingNames = Array.from(typingUsers);
+  const caller = incomingCall?.participants.find((participant) => participant.userId !== user.id)?.user ?? null;
+  const callHref = (call: IncomingCall) => `/call/active?callId=${call.id}&media=${call.mediaType === 'VIDEO' ? 'video' : 'audio'}`;
+
   return (
-    <div className="bg-[#070B14] text-[#F8FAFC] selection:bg-[#7C83FF]/30 selection:text-[#F8FAFC] flex h-dvh relative overflow-hidden font-sans">
-      {/* Aurora Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-[#A855F7]/15 blur-[120px] mix-blend-screen opacity-60"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[#22D3EE]/10 blur-[100px] mix-blend-screen opacity-50"></div>
-        <div className="absolute top-[30%] left-[20%] w-[40vw] h-[40vw] rounded-full bg-[#7C83FF]/10 blur-[90px] mix-blend-screen opacity-40"></div>
-        {/* Subtle noise texture */}
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
-      </div>
-
-
+    <main
+      className={cx(
+        'flex h-dvh min-w-0 flex-col bg-canvas text-fg',
+        // Leave room for the mobile bottom bar, which is hidden while a conversation is open.
+        !activeConversation && 'pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0',
+      )}
+    >
       {incomingCall && (
-        <div className="fixed inset-x-4 top-4 z-[120] mx-auto max-w-md rounded-[28px] bg-[#141C30]/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.4)] p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              alt=""
-              className="w-12 h-12 rounded-full object-cover bg-[#0E1525]"
-              src={incomingCall.participants.find((participant) => participant.userId !== user.id)?.user?.image || `https://ui-avatars.com/api/?name=Call&background=random`}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-[#F8FAFC] truncate">
-                {incomingCall.participants.find((participant) => participant.userId !== user.id)?.user?.name || 'Someone'} is calling
-              </p>
-              <p className="text-xs text-[#94A3B8]">{incomingCall.mediaType === 'VIDEO' ? 'Video' : 'Voice'} call</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={declineIncomingCall}
-              className="w-10 h-10 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center"
-              title="Decline"
-            >
-              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>call_end</span>
-            </button>
-            <Link
-              href={`/call/active?callId=${incomingCall.id}&media=${incomingCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
-              className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors flex items-center justify-center"
-              title="Accept"
-            >
-              <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>call</span>
-            </Link>
-          </div>
-        </div>
+        <IncomingCallBanner
+          callerName={caller?.name || 'Someone'}
+          callerImage={caller?.image ?? null}
+          mediaType={incomingCall.mediaType}
+          acceptHref={callHref(incomingCall)}
+          onDecline={declineIncomingCall}
+        />
       )}
 
-      <main className="mobile-safe-bottom h-dvh w-full relative z-10 max-w-full flex flex-col gap-3 p-3 md:gap-6 md:py-6 md:pl-4 md:pr-8">
-        {/* Top Header */}
-        <header className={`${activeConversation ? 'hidden md:flex' : 'flex'} h-14 shrink-0 items-center justify-between gap-3`}>
-          <div className="flex items-center gap-4">
-            <button
-              className="hidden lg:hidden p-2 rounded-xl text-[#F8FAFC] hover:bg-[#141C30]"
-              onClick={() => setIsSidebarVisible(true)}
-            >
-              <span className="material-symbols-outlined">menu</span>
-            </button>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-[#F8FAFC] md:text-2xl">Messages</h1>
-              <p className="text-[10px] text-[#A855F7] font-bold uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-[#F59E0B] shadow-[0_0_8px_rgba(245,158,11,0.8)]'}`}></span>
-                {isConnected ? 'Connected' : 'Connecting...'}
-              </p>
-            </div>
+      <header className={cx(activeConversation ? 'hidden md:flex' : 'flex', 'shrink-0 items-center justify-between gap-3 px-4 pt-4 md:px-8 md:pt-6')}>
+        <h1 className="m-0 font-grotesk text-3xl font-bold tracking-tight">Messages</h1>
+        <ConnectionStatus connected={isConnected} />
+      </header>
+
+      <section className={cx('flex min-h-0 flex-1 gap-5', activeConversation ? 'p-0 md:p-8' : 'p-3 md:p-8')}>
+        <aside
+          aria-label="Conversations"
+          className={cx(
+            activeConversation ? 'hidden lg:flex' : 'flex',
+            'min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-nb-lg border-nb bg-card lg:w-[22rem]',
+          )}
+        >
+          <div className="shrink-0 border-b-[length:var(--nb-border-width)] border-line p-3">
+            <Input
+              id="conversation-search"
+              type="search"
+              label="Search conversations"
+              labelHidden
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search conversations"
+              autoComplete="off"
+            />
           </div>
-          <HeaderProfileMenu userName={user.name || 'Scholar'} imageUrl={user.image} />
-        </header>
 
-        {/* Main Content: Inbox & Active Chat */}
-        <section className="flex-1 flex min-h-0 gap-3 md:gap-6">
-          {/* Inbox Sidebar Panel */}
-          <aside className={`${activeConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-[min(22rem,calc(100vw-1.5rem))] bg-[#0E1525]/95 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl flex-col overflow-hidden shrink-0 transition-transform duration-300 z-50 lg:relative ${isSidebarVisible ? 'translate-x-0' : 'lg:translate-x-0'}`}>
-            <div className="p-4 md:p-5 border-b border-white/5 shrink-0 space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xs font-black uppercase tracking-widest text-[#94A3B8]">Recent Chats</h2>
-                  <p className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#22D3EE]">
-                    <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? 'bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-[#F59E0B]'}`}></span>
-                    {isConnected ? 'Online' : 'Connecting'}
-                  </p>
-                </div>
-                <button className="hidden lg:hidden p-1.5 rounded-full bg-[#141C30] hover:bg-white/10 transition-colors" onClick={() => setIsSidebarVisible(false)}>
-                <span className="material-symbols-outlined text-[14px]">close</span>
-                </button>
-              </div>
-              <label className="relative block">
-                <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-[#94A3B8]/70">search</span>
-                <input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full rounded-2xl border border-white/10 bg-[#070B14]/75 py-3 pl-10 pr-4 text-sm font-medium text-[#F8FAFC] outline-none transition-all placeholder:text-[#94A3B8]/50 focus:border-[#7C83FF]/60 focus:shadow-[0_0_18px_rgba(124,131,255,0.18)]"
-                  placeholder="Search conversations..."
-                />
-              </label>
-            </div>
+          <div className="flex-1 overflow-y-auto p-3">
+            {filteredConversations.length > 0 && (
+              <ul aria-label="Recent chats" className="m-0 flex list-none flex-col gap-1.5 p-0">
+                {filteredConversations.map((conversation) => {
+                  const isActive = conversation.id === activeConversationId;
+                  return (
+                    <li key={conversation.id}>
+                      <button
+                        type="button"
+                        onClick={() => openConversation(conversation.id)}
+                        aria-current={isActive ? 'true' : undefined}
+                        className={cx(
+                          'nb-focus flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-nb border-2 px-3 py-2 text-left font-grotesk text-fg',
+                          isActive ? 'border-line bg-chat text-ink shadow-nb-sm' : 'border-transparent bg-transparent hover:border-line hover:bg-canvas',
+                        )}
+                      >
+                        <Avatar name={conversation.title} src={conversation.avatar} size="md" />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-baseline justify-between gap-2">
+                            <span className="truncate font-bold">{conversation.title}</span>
+                            <span className={cx('shrink-0 text-xs', isActive ? 'text-ink' : 'text-fg-muted')}>
+                              {formatListTime(conversation.lastMessageAt || conversation.lastMessage?.timestamp || null)}
+                            </span>
+                          </span>
+                          <span className="flex items-center justify-between gap-2">
+                            <span className={cx('truncate text-sm', conversation.unreadCount > 0 ? 'font-bold' : isActive ? 'text-ink' : 'text-fg-muted')}>
+                              {getConversationPreview(conversation)}
+                            </span>
+                            {conversation.unreadCount > 0 && (
+                              <Badge tone="match" size="sm">
+                                {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
+                                <span className="sr-only"> unread</span>
+                              </Badge>
+                            )}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
 
-            <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-1">
-              {filteredConversations.length > 0 && filteredConversations.map((conversation, index) => {
-                const isActive = conversation.id === activeConversationId;
-                return (
-                  <motion.button
-                    key={conversation.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.18, delay: Math.min(index * 0.025, 0.15) }}
-                    onClick={() => openConversation(conversation.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-[#7C83FF]/15 to-transparent border border-[#7C83FF]/20 shadow-[inset_4px_0_0_#7C83FF]' 
-                        : 'hover:bg-[#141C30] border border-transparent'
-                    }`}
-                  >
-                    <div className="relative">
-                      <img
-                        alt=""
-                        className="w-12 h-12 rounded-2xl object-cover bg-[#070B14]"
-                        src={conversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.title)}&background=random`}
-                      />
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#0E1525] bg-[#34D399] shadow-[0_0_10px_rgba(52,211,153,0.7)]"></span>
-                      {conversation.unreadCount > 0 && (
-                        <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-[#A855F7] shadow-[0_0_10px_rgba(168,85,247,0.5)] border-2 border-[#0E1525] flex items-center justify-center text-white text-[9px] font-bold">
-                          {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className={`text-sm font-bold truncate ${isActive ? 'text-[#F8FAFC]' : 'text-[#94A3B8] group-hover:text-[#F8FAFC]'}`}>{conversation.title}</p>
-                        <span className="shrink-0 text-[10px] font-bold text-[#94A3B8]/50">{formatConversationTime(conversation.lastMessageAt || conversation.lastMessage?.timestamp || null)}</span>
-                      </div>
-                      <p className={`text-[12px] truncate mt-1 ${conversation.unreadCount > 0 ? 'font-bold text-[#F8FAFC]' : isActive ? 'text-[#7C83FF]' : 'text-[#94A3B8]/60'}`}>
-                        {getConversationPreview(conversation)}
-                      </p>
-                    </div>
-                  </motion.button>
-                );
-              })}
-
-              {conversations.length === 0 && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="px-3 py-8 text-center">
-                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] border border-[#7C83FF]/30 bg-[#7C83FF]/10 shadow-[0_0_28px_rgba(124,131,255,0.18)]">
-                    <span className="material-symbols-outlined text-3xl text-[#7C83FF]" style={{ fontVariationSettings: "'FILL' 1" }}>forum</span>
-                  </div>
-                  <h3 className="text-lg font-black text-[#F8FAFC]">No conversations yet</h3>
-                  <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-[#94A3B8]">Accept a match request before starting a direct message.</p>
-                  <Link href="/matching" className="mt-5 inline-flex rounded-2xl bg-gradient-to-r from-[#7C83FF] to-[#A855F7] px-4 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(124,131,255,0.28)]">
-                    Find Matches
+            {conversations.length === 0 && (
+              <EmptyState
+                title="No conversations yet"
+                description="Accept a match request before starting a direct message."
+                action={
+                  <Link href="/matching" className={buttonClasses({ variant: 'match', size: 'sm' })}>
+                    Find partners
                   </Link>
-                </motion.div>
-              )}
+                }
+              />
+            )}
 
-              {conversations.length > 0 && filteredConversations.length === 0 && (
-                <div className="px-3 py-8 text-center">
-                  <p className="text-sm font-bold text-[#F8FAFC]">No chats found</p>
-                  <p className="mt-1 text-xs text-[#94A3B8]">Try another name or message.</p>
-                </div>
-              )}
+            {conversations.length > 0 && filteredConversations.length === 0 && (
+              <p className="m-0 px-3 py-8 text-center text-fg-muted">No chats match “{searchQuery.trim()}”.</p>
+            )}
 
-              {/* Partners (DMs) */}
-              <div ref={newMessageRef} className="pt-6 px-3 pb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">{conversations.length === 0 ? 'Accepted Matches' : 'Start a DM'}</p>
-              </div>
-              {(conversations.length === 0 ? suggestedPartners : partners).map((partner) => (
-                <button
-                  key={partner.id}
-                  onClick={() => startDm(partner.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left hover:bg-[#141C30] transition-colors border border-transparent hover:border-white/5"
-                >
-                  <img alt="" className="w-8 h-8 rounded-full object-cover" src={partner.avatar} />
-                  <span className="text-[13px] font-bold text-[#94A3B8] truncate hover:text-[#F8FAFC]">{partner.name}</span>
-                </button>
-              ))}
+            <section ref={newMessageRef} aria-labelledby="start-dm-heading" className="mt-6 scroll-mt-3">
+              <h2 id="start-dm-heading" className="m-0 mb-2 px-1 font-grotesk text-sm font-bold tracking-wide text-fg-muted uppercase">
+                {conversations.length === 0 ? 'Accepted matches' : 'Start a DM'}
+              </h2>
+              <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                {(conversations.length === 0 ? suggestedPartners : partners).map((partner) => (
+                  <li key={partner.id}>
+                    <button
+                      type="button"
+                      onClick={() => startDm(partner.id)}
+                      className="nb-focus flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-nb border-2 border-transparent px-3 py-1.5 text-left font-grotesk font-bold text-fg hover:border-line hover:bg-canvas"
+                    >
+                      <Avatar name={partner.name} src={partner.avatar} size="sm" />
+                      <span className="truncate">{partner.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
               {partners.length === 0 && (
-                <Link
-                  href="/matching"
-                  className="mx-3 flex items-center justify-center rounded-2xl border border-white/5 bg-[#141C30]/60 px-3 py-3 text-center text-[12px] font-bold text-[#94A3B8] transition-colors hover:text-[#F8FAFC]"
-                >
+                <Link href="/matching" className={buttonClasses({ variant: 'secondary', size: 'sm', fullWidth: true })}>
                   Connect with classmates first
                 </Link>
               )}
+            </section>
 
-              <button
-                onClick={focusNewMessage}
-                className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-5 z-[80] flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C83FF] to-[#A855F7] text-white shadow-[0_18px_42px_rgba(124,131,255,0.38)] active:scale-95 lg:hidden"
-                title="New Message"
-                aria-label="New Message"
-              >
-                <span className="material-symbols-outlined text-2xl">add</span>
-              </button>
+            <section aria-labelledby="groups-heading" className="mt-6">
+              <h2 id="groups-heading" className="m-0 mb-2 px-1 font-grotesk text-sm font-bold tracking-wide text-fg-muted uppercase">
+                Study groups
+              </h2>
+              {groups.length === 0 ? (
+                <p className="m-0 px-1 text-[15px] text-fg-muted">You have not joined a group yet.</p>
+              ) : (
+                <ul className="m-0 flex list-none flex-col gap-1 p-0">
+                  {groups.map((group) => (
+                    <li key={group.id}>
+                      <Link
+                        href={`/groups/${group.id}`}
+                        className="nb-focus flex min-h-12 items-center gap-3 rounded-nb border-2 border-transparent px-3 py-1.5 font-grotesk font-bold text-fg no-underline hover:border-line hover:bg-canvas"
+                      >
+                        <Avatar name={group.name} shape="square" size="sm" tone="career" />
+                        <span className="truncate">{group.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
 
-              {/* Groups */}
-              <div className="pt-6 px-3 pb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Study Groups</p>
-              </div>
-              {groups.map((group) => (
-                <Link
-                  key={group.id}
-                  href={`/groups/${group.id}`}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-left hover:bg-[#141C30] transition-colors border border-transparent hover:border-white/5 group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#070B14] flex items-center justify-center border border-white/5 text-[#7C83FF] group-hover:bg-[#7C83FF]/10 transition-colors">
-                    <span className="text-lg font-black">#</span>
-                  </div>
-                  <span className="text-[13px] font-bold text-[#94A3B8] truncate group-hover:text-[#F8FAFC]">{group.name}</span>
-                </Link>
-              ))}
-            </div>
-          </aside>
+          <IconButton
+            variant="chat"
+            size="lg"
+            label="New message"
+            icon={<MessageSquarePlus size={22} />}
+            onClick={focusNewMessage}
+            className="fixed right-5 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-[80] lg:hidden"
+          />
+        </aside>
 
-          {/* Active Chat Window */}
-          <div className={`${activeConversation ? 'flex' : 'hidden lg:flex'} flex-1 flex-col min-h-0 bg-[#0E1525]/80 backdrop-blur-md border border-white/5 rounded-[24px] md:rounded-[28px] shadow-xl overflow-hidden relative`}>
-            {activeConversation ? (
-              <motion.div
-                key={activeConversation.id}
-                initial={{ opacity: 0, x: 18 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 18 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="flex min-h-0 flex-1 flex-col"
-              >
-                {/* Chat Header */}
-                <div className="px-3 py-3 md:px-6 md:py-4 flex items-center justify-between gap-3 border-b border-white/5 bg-[#141C30]/50 backdrop-blur-xl shrink-0">
-                  <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                    <button
-                      type="button"
-                      onClick={backToInbox}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0E1525] text-[#F8FAFC] transition-colors hover:bg-[#7C83FF]/20 md:hidden"
-                      title="Back to inbox"
-                      aria-label="Back to inbox"
-                    >
-                      <span className="material-symbols-outlined">arrow_back</span>
-                    </button>
-                    <img
-                      alt=""
-                      className="h-10 w-10 rounded-full object-cover shadow-[0_4px_10px_rgba(0,0,0,0.3)] md:h-12 md:w-12"
-                      src={activeConversation.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeConversation.title)}&background=random`}
-                    />
-                    <div className="min-w-0">
-                      <h2 className="truncate text-base font-bold text-[#F8FAFC] md:text-lg">{activeConversation.title}</h2>
-                      <p className="flex items-center gap-1.5 text-xs font-medium text-[#22D3EE] uppercase tracking-wider">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#34D399] shadow-[0_0_8px_rgba(52,211,153,0.75)]"></span>
-                        {activeConversation.type}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex shrink-0 items-center gap-2 md:gap-3">
+        <div
+          className={cx(
+            activeConversation ? 'flex' : 'hidden lg:flex',
+            'min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card md:rounded-nb-lg md:border-nb',
+          )}
+        >
+          {activeConversation ? (
+            <>
+              <RoomHeader
+                level={2}
+                backHref="/chat"
+                backLabel="Back to inbox"
+                leading={<Avatar name={activeConversation.title} src={activeConversation.avatar} size="md" />}
+                title={activeConversation.title}
+                subtitle={conversationTypeLabel(activeConversation.type)}
+                actions={
+                  <>
                     <FocusHeaderIndicator />
                     {activeCall && (
-                      <Link
-                        href={`/call/active?callId=${activeCall.id}&media=${activeCall.mediaType === 'VIDEO' ? 'video' : 'audio'}`}
-                        className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#34D399]/10 text-[#34D399] border border-[#34D399]/20 text-xs font-bold animate-pulse"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#34D399]"></span>
-                        Live Session
+                      <Link href={callHref(activeCall)} className={buttonClasses({ variant: 'live', size: 'sm' })}>
+                        <Radio aria-hidden="true" size={18} />
+                        <span className="hidden sm:inline">Join live call</span>
+                        <span className="sm:hidden">Join</span>
                       </Link>
                     )}
                     <Link
                       href={`/call/active?type=dm&id=${activeConversation.id}&media=audio`}
-                      className="w-10 h-10 rounded-full bg-[#141C30] border border-white/5 flex items-center justify-center hover:bg-[#7C83FF]/20 hover:text-[#7C83FF] hover:border-[#7C83FF]/30 transition-all text-[#94A3B8]"
-                      title="Voice Call"
+                      aria-label="Voice call"
+                      title="Voice call"
+                      className={buttonClasses({ variant: 'secondary', size: 'sm', square: true })}
                     >
-                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>call</span>
+                      <Phone aria-hidden="true" size={18} />
                     </Link>
                     <Link
                       href={`/call/active?type=dm&id=${activeConversation.id}&media=video`}
-                      className="w-10 h-10 rounded-full bg-[#141C30] border border-white/5 flex items-center justify-center hover:bg-[#7C83FF]/20 hover:text-[#7C83FF] hover:border-[#7C83FF]/30 transition-all text-[#94A3B8]"
-                      title="Video Call"
+                      aria-label="Video call"
+                      title="Video call"
+                      className={buttonClasses({ variant: 'secondary', size: 'sm', square: true })}
                     >
-                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>videocam</span>
+                      <Video aria-hidden="true" size={18} />
                     </Link>
-                  </div>
-                </div>
+                  </>
+                }
+              />
 
-                {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto hide-scrollbar p-3 md:p-6 space-y-4 md:space-y-6 flex flex-col relative z-10">
+              <div role="log" aria-label="Messages" tabIndex={0} className="quiet nb-focus flex-1 overflow-y-auto bg-canvas p-3 md:p-6">
+                <div className="flex flex-col gap-3">
                   {nextCursor && (
-                    <button onClick={loadOlder} className="mx-auto block px-4 py-1.5 rounded-full bg-[#141C30] border border-white/5 hover:border-white/10 hover:text-white transition-colors text-[11px] font-bold text-[#94A3B8] shadow-md">
+                    <Button variant="secondary" size="sm" onClick={loadOlder} className="mx-auto">
                       Load earlier messages
-                    </button>
+                    </Button>
                   )}
-                  {messages.map((message) => {
-                    const isSelf = message.senderId === user.id || message.isSelf;
-                    const isDeleted = message.status === 'DELETED';
-                    return (
-                      <div key={message.id} className={`flex items-end gap-3 ${isSelf ? 'flex-row-reverse' : ''} group`}>
-                        {!isSelf && (
-                          <img
-                            alt=""
-                            className="w-8 h-8 rounded-full object-cover shadow-md mb-1 shrink-0"
-                            src={message.senderImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(message.senderName)}&background=random`}
-                          />
-                        )}
-                        <div className={`space-y-1 max-w-[86%] sm:max-w-[76%] xl:max-w-[60%] ${isSelf ? 'text-right' : ''}`}>
-                          <div className={`flex items-baseline gap-2 ${isSelf ? 'justify-end' : ''} px-1`}>
-                            {!isSelf && <span className="text-[11px] font-bold text-[#94A3B8]">{message.senderName}</span>}
-                            <span className="text-[9px] text-[#94A3B8]/60 font-medium">
-                              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            {message.pending && <span className="text-[9px] text-[#7C83FF] font-medium animate-pulse">Sending...</span>}
-                          </div>
-                          
-                          <div className={`relative flex items-center gap-2 ${isSelf ? 'justify-end' : ''}`}>
-                            {isSelf && !message.pending && !isDeleted && (
-                              <button
-                                onClick={() => deleteMessage(message.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 text-[#94A3B8] hover:text-red-400 transition-all rounded-full hover:bg-red-500/10 shrink-0"
-                              >
-                                <span className="material-symbols-outlined text-[14px]">delete</span>
-                              </button>
-                            )}
-                            <div className={`
-                              ${isSelf 
-                                ? 'bg-gradient-to-br from-[#7C83FF] to-[#A855F7] text-white rounded-[20px] rounded-br-sm shadow-[0_4px_15px_rgba(124,131,255,0.3)]' 
-                                : 'bg-[#141C30]/90 backdrop-blur-md border border-white/5 text-[#F8FAFC] rounded-[20px] rounded-bl-sm shadow-[0_4px_15px_rgba(0,0,0,0.2)]'
-                              } p-3.5 text-sm leading-relaxed text-left flex flex-col gap-2`}>
-                              
-                              {isDeleted ? (
-                                <p className="italic opacity-60 text-xs">This message was deleted.</p>
-                              ) : (
-                                <>
-                                  {message.fileUrl && (
-                                    <div className="mb-1">
-                                      {message.fileType === 'image' && <img src={message.fileUrl} alt={message.fileName || 'Image'} className="max-h-64 rounded-xl object-cover border border-white/10" />}
-                                      {message.fileType === 'video' && <video src={message.fileUrl} controls className="max-h-64 rounded-xl border border-white/10" />}
-                                      {message.fileType !== 'image' && message.fileType !== 'video' && (
-                                        <a href={message.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/20 hover:bg-black/30 transition-colors border border-white/10 w-fit">
-                                          <span className="material-symbols-outlined text-[20px]">description</span>
-                                          <span className="truncate text-xs font-bold">{message.fileName || 'Download File'}</span>
-                                        </a>
-                                      )}
-                                    </div>
-                                  )}
-                                  {message.fileType === CALL_NOTE_FILE_TYPE ? (
-                                    <CallNoteMessage content={message.content} isSelf={isSelf} />
-                                  ) : (
-                                    <p className="break-words">{message.content}</p>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {typingUsers.size > 0 && (
-                    <div className="flex items-center gap-2 px-2 text-[#94A3B8]">
-                      <div className="flex gap-1 py-2 px-3 bg-[#141C30]/80 rounded-full border border-white/5 w-fit">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#7C83FF] animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#7C83FF] animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#7C83FF] animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                      </div>
-                      <span className="text-[10px] font-bold">{Array.from(typingUsers).join(', ')} is typing</span>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} className="h-2" />
+                  <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                    {messages.map((message) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isSelf={message.senderId === user.id || Boolean(message.isSelf)}
+                        deleted={message.status === 'DELETED'}
+                        pending={message.pending}
+                        onDelete={deleteMessage}
+                      />
+                    ))}
+                  </ul>
+                  <TypingIndicator names={typingNames} />
+                  <div ref={messagesEndRef} />
                 </div>
-
-                {/* Input Area */}
-                <form onSubmit={sendMessage} className="p-3 md:p-4 bg-[#141C30]/40 backdrop-blur-xl border-t border-white/5 shrink-0 relative z-20">
-                  <div className="bg-[#0E1525] border border-white/10 rounded-[20px] p-2 flex flex-col focus-within:border-[#7C83FF]/50 focus-within:shadow-[0_0_15px_rgba(124,131,255,0.15)] transition-all">
-                    <textarea
-                      value={inputValue}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      className="w-full bg-transparent border-none focus:ring-0 text-sm text-[#F8FAFC] placeholder-[#94A3B8]/50 p-3 resize-none outline-none max-h-32 hide-scrollbar"
-                      placeholder={`Message ${activeConversation.title}...`}
-                      rows={1}
-                    />
-                    <div className="flex items-center justify-between px-2 py-1 mt-1">
-                      <div className="flex items-center gap-1">
-                        <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#141C30] text-[#94A3B8] hover:text-[#F8FAFC] disabled:opacity-50 transition-colors"
-                          title="Attach file"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">{isUploading ? 'hourglass_empty' : 'attach_file'}</span>
-                        </button>
-                      </div>
-                      <button 
-                        disabled={!inputValue.trim()} 
-                        className="bg-gradient-to-r from-[#7C83FF] to-[#A855F7] text-white w-9 h-9 flex items-center justify-center rounded-full disabled:opacity-50 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">send</span>
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </motion.div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 relative z-10">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#7C83FF]/20 to-[#A855F7]/20 border border-[#7C83FF]/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(124,131,255,0.2)]">
-                  <span className="material-symbols-outlined text-4xl text-[#7C83FF]" style={{ fontVariationSettings: "'FILL' 1" }}>chat_bubble</span>
-                </div>
-                <h2 className="text-2xl font-bold text-[#F8FAFC] mb-2">Select a Conversation</h2>
-                <p className="text-sm text-[#94A3B8] max-w-sm">Choose a chat from the inbox to start messaging, or start a new DM with a study partner.</p>
               </div>
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
+
+              <Composer
+                id="message-input"
+                label={`Message ${activeConversation.title}`}
+                placeholder={`Message ${activeConversation.title}`}
+                value={inputValue}
+                onChange={handleInputChange}
+                onSend={() => sendMessage()}
+                onFileChange={handleFileUpload}
+                fileInputRef={fileInputRef}
+                uploading={isUploading}
+              />
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-8">
+              <EmptyState
+                icon={<Search size={26} />}
+                title="Select a conversation"
+                description="Choose a chat from the inbox, or start a new DM with a study partner."
+                className="border-0"
+              />
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
   );
 }

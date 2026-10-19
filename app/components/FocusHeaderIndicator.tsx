@@ -1,5 +1,6 @@
 "use client";
 
+import { Timer } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { usePomodoro } from "./PomodoroProvider";
 import {
@@ -40,13 +41,11 @@ export default function FocusHeaderIndicator() {
     <button
       type="button"
       onClick={openPomodoro}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-tertiary/25 bg-tertiary/10 px-2.5 text-[10px] font-black uppercase tracking-widest text-tertiary transition-colors hover:bg-tertiary/15"
+      className="nb-focus nb-press inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-nb bg-focus px-3 font-grotesk text-sm font-bold text-ink shadow-nb-sm"
       title="Focus session"
       aria-label="Open focus session"
     >
-      <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-        timer
-      </span>
+      <Timer aria-hidden="true" size={16} />
       <span>{focusState.status === "PAUSED" ? "Paused" : formatFocusMinutes(focusState.remainingSeconds)}</span>
     </button>
   );
