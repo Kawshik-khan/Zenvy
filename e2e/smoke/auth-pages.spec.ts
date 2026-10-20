@@ -6,19 +6,29 @@ test.describe("login", () => {
 
   test("shows the design-system form with labelled fields", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Sign in to Zenvy" })).toBeVisible();
     await expect(page.getByLabel("Email address")).toHaveAttribute("autocomplete", "email");
-    await expect(page.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
+    await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute("autocomplete", "current-password");
     await expect(page.getByRole("button", { name: "Sign in", exact: true })).toHaveCSS("background-color", "rgb(17, 17, 17)");
-    // Dead controls from the old page are gone.
+    // Google only shows when AUTH_GOOGLE_ID/SECRET are configured (not in CI).
     await expect(page.getByText("Continue with Google")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Forgot?" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
+  });
+
+  test("the password can be shown and hidden", async ({ page }) => {
+    await page.goto("/login");
+    const password = page.getByLabel("Password", { exact: true });
+    await password.fill("secret-value");
+    await page.getByRole("button", { name: "Show password" }).click();
+    await expect(password).toHaveAttribute("type", "text");
+    await page.getByRole("button", { name: "Hide password" }).click();
+    await expect(password).toHaveAttribute("type", "password");
   });
 
   test("a wrong password shows an announced error and keeps the user on the page", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email address").fill("e2e.student@zenvy.test");
-    await page.getByLabel("Password").fill("not-the-password");
+    await page.getByLabel("Password", { exact: true }).fill("not-the-password");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(appAlert(page)).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
@@ -37,17 +47,47 @@ test.describe("register", () => {
 
   test("validates the password before creating anything", async ({ page }) => {
     await page.goto("/register");
-    await expect(page.getByRole("heading", { level: 2, name: "Create your account" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Create your account" })).toBeVisible();
     await page.getByLabel("Full name").fill("Weak Password");
-    await page.getByLabel("Email address").fill("weak.password@zenvy.test");
-    await page.getByLabel("Password").fill("short");
+    await page.getByLabel("University email").fill("weak.password@zenvy.test");
+    const password = page.getByLabel("Password", { exact: true });
+    await password.fill("short");
+    await expect(page.getByText("Too short")).toBeVisible();
     await page.getByRole("button", { name: "Create account", exact: true }).click();
-    await expect(appAlert(page)).toContainText("at least 8 characters");
+    // The error sits under the field and is linked to it.
+    await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
+    await expect(password).toHaveAttribute("aria-invalid", "true");
+    await expect(page).toHaveURL(/\/register/);
   });
 
   test("does not claim numbers or features the product cannot back", async ({ page }) => {
     await page.goto("/register");
     await expect(page.getByText("10K+")).toHaveCount(0);
+  });
+});
+
+test.describe("password reset", () => {
+  test.use({ extraHTTPHeaders: ownIpHeaders() });
+
+  test("asks for an email, then confirms without saying whether the account exists", async ({ page }) => {
+    await page.goto("/forgot-password");
+    await expect(page.getByRole("heading", { level: 1, name: "Forgot your password?" })).toBeVisible();
+    await page.getByRole("button", { name: "Send reset link" }).click();
+    await expect(page.getByText("Enter the email you signed up with.")).toBeVisible();
+
+    await page.getByLabel("Email address").fill("nobody.here@zenvy.test");
+    await page.getByRole("button", { name: "Send reset link" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Check your email" })).toBeVisible();
+    await expect(page.getByText("If an account exists for nobody.here@zenvy.test")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Resend in/ })).toBeDisabled();
+    await expectNoAppError(page);
+  });
+
+  test("an unknown or expired link offers a new one", async ({ page }) => {
+    await page.goto("/reset-password?token=does-not-exist");
+    await expect(page.getByRole("heading", { level: 1, name: "This link has expired" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Send a new link" })).toHaveAttribute("href", "/forgot-password");
+    await expectNoAppError(page);
   });
 });
 

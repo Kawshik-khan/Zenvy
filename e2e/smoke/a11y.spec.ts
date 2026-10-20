@@ -5,7 +5,7 @@ import { login } from "../helpers";
 // Automated WCAG 2.1 A/AA checks with axe. This catches contrast, missing names, bad ARIA and
 // heading/landmark mistakes; it does not replace a keyboard and screen reader pass.
 
-const SIGNED_OUT = ["/", "/login", "/register"];
+const SIGNED_OUT = ["/", "/login", "/register", "/forgot-password", "/reset-password?token=expired"];
 const SIGNED_IN = ["/dashboard", "/matching", "/chat", "/groups", "/channels", "/events", "/scheduling", "/notifications", "/bookmarks", "/stats", "/profile", "/jobs", "/jobs/new", "/jobs/saved", "/jobs/mine"];
 
 async function scan(page: Page) {

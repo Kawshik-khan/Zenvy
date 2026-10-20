@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { expectNoAppError } from "../helpers";
 
 test.describe("public pages", () => {
-  for (const path of ["/", "/login", "/register"]) {
+  for (const path of ["/", "/login", "/register", "/forgot-password"]) {
     test(`${path} renders`, async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBeLessThan(400);
