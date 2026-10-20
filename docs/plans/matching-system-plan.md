@@ -2,6 +2,14 @@
 
 Goal: replace the single-sided, free-text scoring in `lib/discovery.ts` (`recommendPeople`) with an explainable, two-sided ranking pipeline built on structured data, and log outcomes so weights can be learned later.
 
+## Decisions
+
+| Question | Decision | Effect on plan |
+|---|---|---|
+| Course data source | Students type their own courses | Autocomplete over existing `Course` rows, create-on-miss, code normalisation (`cse220`, `CSE-220` -> `CSE 220`). No registrar import. |
+| Near-term scale | About 1,000 students | Score per request; no candidate cache. Retrieval cap 500 is well within budget (one indexed query plus in-memory scoring of at most 500 rows). |
+| Match percentage | Keep it | Cards show `match%` (= round(score x 100)) plus the reasons. A band label ("Great fit") may appear next to it as a secondary hint; the percentage stays primary. |
+
 ## Current state (verified in code)
 
 - `Profile.availability` and `Profile.interests` are free-text strings (`prisma/schema.prisma:102`); `studyStyle` is stored but unused in scoring.
@@ -56,12 +64,12 @@ Acceptance: existing matching page behaves the same for users without new data; 
 
 ### Phase 2: Two-sided scoring and retrieval
 
-Schema (migration `5_courses`): `Course { id, code, title?, college, @@unique([college, code]) }`, `Enrollment { userId, courseId, term, @@id([userId, courseId, term]), @@index([courseId, term]) }`. UI to add current courses on profile and onboarding (autocomplete, create-on-miss).
+Schema (migration `5_courses`): `Course { id, code, title?, college, @@unique([college, code]) }`, `Enrollment { userId, courseId, term, @@id([userId, courseId, term]), @@index([courseId, term]) }`. UI to add current courses on profile and onboarding: students type their own courses, with autocomplete over existing courses at their college, create-on-miss, and code normalisation (uppercase, single space between letters and digits, e.g. `cse220` -> `CSE 220`) so the same course resolves to one row. Limit 8 courses per term.
 
 Code:
 - `config.ts` weights: shared courses 0.30, schedule overlap 0.25, complementary skills 0.15, goal/style fit 0.10, shared tags (Jaccard) 0.10, activity 0.10. Same major/college/semester act as retrieval filters and small tie-breakers, not major score components.
 - `features.ts`: each feature is 0..1 and testable. Missing data scores neutral-low, never penalises the other side.
-- `scorePair`: `harmonic(fit(A->B), fit(B->A))`, returns `{ score, band, reasons[] }`. Bands: Great (>=0.7), Good (>=0.5), Possible. UI shows band and reasons, not a precise percent.
+- `scorePair`: `harmonic(fit(A->B), fit(B->A))`, returns `{ score, percent, band, reasons[] }`. `percent = round(score * 100)` stays the primary number on the card (existing `match` field and `minMatch` filter keep working). Bands: Great (>=70), Good (>=50), Possible, shown as a secondary label.
 - `retrieve.ts`: hard filters (not blocked either way, `matchingAvailable`, not REJECTED/connected) plus union of: same course this term, same college and major, tag overlap. Cap 500, ordered by cheap SQL prefilter score.
 - Page switches to `getRecommendations`; `Match.compatibility` stores the score at connect time.
 
@@ -81,14 +89,14 @@ Acceptance: events written without blocking render (fire-and-forget, errors swal
 
 ### Phase 4: Learning and scale (only once data exists)
 
-- Candidate cache table `MatchCandidate(userId, candidateId, score, reasons, computedAt)`, refreshed by a job on profile change plus nightly. Add only when per-request scoring latency exceeds ~200 ms.
+- Not needed at the planned ~1,000 students: per-request scoring stays well under 100 ms. Revisit the candidate cache (`MatchCandidate(userId, candidateId, score, reasons, computedAt)`, refreshed on profile change plus nightly) only if p95 page latency exceeds ~200 ms or the user base grows past ~10,000.
 - Offline analysis: fit logistic regression on `MatchEvent` features to predict ENGAGED; compare learned weights to hand-set ones; A/B test behind a flag.
 - Optional: pgvector embeddings of bio and goals as one extra feature.
 
 ## Testing and verification
 
 - Unit (vitest): availability bitmask, each feature, `scorePair`, retrieval filters (mock Prisma like `lib/discovery.test.ts`), rerank.
-- Update `e2e/smoke/matching.spec.ts` and `app/(app)/matching/partners.test.ts` for band and reasons display.
+- Update `e2e/smoke/matching.spec.ts` and `app/(app)/matching/partners.test.ts` for the percentage, band label and reasons display.
 - Each phase: `npm run prisma:validate && npm run lint && npm run typecheck && npm run test`; run migrations against a scratch DB before commit.
 
 ## Risks and mitigations
@@ -98,15 +106,9 @@ Acceptance: events written without blocking render (fire-and-forget, errors swal
 | Sparse data makes new features inert | Neutral scoring for missing fields; onboarding prompts; profile-completion nudges (`lib/profile-completion.ts`) |
 | Migration/backfill errors on production data | Additive nullable columns, dual-write, idempotent backfill script, keep old columns until Phase 2 is stable |
 | Hand-tuned weights are wrong | Weights isolated in `config.ts`; Phase 3 logging enables evidence-based tuning |
-| Free-text course names fragment | Autocomplete, normalise code (`cse220` -> `CSE 220`), admin merge later |
+| Self-entered course names fragment | Autocomplete first, normalise codes on save, unique `(college, code)`; later an admin merge tool for duplicates |
 | Popular users get swamped | Exposure cap and diversity in Phase 3 |
 
 ## Metric
 
 North star: share of connections accepted that reach ENGAGED within 14 days. Secondary: connect rate per impression, accept rate, median time to first message.
-
-## Open questions
-
-1. Is there a course catalog or registrar data, or should students enter courses themselves?
-2. How many users per college are expected near term? (Decides when the candidate cache is needed.)
-3. Should the match percentage stay visible for continuity, or switch straight to bands?
