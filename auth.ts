@@ -2,13 +2,31 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { isGoogleEnabled } from "@/lib/auth-providers";
+import { makeUniqueId } from "@/lib/unique-id";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
+  events: {
+    // Users created through Google need the same profile row and handle as email sign-ups.
+    async createUser({ user }) {
+      if (!user.id) return;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          uniqueId: makeUniqueId(user.name ?? user.email ?? "user"),
+          profile: { connectOrCreate: { where: { userId: user.id }, create: {} } },
+        },
+      });
+    },
+  },
   providers: [
+    // Reads AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET. Left out entirely when they are not set.
+    ...(isGoogleEnabled() ? [Google] : []),
     Credentials({
       name: "credentials",
       credentials: {
@@ -18,9 +36,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
  
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
+        const email = String(credentials.email).trim();
+        // Exact match first (unique index), then case-insensitive for "Name@Uni.edu" style input.
+        const user =
+          (await prisma.user.findUnique({ where: { email } })) ??
+          (await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } }));
 
         if (!user || !user.password) {
           // Keep console logs minimal for security (SEC-018 partial fix)

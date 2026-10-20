@@ -53,6 +53,20 @@
   --animate-nb-shake: nb-shake 320ms ease-in-out;
   --animate-nb-wobble: nb-wobble 900ms ease-in-out infinite alternate;
   --animate-nb-shimmer: nb-shimmer 1.4s linear infinite;
+  /* Landing and auth motion. Decorative loops end on their last frame under reduced motion. */
+  --animate-nb-float: nb-float 2.8s ease-in-out infinite alternate;
+  --animate-nb-sway: nb-sway 1.9s ease-in-out infinite alternate;
+  --animate-nb-twinkle: nb-twinkle 2.8s ease-in-out infinite;
+  --animate-nb-ants: nb-ants 1.4s linear infinite;
+  --animate-nb-marquee: nb-marquee 40s linear infinite;
+  --animate-nb-nudge: nb-nudge 1.6s ease-in-out infinite alternate;
+  --animate-nb-fly: nb-fly 3s ease-in-out infinite alternate;
+  --animate-nb-unlock: nb-unlock 700ms var(--ease-nb-spring) 200ms both;
+  --animate-nb-burst: nb-burst 1100ms var(--ease-nb-out) 150ms both;
+  --animate-nb-blink: nb-blink 1.6s ease-in-out infinite;
+  --animate-nb-word: nb-word 700ms var(--ease-nb-spring) both;
+  --animate-nb-draw: nb-draw 800ms var(--ease-nb-out) 650ms both;
+  --animate-nb-grow: nb-grow 700ms var(--ease-nb-out) both;
 
   @keyframes nb-pop-in {
     from { opacity: 0; transform: translateY(10px) scale(0.94) rotate(-1deg); }
@@ -120,6 +134,56 @@
   @keyframes nb-wobble {
     from { transform: rotate(-0.6deg) scale(1.01); }
     to { transform: rotate(0.6deg) scale(1.01); }
+  }
+  @keyframes nb-float {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+  }
+  @keyframes nb-sway {
+    from { transform: rotate(-2deg); }
+    to { transform: rotate(2deg); }
+  }
+  @keyframes nb-twinkle {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(0.7) rotate(25deg); }
+  }
+  @keyframes nb-ants {
+    to { stroke-dashoffset: -32; }
+  }
+  @keyframes nb-marquee {
+    to { transform: translateX(-50%); }
+  }
+  @keyframes nb-nudge {
+    from { transform: translateX(-10px); }
+    to { transform: translateX(6px); }
+  }
+  @keyframes nb-fly {
+    from { transform: translate(0, 4px) rotate(-3deg); }
+    to { transform: translate(10px, -8px) rotate(3deg); }
+  }
+  @keyframes nb-unlock {
+    from { transform: translateY(0) rotate(0deg); }
+    to { transform: translateY(-22px) rotate(-28deg); }
+  }
+  @keyframes nb-burst {
+    from { transform: translate(0, 0) scale(0.3) rotate(0deg); opacity: 1; }
+    70% { opacity: 1; }
+    to { transform: translate(var(--dx), var(--dy)) scale(1) rotate(260deg); opacity: 0; }
+  }
+  @keyframes nb-blink {
+    50% { opacity: 0.3; }
+  }
+  @keyframes nb-word {
+    from { opacity: 0; transform: translateY(0.45em) rotate(4deg); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes nb-grow {
+    from { transform: scaleX(0); }
+    to { transform: none; }
+  }
+  @keyframes nb-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
   }
   @keyframes nb-shimmer {
     from { background-position: 200% 0; }
@@ -200,6 +264,61 @@
   &:focus-visible {
     outline: 3px solid var(--color-chat);
     outline-offset: 3px;
+  }
+}
+
+/* Notebook grid behind loud sections. Ink at low strength, so it reads on every accent. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-ink) 16%, transparent) 2px, transparent 2px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-ink) 16%, transparent) 2px, transparent 2px);
+  background-size: 42px 42px;
+  background-position: -1px -1px;
+}
+
+@utility bg-grid-light {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-paper) 14%, transparent) 2px, transparent 2px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-paper) 14%, transparent) 2px, transparent 2px);
+  background-size: 42px 42px;
+  background-position: -1px -1px;
+}
+
+/* Content straightens as it scrolls into view. Always visible: only the transform animates. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .nb-reveal {
+      animation: nb-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 80%;
+    }
+  }
+}
+
+@keyframes nb-reveal {
+  from { transform: translateY(36px) rotate(-1.4deg); }
+  to { transform: none; }
+}
+
+/* Custom cursor icon on the marketing and sign-in pages (fine pointers only). */
+@media (pointer: fine) {
+  .nb-cursor,
+  .nb-cursor * {
+    cursor: url("/cursors/arrow.svg") 4 3, auto;
+  }
+
+  .nb-cursor :is(a, button, label, summary, select, [role="button"], [role="tab"], input[type="checkbox"]):not(:disabled),
+  .nb-cursor :is(a, button, label, [role="button"], [role="tab"]):not(:disabled) * {
+    cursor: url("/cursors/hand.svg") 11 3, pointer;
+  }
+
+  .nb-cursor :is(input:not([type="checkbox"]), textarea) {
+    cursor: text;
+  }
+
+  .nb-cursor [data-cursor="drag"],
+  .nb-cursor [data-cursor="drag"] * {
+    cursor: url("/cursors/grab.svg") 14 14, grab;
   }
 }
 

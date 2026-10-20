@@ -1,18 +1,23 @@
+import { CustomCursor } from "@/components/motion/CustomCursor";
 import { Hero } from "./Hero";
 import { LandingFooter } from "./LandingFooter";
 import { LandingNav } from "./LandingNav";
-import { Calls, Communities, Features, FinalCta, HowItWorks, Matching } from "./Sections";
+import { ChannelStrip, Communities, Features, FinalCta, Focus, HowItWorks, Jobs, Matching } from "./Sections";
 
-export default function LandingPage() {
+/** Public home page. `jobsEnabled` follows the FEATURE_JOBS flag, so the jobs board is only advertised when it's live. */
+export default function LandingPage({ jobsEnabled = false }: { jobsEnabled?: boolean }) {
   return (
-    <div className="min-h-dvh overflow-x-clip bg-canvas font-grotesk text-fg">
-      <LandingNav />
+    <div className="nb-cursor min-h-dvh overflow-x-clip bg-canvas font-grotesk text-fg">
+      <CustomCursor />
+      <LandingNav jobsEnabled={jobsEnabled} />
       <main>
-        <Hero />
+        <Hero jobsEnabled={jobsEnabled} />
+        <ChannelStrip />
         <HowItWorks />
-        <Features />
+        <Features jobsEnabled={jobsEnabled} />
         <Matching />
-        <Calls />
+        <Focus />
+        {jobsEnabled && <Jobs />}
         <Communities />
         <FinalCta />
       </main>

@@ -1,64 +1,71 @@
-import { ArrowRight, Timer } from "lucide-react";
-import { Avatar, Badge, ButtonLink, Card, ProgressBar } from "@/components/ui";
+import { ArrowRight, Check } from "lucide-react";
+import { ButtonLink } from "@/components/ui";
+import { Magnetic } from "@/components/motion/Magnetic";
+import { PointerParallax } from "@/components/motion/PointerParallax";
+import { HeroDecorations } from "./Decorations";
+import { HeroCards } from "./HeroCards";
 
-/** Illustration of the product: sample people and numbers, hidden from assistive tech. */
-function HeroIllustration() {
+const WORDS = ["Find", "your", "study"];
+
+export function Hero({ jobsEnabled }: { jobsEnabled: boolean }) {
   return (
-    <div aria-hidden="true" className="relative mx-auto h-[26rem] w-full max-w-md lg:max-w-none">
-      <Card padding="none" shadow="lg" className="absolute top-0 left-[4%] w-[80%] -rotate-3 animate-nb-rise">
-        <div className="flex items-center gap-3 border-b-[length:var(--nb-border-width)] border-line bg-match px-5 py-4 text-ink">
-          <Avatar name="Nadia Rahman" size="lg" tone="focus" />
-          <div className="min-w-0 flex-1">
-            <div className="text-xl font-bold">Nadia R.</div>
-            <div className="text-sm">CS · Semester 5</div>
+    <PointerParallax className="relative overflow-hidden bg-canvas bg-grid">
+      <section id="top" aria-labelledby="hero-title" className="relative">
+        <HeroDecorations />
+        <div className="relative z-[1] mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 md:px-6 lg:grid-cols-[1.05fr_1fr] lg:py-20">
+          <div className="flex flex-col items-start gap-7">
+            <a href={jobsEnabled ? "#jobs" : "#features"} className="nb-focus inline-flex animate-nb-rise items-center gap-2 rounded-full border-2 border-line bg-live px-3.5 py-1 text-sm font-bold text-ink no-underline">
+              <span aria-hidden="true" className="size-2.5 animate-nb-blink rounded-full bg-ink" />
+              {jobsEnabled ? "New: jobs board and study stats" : "New: study stats and focus mode"}
+              <ArrowRight size={16} aria-hidden="true" />
+            </a>
+            <h1 id="hero-title" className="m-0 font-grotesk text-5xl leading-[0.98] font-bold tracking-[-0.04em] text-fg sm:text-6xl lg:text-7xl">
+              {WORDS.map((word, index) => (
+                <span key={word} className="inline-block animate-nb-word" style={{ animationDelay: `${80 + index * 70}ms` }}>
+                  {word}&nbsp;
+                </span>
+              ))}
+              <span className="relative inline-block animate-nb-word" style={{ animationDelay: "290ms" }}>
+                partner.
+                <svg aria-hidden="true" viewBox="0 0 300 24" preserveAspectRatio="none" className="absolute -bottom-2 left-[-2%] h-[0.3em] w-[104%] overflow-visible">
+                  <path d="M4 16 C 60 4, 110 22, 160 12 S 250 6, 296 14" pathLength={1} strokeDasharray={1} className="animate-nb-draw fill-none stroke-match" strokeWidth={9} strokeLinecap="round" />
+                </svg>
+              </span>{" "}
+              <span className="mt-3 inline-block animate-nb-pop-in rounded-nb border-nb bg-focus px-3 pb-1.5 text-[0.82em] whitespace-nowrap text-ink shadow-nb-lg [animation-delay:520ms] -rotate-[1.5deg]">
+                Actually study.
+              </span>
+            </h1>
+            <p className="m-0 max-w-xl animate-nb-rise font-grotesk text-lg leading-relaxed text-fg-muted [animation-delay:600ms] sm:text-xl">
+              Zenvy matches you with students who share your major, courses and free time. Then it gives you the room to work: chat, group calls, shared
+              notes and a focus timer.
+            </p>
+            <div className="flex animate-nb-rise flex-wrap gap-4 [animation-delay:720ms]">
+              <Magnetic>
+                <ButtonLink href="/register" variant="match" size="lg">
+                  Find my match
+                  <ArrowRight size={20} aria-hidden="true" />
+                </ButtonLink>
+              </Magnetic>
+              <ButtonLink href="/login" variant="secondary" size="lg">
+                I have an account
+              </ButtonLink>
+            </div>
+            <ul className="m-0 flex animate-nb-rise list-none flex-wrap gap-x-5 gap-y-2 p-0 text-[15px] font-semibold [animation-delay:840ms]">
+              {["Every match shows its reasons", "Works on phone and laptop"].map((item) => (
+                <li key={item} className="inline-flex items-center gap-2">
+                  <span aria-hidden="true" className="inline-flex size-5 items-center justify-center rounded-full border-2 border-line bg-live text-ink">
+                    <Check size={12} strokeWidth={3.5} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-          <span className="rounded-nb border-nb bg-card px-2 py-1 font-jetbrains text-2xl font-bold text-fg">92%</span>
+          <div className="animate-nb-rise [animation-delay:300ms]">
+            <HeroCards jobsEnabled={jobsEnabled} />
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2 p-5">
-          <Badge tone="chat">Same major</Badge>
-          <Badge tone="focus">2 shared interests</Badge>
-          <Badge tone="live">Availability set</Badge>
-        </div>
-      </Card>
-
-      <Card tone="focus" shadow="md" padding="sm" className="absolute right-0 bottom-6 w-56 rotate-3 animate-nb-rise [animation-delay:120ms]">
-        <div className="flex items-center gap-2 text-sm font-bold tracking-[0.08em] uppercase">
-          <Timer size={16} /> Focus · 2 of 4
-        </div>
-        <div className="mt-1 font-jetbrains text-5xl leading-none font-bold">18:42</div>
-        <ProgressBar label="Example focus progress" value={38} tone="ink" className="mt-3" />
-      </Card>
-
-      <div className="absolute bottom-16 left-0 max-w-[15rem] -rotate-2 animate-nb-rise rounded-nb-lg rounded-bl-sm border-nb bg-chat px-4 py-3 font-grotesk font-medium text-ink shadow-nb-md [animation-delay:240ms]">
-        Library at 7? I&apos;ll bring the past papers.
-      </div>
-    </div>
-  );
-}
-
-export function Hero() {
-  return (
-    <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 md:px-6 lg:grid-cols-2 lg:py-24">
-      <div className="flex flex-col items-start gap-7">
-        <Badge tone="live">For university students</Badge>
-        <h1 className="m-0 font-grotesk text-5xl leading-[1.02] font-bold tracking-tight text-fg sm:text-6xl">
-          Find your study partner.{" "}
-          <span className="mt-2 inline-block -rotate-1 border-nb bg-focus px-3 text-ink">Actually study.</span>
-        </h1>
-        <p className="m-0 max-w-xl font-grotesk text-lg leading-relaxed text-fg-muted sm:text-xl">
-          Zenvy matches you with students who share your major, courses and free time, then gives you what you need to study together: chat,
-          group rooms, voice and video calls, and a focus timer.
-        </p>
-        <div className="flex flex-wrap gap-4">
-          <ButtonLink href="/register" variant="match" size="lg" icon={<ArrowRight size={20} />}>
-            Find my match
-          </ButtonLink>
-          <ButtonLink href="/login" variant="secondary" size="lg">
-            I have an account
-          </ButtonLink>
-        </div>
-      </div>
-      <HeroIllustration />
-    </section>
+      </section>
+    </PointerParallax>
   );
 }

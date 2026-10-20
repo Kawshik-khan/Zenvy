@@ -47,3 +47,13 @@ export async function login(prevState: string | undefined, formData: FormData) {
     throw error;
   }
 }
+
+/** Starts the Google OAuth redirect. Only reachable when Google sign-in is configured. */
+export async function signInWithGoogle(formData: FormData) {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");
+  const proto = requestHeaders.get("x-forwarded-proto") || "http";
+  const origin = host ? `${proto}://${host}` : undefined;
+  const callbackUrl = formData.get("callbackUrl") as string | null;
+  await signIn("google", { redirectTo: safeCallbackPath(callbackUrl, origin) ?? "/dashboard" });
+}
