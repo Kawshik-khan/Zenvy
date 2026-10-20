@@ -44,7 +44,7 @@ export function HeroDecorations() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
       {HERO_DECOR.map((item, index) => (
-        <Depth key={index} depth={item.depth} className={cx("absolute max-md:hidden", item.wide && "max-lg:hidden")} style={item.style}>
+        <Depth key={index} depth={item.depth} className={cx("absolute max-lg:hidden", item.wide && "max-xl:hidden")} style={item.style}>
           {item.node}
         </Depth>
       ))}

@@ -45,7 +45,7 @@ export function JobsShowcase() {
         ))}
       </div>
 
-      <ul className="m-0 grid list-none gap-7 p-0 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite">
+      <ul className="m-0 grid list-none gap-7 p-0 sm:grid-cols-2 lg:grid-cols-3 sm:[&>li:last-child:nth-child(odd)]:col-span-2 lg:[&>li:last-child:nth-child(odd)]:col-span-1" aria-live="polite">
         {visible.map((job) => {
           const isSaved = saved.includes(job.id);
           return (

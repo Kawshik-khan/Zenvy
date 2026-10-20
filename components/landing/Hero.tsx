@@ -13,7 +13,7 @@ export function Hero({ jobsEnabled }: { jobsEnabled: boolean }) {
       <section id="top" aria-labelledby="hero-title" className="relative">
         <HeroDecorations />
         <div className="relative z-[1] mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 md:px-6 lg:grid-cols-[1.05fr_1fr] lg:py-20">
-          <div className="flex flex-col items-start gap-7">
+          <div className="flex min-w-0 flex-col items-start gap-7">
             <a href={jobsEnabled ? "#jobs" : "#features"} className="nb-focus inline-flex animate-nb-rise items-center gap-2 rounded-full border-2 border-line bg-live px-3.5 py-1 text-sm font-bold text-ink no-underline">
               <span aria-hidden="true" className="size-2.5 animate-nb-blink rounded-full bg-ink" />
               {jobsEnabled ? "New: jobs board and study stats" : "New: study stats and focus mode"}
@@ -61,7 +61,7 @@ export function Hero({ jobsEnabled }: { jobsEnabled: boolean }) {
               ))}
             </ul>
           </div>
-          <div className="animate-nb-rise [animation-delay:300ms]">
+          <div className="min-w-0 animate-nb-rise [animation-delay:300ms]">
             <HeroCards jobsEnabled={jobsEnabled} />
           </div>
         </div>

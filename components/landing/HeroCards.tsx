@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cx } from "@/components/ui";
 import { Depth } from "@/components/motion/PointerParallax";
 import { Tilt } from "@/components/motion/Tilt";
@@ -17,6 +17,8 @@ const MATCH_CARDS: MatchCard[] = [
 ];
 const JOB_CARD: JobCard = { kind: "job", id: "ta", title: "Teaching assistant", org: "CSE 220 · Dept. of CSE", tags: ["Part-time", "On campus"], deadline: "Closes in 3 days" };
 const SLOTS = ["front", "left", "right"] as const;
+const DECK_WIDTH = 560;
+const DECK_HEIGHT = 540;
 
 function slotStyle(slot: (typeof SLOTS)[number]) {
   if (slot === "front") return { transform: "translate(-50%, 0) rotate(0deg)", zIndex: 3 };
@@ -110,8 +112,20 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
       return next;
     });
 
+  // The fan is drawn at 560x540 and scaled to the column, so it fits phones and narrow laptop columns alike.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => setScale(Math.min(1, entry.contentRect.width / DECK_WIDTH)));
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div aria-hidden="true" className="relative mx-auto h-[540px] w-full max-w-[560px] select-none">
+    <div ref={frameRef} aria-hidden="true" className="relative mx-auto w-full max-w-[560px] select-none" style={{ height: DECK_HEIGHT * scale }}>
+    <div className="absolute top-0 left-0 origin-top-left" style={{ width: DECK_WIDTH, height: DECK_HEIGHT, scale: String(scale) }}>
       {deck.map((card, deckIndex) => {
         const slot = SLOTS[order.indexOf(deckIndex)];
         const front = slot === "front";
@@ -120,7 +134,7 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
             key={card.id}
             onClick={() => bringToFront(deckIndex)}
             data-cursor-label={front ? undefined : "Shuffle"}
-            className={cx("absolute top-[70px] left-1/2 w-[min(280px,58%)] transition-transform duration-[650ms] ease-[var(--ease-nb-spring)]", !front && "cursor-pointer")}
+            className={cx("absolute top-[70px] left-1/2 w-[280px] transition-transform duration-[650ms] ease-[var(--ease-nb-spring)]", !front && "cursor-pointer")}
             style={slotStyle(slot)}
           >
             <Tilt max={front ? 10 : 0}>
@@ -158,6 +172,7 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
           </div>
         </div>
       </Depth>
+    </div>
     </div>
   );
 }

@@ -67,7 +67,7 @@ export function HowItWorks() {
   return (
     <Section id="how-it-works" tone="ink">
       <Heading>From sign-up to your first session in three steps</Heading>
-      <ol className="m-0 grid list-none gap-7 p-0 md:grid-cols-3">
+      <ol className="m-0 grid list-none gap-7 p-0 sm:grid-cols-2 lg:grid-cols-3 sm:[&>li:last-child]:col-span-2 lg:[&>li:last-child]:col-span-1">
         {steps.map((step) => (
           <li key={step.num} className="nb-reveal">
             <div className={cx("flex h-full flex-col gap-3 rounded-nb-lg border-[length:var(--nb-border-width)] border-paper bg-card p-6 text-ink", step.shadow)}>
@@ -176,6 +176,13 @@ export function Matching() {
                 </text>
               </g>
             </svg>
+            <ul aria-hidden="true" className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0 sm:hidden">
+              {["Computer Science", "CSE 220 · MAT 215", "Tue, Thu evenings", "Algorithms"].map((item) => (
+                <li key={item} className="rounded-full border-2 border-line bg-focus px-2.5 text-sm font-bold">
+                  {item}
+                </li>
+              ))}
+            </ul>
             <figcaption className="mt-2 text-sm font-medium">Example match. Yours depend on your profile.</figcaption>
           </figure>
         </Tilt>
