@@ -18,7 +18,8 @@ export const STUDENT_STATE = path.join(__dirname, ".auth", "student.json");
  */
 export async function loginWithForm(page: Page, expectedUrl: RegExp = /\/dashboard/, email: string = E2E_USER.email, password: string = E2E_USER.password) {
   await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").fill(password);
+  // Exact: the "Show password" toggle also has "password" in its name.
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(expectedUrl, { timeout: 30_000 });
 }

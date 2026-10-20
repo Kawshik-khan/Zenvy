@@ -54,6 +54,11 @@ DIRECT_URL="postgresql://user:password@host:port/dbname"
 AUTH_SECRET="your-auth-secret"
 NEXTAUTH_URL="http://localhost:3000"
 
+# Optional: "Continue with Google" (the button only shows when both are set).
+# Redirect URI in Google Cloud Console: <your site>/api/auth/callback/google
+AUTH_GOOGLE_ID="your-google-client-id"
+AUTH_GOOGLE_SECRET="your-google-client-secret"
+
 # Supabase (Storage)
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"

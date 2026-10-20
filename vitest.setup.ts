@@ -23,3 +23,19 @@ if (typeof window !== "undefined") {
   URL.createObjectURL ??= () => `blob:mock/${++objectUrlCount}`;
   URL.revokeObjectURL ??= () => {};
 }
+
+// jsdom has no matchMedia. Report a touch device with no motion preference, so pointer-driven
+// effects (custom cursor, tilt, parallax) stay off in tests, as they do on phones.
+if (typeof window !== "undefined" && !window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: query.includes("pointer: coarse"),
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}

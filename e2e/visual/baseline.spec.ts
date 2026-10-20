@@ -5,7 +5,7 @@ import { login } from "../helpers";
 // redesign. Images are written to test-results/ and uploaded as a CI artifact; they are
 // not compared automatically.
 
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/ui"];
+const PUBLIC_ROUTES = ["/", "/login", "/register", "/forgot-password", "/ui"];
 const APP_ROUTES = [
   "/dashboard",
   "/matching",

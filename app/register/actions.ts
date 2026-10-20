@@ -5,47 +5,55 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { resend } from "@/lib/resend";
 import { generateVerificationToken } from "@/lib/tokens";
-import { z } from "zod";
 import { rateLimit } from "@/lib/rateLimit";
 import { headers } from "next/headers";
+import { emailSchema, passwordSchema } from "@/lib/password";
+import { makeUniqueId } from "@/lib/unique-id";
 
-const passwordSchema = z.string()
-  .min(8, "Password must be at least 8 characters long")
-  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-  .regex(/[0-9]/, "Password must contain at least one number");
+export type SignUpState = {
+  error?: string;
+  fieldErrors?: Partial<Record<"name" | "email" | "password", string>>;
+  /** What the person typed, so the form keeps it after an error. */
+  values?: { name: string; email: string };
+} | null;
 
-export async function signUp(prevState: any, formData: FormData) {
+export async function signUp(_prevState: SignUpState, formData: FormData): Promise<SignUpState> {
+  const name = String(formData.get("name") ?? "").trim();
+  const rawEmail = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const values = { name, email: rawEmail.trim() };
+
+  const fieldErrors: NonNullable<SignUpState>["fieldErrors"] = {};
+  if (!name) fieldErrors.name = "Enter your name.";
+  else if (name.length > 80) fieldErrors.name = "Use 80 characters or fewer.";
+  const email = emailSchema.safeParse(rawEmail);
+  if (!rawEmail.trim()) fieldErrors.email = "Enter your university email.";
+  else if (!email.success) fieldErrors.email = email.error.issues[0].message;
+  // SEC-006: Password Strength Validation
+  const checkedPassword = passwordSchema.safeParse(password);
+  if (!password) fieldErrors.password = "Choose a password.";
+  else if (!checkedPassword.success) fieldErrors.password = checkedPassword.error.issues[0].message;
+  if (Object.keys(fieldErrors).length || !email.success) return { fieldErrors, values };
+
   const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1";
   const allowed = await rateLimit(`register_${ip}`, 5);
   if (!allowed) {
-    return { error: "Too many sign-up attempts. Please try again later." };
+    return { error: "Too many sign-up attempts. Please try again later.", values };
   }
 
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  if (!email || !password || !name) {
-    return { error: "Missing fields" };
+  const existing = await prisma.user.findFirst({ where: { email: { equals: email.data, mode: "insensitive" } }, select: { id: true } });
+  if (existing) {
+    return { fieldErrors: { email: "An account with this email already exists. Sign in instead." }, values };
   }
 
-  // SEC-006: Password Strength Validation
-  const passValidation = passwordSchema.safeParse(password);
-  if (!passValidation.success) {
-    return { error: passValidation.error.issues[0].message };
-  }
-
-  console.log("Signup: Attempting signup for:", email);
   const hashedPassword = await bcrypt.hash(password, 10);
-  const baseName = name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
-  const uniqueId = `${baseName}_${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
 
   try {
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         name,
-        uniqueId,
-        email,
+        uniqueId: makeUniqueId(name),
+        email: email.data,
         emailVerified: new Date(), // Auto-verify (SEC-005 temporarily disabled)
         password: hashedPassword,
         profile: {
@@ -55,31 +63,26 @@ export async function signUp(prevState: any, formData: FormData) {
     });
 
     // Generate Verification Token (optional, for record keeping)
-    const verificationToken = await generateVerificationToken(email);
+    const verificationToken = await generateVerificationToken(email.data);
     const confirmLink = `${process.env.NEXTAUTH_URL}/verify?token=${verificationToken.token}`;
 
-    console.log("----------------------------------------");
-    console.log("DEV: Validation Link:", confirmLink);
-    console.log("----------------------------------------");
+    if (process.env.NODE_ENV !== "production") console.log("DEV: Validation Link:", confirmLink);
 
     // Send Verification Email (Silence errors so it doesn't block signup)
     try {
       await resend.emails.send({
-        from: 'Zenvy <onboarding@resend.dev>',
-        to: email,
-        subject: 'Welcome to Zenvy!',
-        html: `<p>Welcome! Your account is active. Explore Zenvy here: ${confirmLink}</p>`
+        from: "Zenvy <onboarding@resend.dev>",
+        to: email.data,
+        subject: "Welcome to Zenvy!",
+        html: `<p>Welcome! Your account is active. Explore Zenvy here: ${confirmLink}</p>`,
       });
-    } catch (e) {
+    } catch {
       console.log("Signup: Email sending failed but bypassing error.");
     }
-
-
-    console.log("Signup: User created and email sent for:", email);
   } catch (error) {
     console.error("Signup CRITICAL error:", error);
-    return { error: "User already exists or email service error" };
+    return { error: "We couldn't create your account. Please try again.", values };
   }
 
-  redirect("/login?callbackUrl=%2Fonboarding");
+  redirect("/login?message=welcome&callbackUrl=%2Fonboarding");
 }

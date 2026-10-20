@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import LandingPage from "./LandingPage";
 
 describe("LandingPage", () => {
@@ -40,5 +40,50 @@ describe("LandingPage", () => {
     render(<LandingPage />);
     expect(screen.getByRole("navigation", { name: "Footer" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Page sections" })).toBeInTheDocument();
+  });
+
+  it("only shows the jobs section when the jobs flag is on", () => {
+    const { unmount } = render(<LandingPage />);
+    expect(screen.queryByRole("heading", { name: "Jobs that fit around your classes" })).toBeNull();
+    unmount();
+    render(<LandingPage jobsEnabled />);
+    expect(screen.getByRole("heading", { name: "Jobs that fit around your classes" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Jobs" })[0]).toHaveAttribute("href", "#jobs");
+  });
+
+  it("filters the example jobs and saves one", () => {
+    render(<LandingPage jobsEnabled />);
+    const jobs = screen.getByRole("heading", { name: "Jobs that fit around your classes" }).closest("section")!;
+    fireEvent.click(within(jobs).getByRole("button", { name: "Research" }));
+    expect(within(jobs).getAllByRole("article")).toHaveLength(1);
+    const save = within(jobs).getByRole("button", { name: "Unsave Research assistant, ML lab" });
+    fireEvent.click(save);
+    expect(within(jobs).getByRole("button", { name: "Save Research assistant, ML lab" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("lets visitors join example channels", () => {
+    render(<LandingPage />);
+    const chip = screen.getByRole("button", { name: "cse-220" });
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(/1 joined/)).toBeInTheDocument();
+  });
+
+  it("runs the focus timer demo", () => {
+    vi.useFakeTimers();
+    try {
+      render(<LandingPage />);
+      const timer = screen.getByRole("timer");
+      expect(timer).toHaveTextContent("25:00");
+      fireEvent.click(screen.getByRole("button", { name: "Start" }));
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(timer).toHaveTextContent("24:57");
+      fireEvent.click(screen.getByRole("button", { name: "Break 5" }));
+      expect(timer).toHaveTextContent("05:00");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
