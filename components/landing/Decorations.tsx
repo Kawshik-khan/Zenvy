@@ -12,9 +12,9 @@ export function Sparkle({ size = 32, className = "fill-focus", delay = "0s" }: {
 }
 
 /** Emoji in a round sticker with a hard shadow. Decorative. */
-export function EmojiSticker({ emoji, rotate = 0, motion = "float", delay = "0s" }: { emoji: string; rotate?: number; motion?: "float" | "sway"; delay?: string }) {
+export function EmojiSticker({ emoji, rotate = 0 }: { emoji: string; rotate?: number }) {
   return (
-    <span aria-hidden="true" className={cx("inline-block", motion === "float" ? "animate-nb-float" : "animate-nb-sway")} style={{ animationDelay: delay }}>
+    <span aria-hidden="true" className="inline-block">
       <span className="inline-flex size-14 items-center justify-center rounded-full border-nb bg-card text-[28px] leading-none shadow-nb" style={{ rotate: `${rotate}deg` }}>
         {emoji}
       </span>
@@ -32,11 +32,11 @@ const HERO_DECOR: Placed[] = [
   { style: { left: "7%", bottom: "7%" }, depth: 12, wide: true, node: <Sparkle size={26} className="fill-career" delay="-2.1s" /> },
   { style: { right: "30%", top: "4%" }, depth: 8, node: <Sparkle size={20} delay="-1.2s" /> },
   { style: { left: "38%", bottom: "4%" }, depth: -20, wide: true, node: <EmojiSticker emoji="📚" rotate={-8} /> },
-  { style: { left: "30%", top: "3%" }, depth: 22, wide: true, node: <EmojiSticker emoji="✏️" rotate={10} motion="sway" delay="-0.5s" /> },
-  { style: { right: "2%", top: "7%" }, depth: -14, wide: true, node: <EmojiSticker emoji="🎧" rotate={8} delay="-1.1s" /> },
-  { style: { right: "2%", bottom: "20%" }, depth: 16, wide: true, node: <EmojiSticker emoji="☕" rotate={-6} motion="sway" delay="-0.8s" /> },
-  { style: { left: "1.5%", top: "44%" }, depth: -10, wide: true, node: <EmojiSticker emoji="⏰" rotate={-10} delay="-1.7s" /> },
-  { style: { left: "50%", top: "14%" }, depth: 14, wide: true, node: <EmojiSticker emoji="💡" rotate={6} delay="-0.3s" /> },
+  { style: { left: "30%", top: "3%" }, depth: 22, wide: true, node: <EmojiSticker emoji="✏️" rotate={10} /> },
+  { style: { right: "2%", top: "7%" }, depth: -14, wide: true, node: <EmojiSticker emoji="🎧" rotate={8} /> },
+  { style: { right: "2%", bottom: "20%" }, depth: 16, wide: true, node: <EmojiSticker emoji="☕" rotate={-6} /> },
+  { style: { left: "1.5%", top: "44%" }, depth: -10, wide: true, node: <EmojiSticker emoji="⏰" rotate={-10} /> },
+  { style: { left: "50%", top: "14%" }, depth: 14, wide: true, node: <EmojiSticker emoji="💡" rotate={6} /> },
 ];
 
 /** Sparkles and emoji stickers behind the hero. They drift with the pointer. */
