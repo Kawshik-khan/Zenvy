@@ -133,7 +133,6 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
           <div
             key={card.id}
             onClick={() => bringToFront(deckIndex)}
-            data-cursor-label={front ? undefined : "Shuffle"}
             className={cx("absolute top-[70px] left-1/2 w-[280px] transition-transform duration-[650ms] ease-[var(--ease-nb-spring)]", !front && "cursor-pointer")}
             style={slotStyle(slot)}
           >
