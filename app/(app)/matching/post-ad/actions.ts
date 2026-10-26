@@ -2,18 +2,9 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { createStudyAdForUser } from "@/lib/study-ads";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-const MODES = new Set(["ONLINE", "IN_PERSON", "HYBRID", "ANY"]);
-
-function cleanText(value: FormDataEntryValue | null, fallback = "") {
-  return String(value || fallback).trim();
-}
-
-function limit(value: string, maxLength: number) {
-  return value.slice(0, maxLength);
-}
 
 export async function createStudyAd(formData: FormData) {
   const session = await auth();
@@ -25,26 +16,12 @@ export async function createStudyAd(formData: FormData) {
 
   if (!user) redirect("/login");
 
-  const title = limit(cleanText(formData.get("title")), 100);
-  const subjects = limit(cleanText(formData.get("subjects")), 200);
-  const availability = limit(cleanText(formData.get("availability")), 200);
-  const description = limit(cleanText(formData.get("description")), 800);
-  const modeInput = cleanText(formData.get("mode"), "ANY").toUpperCase();
-  const mode = MODES.has(modeInput) ? modeInput : "ANY";
-
-  if (!title || !subjects || !availability || !description) {
-    throw new Error("Please complete all required study ad fields.");
-  }
-
-  await prisma.studyAd.create({
-    data: {
-      userId: user.id,
-      title,
-      subjects,
-      availability,
-      description,
-      mode,
-    },
+  await createStudyAdForUser(user.id, {
+    title: formData.get("title"),
+    subjects: formData.get("subjects"),
+    availability: formData.get("availability"),
+    description: formData.get("description"),
+    mode: formData.get("mode"),
   });
 
   revalidatePath("/matching");

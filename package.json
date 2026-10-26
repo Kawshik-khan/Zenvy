@@ -16,6 +16,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "db:seed:e2e": "node scripts/seed-e2e.mjs",
+    "db:seed:dev": "node scripts/seed-dev.mjs",
     "ci": "npm run prisma:validate && npm run lint && npm run check:ui && npm run typecheck && npm run test && npm run build",
     "postinstall": "prisma generate",
     "start:custom": "node server.js",
