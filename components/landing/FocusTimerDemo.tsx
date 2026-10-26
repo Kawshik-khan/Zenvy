@@ -84,7 +84,7 @@ export function FocusTimerDemo() {
           <circle cx="110" cy="110" r={RADIUS - 9} fill="none" className="stroke-line" strokeWidth={2} />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
-          <span role="timer" aria-live="off" className={cx("font-jetbrains text-5xl font-bold tabular-nums", running && "animate-nb-float")}>
+          <span role="timer" aria-live="off" className="font-jetbrains text-5xl font-bold tabular-nums">
             {time}
           </span>
           <span className="text-sm font-bold" aria-live="polite">
