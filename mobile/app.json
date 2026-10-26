@@ -7,7 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.zenvy.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Zenvy uses the camera for video calls with study partners.",
+        "NSMicrophoneUsageDescription": "Zenvy uses the microphone for calls with study partners."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +21,14 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.zenvy.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.BLUETOOTH_CONNECT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -24,7 +36,16 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store",
+      "@livekit/react-native-expo-plugin",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Zenvy uses the camera for video calls with study partners.",
+          "microphonePermission": "Zenvy uses the microphone for calls with study partners."
+        }
+      ]
     ],
     "scheme": "zenvy",
     "experiments": {

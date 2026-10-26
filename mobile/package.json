@@ -3,15 +3,22 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@config-plugins/react-native-webrtc": "^15.0.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/metro-runtime": "~58.0.15",
+    "@livekit/react-native": "^3.1.0",
+    "@livekit/react-native-expo-plugin": "^1.1.0",
+    "@livekit/react-native-webrtc": "^150.1.0",
     "expo": "~58.0.19",
     "expo-constants": "~58.0.13",
+    "expo-dev-client": "~58.0.15",
     "expo-font": "~58.0.10",
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.26",
+    "expo-secure-store": "~58.0.2",
     "expo-status-bar": "~58.0.4",
+    "livekit-client": "^2.23.0",
     "lucide-react-native": "^1.61.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -19,7 +26,8 @@
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
     "react-native-svg": "15.16.0",
-    "react-native-web": "~0.21.4"
+    "react-native-web": "~0.21.4",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",

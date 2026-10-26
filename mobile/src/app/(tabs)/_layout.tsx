@@ -6,6 +6,7 @@ import { House, Menu, MessageSquare, Timer, Users, type LucideIcon } from "lucid
 import { CountBadge, Text } from "../../components";
 import { conversations } from "../../data/sample";
 import { formatBadge } from "../../state/AppState";
+import { useUnreadCount } from "../../chat/useUnreadCount";
 import { font, palette, type Accent } from "../../theme/tokens";
 
 // Mirrors components/shell/nav.ts on the web: Home, Partners, Messages and Focus, with the rest under More.
@@ -19,7 +20,8 @@ const items: Record<string, { label: string; icon: LucideIcon; tone: Accent }> =
 
 function ZenvyTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const unread = formatBadge(conversations.reduce((n, c) => n + (c.kind === "people" ? c.unread : 0), 0));
+  const liveUnread = useUnreadCount();
+  const unread = formatBadge(liveUnread ?? conversations.reduce((n, c) => n + (c.kind === "people" ? c.unread : 0), 0));
   return (
     <View pointerEvents="box-none" style={{ position: "absolute", left: 12, right: 12, bottom: Math.max(insets.bottom, 12) }}>
       <View style={{ position: "absolute", top: 4, left: 4, right: -4, bottom: -4, borderRadius: 14, backgroundColor: palette.ink }} />

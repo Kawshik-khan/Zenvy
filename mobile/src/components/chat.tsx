@@ -92,6 +92,45 @@ export function Bubble({ message, showAuthor }: { message: ChatMessage; showAuth
   );
 }
 
+type LiveMessage = { id: string; content: string; senderName: string; status: string; timestamp: string; fileName: string | null; fileUrl: string | null; pending?: boolean; failed?: boolean };
+
+export function formatTime(iso: string) {
+  const d = new Date(iso);
+  const h = d.getHours();
+  return `${h % 12 || 12}:${String(d.getMinutes()).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** A message from the server (live mode). */
+export function LiveBubble({ message, mine, onRetry }: { message: LiveMessage; mine: boolean; onRetry?: () => void }) {
+  const v = useVolume();
+  const deleted = message.status === "DELETED";
+  const text = deleted ? "Message deleted" : message.content || message.fileName || "Attachment";
+  const shape = mine ? { borderTopLeftRadius: 14, borderTopRightRadius: 4, borderBottomLeftRadius: 14, borderBottomRightRadius: 14 } : { borderTopLeftRadius: 4, borderTopRightRadius: 14, borderBottomLeftRadius: 14, borderBottomRightRadius: 14 };
+  const state = message.failed ? "Not sent" : message.pending ? "Sending…" : mine ? "Sent" : "";
+  return (
+    <View style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "85%", alignItems: mine ? "flex-end" : "flex-start" }} accessible accessibilityLabel={`${mine ? "You" : message.senderName}, ${formatTime(message.timestamp)}: ${text}${state ? `. ${state}` : ""}`}>
+      <View style={[{ borderWidth: v.border, borderColor: message.failed ? palette.alert : v.line, backgroundColor: mine ? palette.chat : v.card, paddingHorizontal: 13, paddingVertical: 10, opacity: message.pending ? 0.7 : 1 }, shape]}>
+        <Text variant="body" muted={deleted} style={{ fontSize: 15, lineHeight: 21, fontStyle: deleted ? "italic" : "normal" }}>
+          {text}
+        </Text>
+      </View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Text variant="mono" muted style={{ fontSize: 10, marginTop: 3, fontFamily: font.mono }}>
+          {formatTime(message.timestamp)}
+          {state ? ` · ${state}` : ""}
+        </Text>
+        {message.failed && onRetry ? (
+          <Pressable onPress={onRetry} accessibilityRole="button" accessibilityLabel="Retry sending" style={{ minHeight: 32, justifyContent: "center" }}>
+            <Text variant="mono" style={{ fontSize: 11, textDecorationLine: "underline" }}>
+              Retry
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 export function TypingIndicator({ name }: { name: string }) {
   const v = useVolume();
   return (
@@ -108,7 +147,7 @@ export function TypingIndicator({ name }: { name: string }) {
   );
 }
 
-export function Composer({ placeholder, onSend }: { placeholder: string; onSend: (text: string) => void }) {
+export function Composer({ placeholder, onSend, onTyping }: { placeholder: string; onSend: (text: string) => void; onTyping?: () => void }) {
   const v = useVolume();
   const [draft, setDraft] = useState("");
   const send = () => {
@@ -123,7 +162,10 @@ export function Composer({ placeholder, onSend }: { placeholder: string; onSend:
       <IconButton icon={Paperclip} label="Attach a file" onPress={() => notify("Attach a file", "Attachments need expo-document-picker and the upload endpoint.")} />
       <TextInput
         value={draft}
-        onChangeText={setDraft}
+        onChangeText={(t) => {
+          setDraft(t);
+          if (t) onTyping?.();
+        }}
         onSubmitEditing={send}
         placeholder={placeholder}
         placeholderTextColor={v.fgMuted}

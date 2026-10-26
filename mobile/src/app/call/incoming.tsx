@@ -6,6 +6,10 @@ import { GridBackground } from "../../components/GridBackground";
 import { partners, person } from "../../data/sample";
 import { useApp } from "../../state/AppState";
 import { font, palette } from "../../theme/tokens";
+import { isLive } from "../../api/config";
+import { api } from "../../api/client";
+import { initialsOf } from "../../auth/AuthProvider";
+import { useCalls } from "../../calls/CallProvider";
 
 const QUICK = ["Can't talk, text me", "5 min", "In a session"];
 
@@ -23,7 +27,7 @@ function CallButton({ label, fill, onPress, children }: { label: string; fill: s
   );
 }
 
-export default function IncomingCall() {
+function DemoIncomingCall() {
   const { id = "tanvir" } = useLocalSearchParams<{ id?: string }>();
   const { sendDm } = useApp();
   const caller = person(id);
@@ -87,4 +91,90 @@ export default function IncomingCall() {
       </View>
     </Screen>
   );
+}
+
+function LiveIncomingCall() {
+  const { incoming, acceptIncoming, declineIncoming, busy } = useCalls();
+  if (!incoming) {
+    return (
+      <Screen background={palette.ink} scroll={false} statusBar="light">
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
+          <Text variant="h2" color={palette.paper}>
+            Call ended
+          </Text>
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace("/messages"))} accessibilityRole="button" style={{ minHeight: 44, justifyContent: "center" }}>
+            <Text variant="strong" color={palette.paper} style={{ textDecorationLine: "underline" }}>
+              Close
+            </Text>
+          </Pressable>
+        </View>
+      </Screen>
+    );
+  }
+
+  const caller = incoming.participants.find((p) => p.userId === incoming.startedById)?.user?.name ?? "Someone";
+  const video = incoming.mediaType === "VIDEO";
+  const reply = async (text: string) => {
+    const conversationId = incoming.conversationId;
+    await declineIncoming();
+    if (conversationId) {
+      await api(`/api/conversations/${conversationId}/messages`, { method: "POST", body: { content: text } }).catch(() => {});
+      router.push({ pathname: "/chat/[id]", params: { id: conversationId, title: caller } });
+    }
+  };
+
+  return (
+    <Screen background={palette.ink} scroll={false} statusBar="light">
+      <GridBackground color={palette.paper} opacity={0.07} />
+      <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 28, paddingTop: 40, paddingBottom: 24 }}>
+        <View style={{ borderWidth: 2, borderColor: palette.paper, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5 }}>
+          <Text variant="label" color={palette.paper}>
+            {video ? "Incoming video call" : "Incoming voice call"}
+          </Text>
+        </View>
+
+        <View style={{ width: 220, height: 220, marginTop: 44, alignItems: "center", justifyContent: "center" }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <View style={{ position: "absolute", width: 220, height: 220, borderRadius: 110, borderWidth: 2, borderStyle: "dashed", borderColor: "rgba(61,220,151,0.5)" }} />
+          <View style={{ position: "absolute", width: 176, height: 176, borderRadius: 88, borderWidth: 3, borderColor: "rgba(61,220,151,0.8)" }} />
+          <View style={{ width: 136, height: 136, borderRadius: 68, borderWidth: 3, borderColor: palette.paper, backgroundColor: palette.chat, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontFamily: font.bold, fontSize: 46, lineHeight: 54 }} color={palette.ink}>
+              {initialsOf(caller)}
+            </Text>
+          </View>
+        </View>
+
+        <Text variant="title" color={palette.paper} accessibilityRole="header" style={{ marginTop: 30, fontSize: 32, lineHeight: 36, textAlign: "center" }}>
+          {caller}
+        </Text>
+        <Text variant="body" color={palette.quietShade}>
+          Study partner
+        </Text>
+
+        {incoming.conversationId ? (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 32 }}>
+            {QUICK.map((q) => (
+              <Pressable key={q} onPress={() => void reply(q)} accessibilityRole="button" accessibilityLabel={`Decline and reply: ${q}`} style={{ minHeight: 44, paddingHorizontal: 14, borderWidth: 2, borderColor: palette.paper, borderRadius: 99, justifyContent: "center" }}>
+                <Text variant="strong" color={palette.paper} style={{ fontSize: 14 }}>
+                  {q}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+        <View style={{ marginTop: "auto", width: "100%", flexDirection: "row", justifyContent: "space-around" }}>
+          <CallButton label="Decline call" fill={palette.alert} onPress={() => void declineIncoming()}>
+            <Phone size={32} color={palette.ink} strokeWidth={2.3} style={{ transform: [{ rotate: "135deg" }] }} />
+          </CallButton>
+          <CallButton label={busy ? "Joining call" : "Accept call"} fill={palette.live} onPress={() => !busy && void acceptIncoming()}>
+            {video ? <Video size={32} color={palette.ink} strokeWidth={2.3} /> : <Phone size={32} color={palette.ink} strokeWidth={2.3} />}
+          </CallButton>
+        </View>
+      </View>
+    </Screen>
+  );
+}
+
+export default function IncomingCall() {
+  return isLive ? <LiveIncomingCall /> : <DemoIncomingCall />;
 }

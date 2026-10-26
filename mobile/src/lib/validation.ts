@@ -4,14 +4,18 @@ export function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-/** 0–4. Two or more is the minimum the web app accepts (8+ characters with a number). */
+/** Same rules the server enforces in lib/password.ts: 8+ characters, an uppercase letter and a number. */
+export function passwordProblem(pw: string) {
+  if (pw.length < 8) return "Use at least 8 characters.";
+  if (!/[A-Z]/.test(pw)) return "Add at least one uppercase letter.";
+  if (!/[0-9]/.test(pw)) return "Add at least one number.";
+  return null;
+}
+
+/** 0–4, mirroring the web strength meter: length first, then uppercase, number and symbol. */
 export function passwordStrength(pw: string) {
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/\d/.test(pw) && pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw) || pw.length >= 14) score++;
-  const label = score <= 1 ? "Too weak" : score === 2 ? "Okay" : score === 3 ? "Strong" : "Very strong";
+  const score = !pw ? 0 : pw.length < 8 ? 1 : Math.min(4, 1 + Number(/[A-Z]/.test(pw)) + Number(/[0-9]/.test(pw)) + Number(/[^A-Za-z0-9]/.test(pw)));
+  const label = ["", "Weak", "Okay", "Good", "Strong"][score];
   const color = score <= 1 ? palette.alert : score === 2 ? palette.focus : palette.live;
-  return { score, label, color };
+  return { score, label: pw.length && pw.length < 8 ? "Too short" : label, color };
 }

@@ -5,6 +5,7 @@ import { Avatar, Badge, Button, IconButton, ProgressBar, Screen, SectionHeader, 
 import { events, groups, partners, stats } from "../../data/sample";
 import { formatBadge, formatMinutes, unreadCount, useApp } from "../../state/AppState";
 import { font, palette } from "../../theme/tokens";
+import { initialsOf, useAuth } from "../../auth/AuthProvider";
 
 function greeting() {
   const h = new Date().getHours();
@@ -13,6 +14,8 @@ function greeting() {
 
 export default function Home() {
   const { state } = useApp();
+  const { user } = useAuth();
+  const firstName = user?.name?.split(" ")[0] ?? "Nadia";
   const next = events.find((e) => state.rsvp[e.id]);
   const nextGroup = groups.find((g) => g.id === next?.groupId);
   const myGroups = groups.filter((g) => state.joinedGroups[g.id]);
@@ -22,14 +25,14 @@ export default function Home() {
     <Screen tabBar>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <Surface shadow="none" radius={999} borderWidth={0} href="/profile" accessibilityLabel="Your profile" fill="transparent">
-          <Avatar initials="NR" color={palette.match} size={48} />
+          <Avatar initials={user ? initialsOf(user.name) : "NR"} color={palette.match} size={48} />
         </Surface>
         <View style={{ flex: 1 }}>
           <Text variant="small" muted>
             {greeting()}
           </Text>
           <Text variant="title" style={{ fontSize: 22, lineHeight: 26 }} accessibilityRole="header">
-            Nadia
+            {firstName}
           </Text>
         </View>
         <IconButton icon={Search} label="Search people" href="/partners" />

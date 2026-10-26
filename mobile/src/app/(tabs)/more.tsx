@@ -4,6 +4,7 @@ import { Bell, Bookmark, Briefcase, Calendar, ChartColumn, ChevronRight, LogOut,
 import { Avatar, Button, Divider, IconTile, Screen, SectionLabel, Surface, Text, Toggle } from "../../components";
 import { me } from "../../data/sample";
 import { useApp } from "../../state/AppState";
+import { initialsOf, useAuth } from "../../auth/AuthProvider";
 import { palette } from "../../theme/tokens";
 
 const links: { label: string; href: Href; icon: LucideIcon; fill: string }[] = [
@@ -29,6 +30,8 @@ function LinkRow({ label, onPress, icon, fill, right }: { label: string; onPress
 
 export default function More() {
   const { state, updateProfile } = useApp();
+  const { status, user, signOut } = useAuth();
+  const name = user?.name ?? me.name;
   return (
     <Screen tabBar>
       <Text variant="title" accessibilityRole="header">
@@ -36,10 +39,10 @@ export default function More() {
       </Text>
 
       <Surface href="/profile" accessibilityLabel="View and edit your profile" style={{ padding: 12, flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Avatar initials={me.initials} color={me.color} size={52} />
+        <Avatar initials={user ? initialsOf(user.name) : me.initials} color={me.color} size={52} />
         <View style={{ flex: 1 }}>
           <Text variant="h3" style={{ fontSize: 16 }}>
-            {me.name}
+            {name}
           </Text>
           <Text variant="small" muted>
             View and edit profile
@@ -73,7 +76,7 @@ export default function More() {
         </Surface>
       </View>
 
-      <Button label="Log out" variant="danger" icon={LogOut} size="lg" onPress={() => router.replace("/welcome")} />
+      <Button label="Log out" variant="danger" icon={LogOut} size="lg" onPress={() => (status === "signedIn" ? void signOut() : router.replace("/welcome"))} />
     </Screen>
   );
 }

@@ -7,6 +7,8 @@ import { Button, Field, IconButton, Screen, Surface, Text, goBack } from "../../
 import { GoogleButton, RevealButton } from "../../components/auth";
 import { font, palette } from "../../theme/tokens";
 import { isEmail } from "../../lib/validation";
+import { isLive } from "../../api/config";
+import { useAuth } from "../../auth/AuthProvider";
 
 export default function LogIn() {
   const [email, setEmail] = useState("");
@@ -14,15 +16,26 @@ export default function LogIn() {
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const insets = useSafeAreaInsets();
+  const { signIn } = useAuth();
 
-  function submit() {
-    if (!isEmail(email) || password.length < 8) {
-      setError("Check your email and password and try again.");
+  async function submit() {
+    if (!isEmail(email) || !password) {
+      setError("Enter your email and password.");
       return;
     }
     setError(null);
-    router.replace("/home");
+    if (!isLive) return router.replace("/home");
+    setBusy(true);
+    try {
+      await signIn(email.trim(), password, remember);
+      // AuthGate moves signed-in people to Home.
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -60,8 +73,9 @@ export default function LogIn() {
           <Text variant="strong">Keep me signed in</Text>
         </Pressable>
 
-        <Button label="Log in" size="lg" onPress={submit} />
-        <GoogleButton onPress={() => router.replace("/home")} />
+        <Button label={busy ? "Logging in…" : "Log in"} size="lg" onPress={submit} disabled={busy} />
+        {/* Google sign-in needs a browser OAuth flow (expo-auth-session); email login only for now. */}
+        {isLive ? null : <GoogleButton onPress={() => router.replace("/home")} />}
         <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6 }}>
           <Text variant="body" muted>
             New to Zenvy?
