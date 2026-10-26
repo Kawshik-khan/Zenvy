@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ExternalLink, FileText, Link2, Lock, Phone, Pin, PinOff, Radio, StickyNote, Trash2 } from 'lucide-react';
 import FocusHeaderIndicator from '@/app/components/FocusHeaderIndicator';
 import { uploadChatAttachment } from '@/app/actions/upload-chat-attachment';
+import { postRoomMessage, type RoomMessageFile } from '@/lib/room-messages';
 import {
   cancelGroupInvite,
   createGroupResource,
@@ -133,15 +134,17 @@ export default function GroupChatClient({
   useEffect(() => {
     if (!isMember) return;
 
-    // Load message history
-    fetch(`/api/groups/messages?groupId=${group.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.messages && Array.isArray(data.messages)) {
-          setMessages(data.messages);
-        }
-      })
-      .catch(console.error);
+    // Load message history, and again after every reconnect to pick up anything missed while offline.
+    const loadHistory = () =>
+      fetch(`/api/groups/messages?groupId=${group.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.messages && Array.isArray(data.messages)) {
+            setMessages((prev) => [...data.messages, ...prev.filter((m) => m.id.startsWith('temp-'))]);
+          }
+        })
+        .catch(console.error);
+    loadHistory();
 
     fetch(`/api/calls/active?groupId=${group.id}`)
       .then((res) => res.json())
@@ -153,16 +156,13 @@ export default function GroupChatClient({
       setIsConnected(true);
       socket.emit('authenticate', { userId: user.id });
       socket.emit('join_group_room', group.id);
+      loadHistory();
     });
 
     socket.on('disconnect', () => setIsConnected(false));
 
     socket.on('receive_group_message', (msg: Message) => {
-      setMessages((prev) => [...prev, { ...msg, isSelf: false }]);
-    });
-
-    socket.on('group_message_sent_success', (data: { tempId: string, realId: string }) => {
-      setMessages((prev) => prev.map(m => m.id === data.tempId ? { ...m, id: data.realId } : m));
+      setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, { ...msg, isSelf: msg.senderId === user.id }]));
     });
 
     socket.on('group_message_deleted', ({ messageId }: { messageId: string }) => {
@@ -203,7 +203,6 @@ export default function GroupChatClient({
       socket.off('connect');
       socket.off('disconnect');
       socket.off('receive_group_message');
-      socket.off('group_message_sent_success');
       socket.off('group_message_deleted');
       socket.off('group_error');
       socket.off('user_typing');
@@ -233,27 +232,14 @@ export default function GroupChatClient({
 
     try {
       const res = await uploadChatAttachment(formData);
-      if (res?.error) {
-        alert(res.error);
+      if (res?.error || !res?.url) {
+        alert(res?.error || 'Upload failed');
         return;
       }
 
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        senderId: user.id,
-        senderName: user.name || 'Anonymous',
-        senderImage: user.image,
-        content: inputValue.trim() || `Attached: ${file.name}`,
-        fileUrl: res.url,
-        fileType: res.fileType,
-        fileName: res.fileName,
-        timestamp: new Date(),
-        isSelf: true,
-      };
-
-      socket.emit('send_group_message', { groupId: group.id, message: newMessage });
-      setMessages((prev) => [...prev, newMessage]);
+      const content = inputValue.trim() || `Attached: ${file.name}`;
       setInputValue('');
+      await sendToRoom(content, { fileUrl: res.url, fileType: res.fileType ?? null, fileName: res.fileName ?? null });
     } catch (err) {
       console.error('Upload error:', err);
     } finally {
@@ -262,22 +248,40 @@ export default function GroupChatClient({
     }
   };
 
+  // Saves over HTTP first, so a message is never lost when the socket server is unreachable; the
+  // socket only tells the others in the room. Shows the message right away and rolls back on error.
+  const sendToRoom = async (content: string, file: RoomMessageFile | null = null) => {
+    const tempId = `temp-${Date.now()}`;
+    const pending: Message = {
+      id: tempId,
+      senderId: user.id,
+      senderName: user.name || 'Anonymous',
+      senderImage: user.image,
+      content,
+      ...file,
+      timestamp: new Date(),
+      isSelf: true,
+    };
+    setMessages((prev) => [...prev, pending]);
+
+    try {
+      const saved = await postRoomMessage('group', group.id, { content, file });
+      setMessages((prev) =>
+        prev.some((m) => m.id === saved.id) ? prev.filter((m) => m.id !== tempId) : prev.map((m) => (m.id === tempId ? saved : m)),
+      );
+      socket.emit('group_message:created', { groupId: group.id, messageId: saved.id });
+    } catch (error) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setInputValue((current) => current || content);
+      alert(error instanceof Error ? error.message : 'Message could not be sent');
+    }
+  };
+
   const sendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputValue.trim() || !isMember) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: user.id,
-      senderName: user.name || 'Anonymous',
-      senderImage: user.image,
-      content: inputValue,
-      timestamp: new Date(),
-      isSelf: true,
-    };
-
-    socket.emit('send_group_message', { groupId: group.id, message: newMessage });
-    setMessages((prev) => [...prev, newMessage]);
+    void sendToRoom(inputValue.trim());
     setInputValue('');
 
     // Stop typing immediately
@@ -291,6 +295,7 @@ export default function GroupChatClient({
   };
 
   const handleDeleteMessage = (messageId: string) => {
+    if (messageId.startsWith('temp-')) return;
     setMessages((prev) => prev.filter(m => m.id !== messageId));
     socket.emit('delete_group_message', { groupId: group.id, messageId });
   };

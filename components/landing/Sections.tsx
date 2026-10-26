@@ -168,7 +168,7 @@ export function Matching() {
                 <text x="320" y="256">Tue, Thu evenings</text>
                 <text x="320" y="284">Algorithms</text>
               </g>
-              <g className="animate-nb-float">
+              <g>
                 <rect x="286" y="110" width="80" height="42" rx="10" className="fill-ink" />
                 <rect x="280" y="104" width="80" height="42" rx="10" className="fill-card stroke-ink" strokeWidth={3} />
                 <text x="320" y="132" textAnchor="middle" className="fill-ink font-jetbrains" fontWeight={700} fontSize={20}>

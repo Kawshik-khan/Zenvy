@@ -145,7 +145,7 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
       })}
 
       <div className="absolute top-0 right-0 z-10">
-        <div className="animate-nb-float">
+        <div>
           <div className="rotate-[5deg] rounded-nb border-nb bg-focus px-3.5 py-2.5 text-ink shadow-nb-md">
             <span className="block text-[11px] font-bold tracking-[0.08em]">FOCUS · 2 OF 4</span>
             <LiveTimer />
@@ -153,12 +153,12 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
         </div>
       </div>
       <div className="absolute bottom-11 left-0 z-10">
-        <div className="max-w-[210px] origin-left animate-nb-sway rounded-[14px_14px_14px_4px] border-nb bg-chat px-3.5 py-2.5 font-bold text-ink shadow-nb-md">
+        <div className="max-w-[210px] origin-left rounded-[14px_14px_14px_4px] border-nb bg-chat px-3.5 py-2.5 font-bold text-ink shadow-nb-md">
           Library at 7? I&apos;ll bring the past papers.
         </div>
       </div>
       <div className="absolute right-0 bottom-0 z-10">
-        <div className="animate-nb-float [animation-delay:-1.3s]">
+        <div>
           <div className="flex items-center gap-2.5 rounded-nb border-nb bg-card px-3.5 py-2.5 text-ink shadow-nb-md">
             <span className="inline-flex size-8 items-center justify-center rounded-lg border-2 border-line bg-live">
               <Check size={16} strokeWidth={3} />

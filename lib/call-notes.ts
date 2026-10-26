@@ -1,7 +1,8 @@
 import { socket } from "@/lib/socket";
+import { CALL_NOTE_FILE_TYPE, postRoomMessage } from "@/lib/room-messages";
 
+export { CALL_NOTE_FILE_TYPE };
 export const CALL_NOTE_MAX_LENGTH = 1000;
-export const CALL_NOTE_FILE_TYPE = "call_note";
 
 export type CallNoteTarget =
   | { type: "dm"; conversationId: string }
@@ -89,8 +90,6 @@ export async function postCallNote(params: {
     throw new Error(`Note must be ${CALL_NOTE_MAX_LENGTH} characters or fewer`);
   }
 
-  await ensureSocketConnected();
-
   const tempId = `call_note_${Date.now()}`;
   const message = {
     id: tempId,
@@ -107,6 +106,7 @@ export async function postCallNote(params: {
   };
 
   if (params.target.type === "dm") {
+    await ensureSocketConnected();
     const { conversationId } = params.target;
     await new Promise<void>((resolve, reject) => {
       const onAck = (payload: { tempId?: string }) => {
@@ -139,65 +139,21 @@ export async function postCallNote(params: {
     return;
   }
 
-  if (params.target.type === "group") {
-    const { groupId } = params.target;
-    await new Promise<void>((resolve, reject) => {
-      const onSuccess = (payload: { tempId: string }) => {
-        if (payload.tempId !== tempId) return;
-        cleanup();
-        resolve();
-      };
-      const onError = (payload: { message?: string }) => {
-        cleanup();
-        reject(new Error(payload.message || "Unable to send note"));
-      };
-      const cleanup = () => {
-        socket.off("group_message_sent_success", onSuccess);
-        socket.off("group_error", onError);
-      };
-
-      socket.on("group_message_sent_success", onSuccess);
-      socket.on("group_error", onError);
-      socket.emit("send_group_message", { groupId, message });
-
-      window.setTimeout(() => {
-        cleanup();
-        reject(new Error("Sending note timed out"));
-      }, 10000);
+  // Groups and channels save over HTTP, so the note is kept even when the socket server is down.
+  if (params.target.type === "group" || params.target.type === "channel") {
+    const kind = params.target.type;
+    const roomId = params.target.type === "group" ? params.target.groupId : params.target.channelId;
+    const saved = await postRoomMessage(kind, roomId, {
+      content: trimmed,
+      file: { fileUrl: null, fileType: CALL_NOTE_FILE_TYPE, fileName: null },
     });
-    return;
-  }
-
-  if (params.target.type === "channel") {
-    const { channelId } = params.target;
-    await new Promise<void>((resolve, reject) => {
-      const onSuccess = (payload: { tempId: string }) => {
-        if (payload.tempId !== tempId) return;
-        cleanup();
-        resolve();
-      };
-      const onError = (payload: { message?: string }) => {
-        cleanup();
-        reject(new Error(payload.message || "Unable to send note"));
-      };
-      const cleanup = () => {
-        socket.off("channel_message_sent_success", onSuccess);
-        socket.off("channel_error", onError);
-      };
-
-      socket.on("channel_message_sent_success", onSuccess);
-      socket.on("channel_error", onError);
-      socket.emit("send_channel_message", { channelId, message });
-
-      window.setTimeout(() => {
-        cleanup();
-        reject(new Error("Sending note timed out"));
-      }, 10000);
-    });
+    if (socket.connected && kind === "group") socket.emit("group_message:created", { groupId: roomId, messageId: saved.id });
+    if (socket.connected && kind === "channel") socket.emit("channel_message:created", { channelId: roomId, messageId: saved.id });
     return;
   }
 
   if (params.target.type === "legacy_room") {
+    await ensureSocketConnected();
     const { roomId } = params.target;
     await new Promise<void>((resolve, reject) => {
       const onSuccess = (payload: { tempId: string }) => {
