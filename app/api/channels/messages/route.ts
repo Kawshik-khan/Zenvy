@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { invalidateStudyMetrics } from '@/lib/cache';
+import { parseRoomMessageInput, roomMessageJson } from '@/lib/room-messages';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
@@ -27,16 +29,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    const messages = await prisma.channelMessage.findMany({
+    // Newest 100, shown oldest first.
+    const messages = (await prisma.channelMessage.findMany({
       where: { channelId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 100,
       include: {
         sender: {
           select: { name: true, image: true, id: true },
         },
       },
-    });
+    })).reverse();
 
     const formattedMessages = messages.map((msg) => ({
       id: msg.id,
@@ -56,4 +59,38 @@ export async function GET(request: Request) {
     console.error('Error fetching channel messages:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+/**
+ * Saves a channel message. The web and mobile apps both send this way, so messages persist even when
+ * the socket server is down; the web app then asks the socket server to broadcast the saved row.
+ * Body: { channelId, content, fileUrl?, fileType?, fileName? }.
+ */
+export async function POST(request: Request) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const input = parseRoomMessageInput('channel', await request.json().catch(() => null));
+  if (!input.ok) {
+    return NextResponse.json({ error: input.error }, { status: 400 });
+  }
+
+  const membership = await prisma.channelMember.findUnique({
+    where: { channelId_userId: { channelId: input.roomId, userId } },
+    select: { id: true },
+  });
+  if (!membership) {
+    return NextResponse.json({ error: 'You must be a member to send messages' }, { status: 403 });
+  }
+
+  const message = await prisma.channelMessage.create({
+    data: { content: input.content, ...input.file, channelId: input.roomId, senderId: userId },
+    include: { sender: { select: { name: true, image: true } } },
+  });
+  await invalidateStudyMetrics(userId);
+
+  return NextResponse.json({ message: roomMessageJson(message, userId) }, { status: 201 });
 }

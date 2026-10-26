@@ -4,8 +4,9 @@ import { Server as ServerIO } from 'socket.io';
 import { getToken } from 'next-auth/jwt';
 import webpush from 'web-push';
 import { verifySocketToken } from '../../lib/socket-auth';
+import { registerRoomChatHandlers } from '../../lib/room-chat-socket';
 import { prisma } from '../../lib/prisma';
-import { canAccessChannel, canAccessGroup, canAccessMessageRoom, canSignalUser } from '../../lib/room-auth';
+import { canAccessGroup, canAccessMessageRoom, canSignalUser } from '../../lib/room-auth';
 import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '../../lib/calls';
 import { invalidateConversationUnread, invalidateStudyMetrics } from '../../lib/cache';
 import {
@@ -150,6 +151,11 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         addUserSocket(userId, socket.id);
         socket.join(`user_${userId}`);
       }
+
+      // Clients still send this after connecting; auth already happened in the handshake.
+      socket.on('authenticate', () => {
+        socket.emit('authenticated', { userId });
+      });
 
       async function emitConversationUpdated(conversationId: string) {
         const conversation = await prisma.conversation.findUnique({
@@ -351,161 +357,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         }
       });
 
-      // ============================================
-      // CHANNEL MESSAGING
-      // ============================================
-
-      socket.on('join_channel_room', async (channelId: string) => {
-        if (!userId || !(await canAccessChannel(userId, channelId))) {
-          socket.emit('channel_error', { message: 'You must be a member to join this channel' });
-          return;
-        }
-        socket.join(`channel_${channelId}`);
-      });
-
-      socket.on('send_channel_message', async (data: { channelId: string, message: any }) => {
-        if (!data.message || !socket.data.user?.sub) return;
-
-        const senderId = socket.data.user.sub;
-        const tempId = data.message.id;
-
-        try {
-          const membership = await prisma.channelMember.findUnique({
-            where: { channelId_userId: { channelId: data.channelId, userId: senderId } },
-          });
-
-          if (!membership) {
-            socket.emit('channel_error', { message: 'You must be a member to send messages' });
-            return;
-          }
-
-          data.message.senderId = senderId;
-
-          const savedMsg = await prisma.channelMessage.create({
-            data: {
-              content: data.message.content || "",
-              fileUrl: data.message.fileUrl || null,
-              fileType: data.message.fileType || null,
-              fileName: data.message.fileName || null,
-              senderId,
-              channelId: data.channelId,
-            },
-          });
-
-          data.message.id = savedMsg.id;
-          data.message.timestamp = savedMsg.createdAt;
-          await invalidateStudyMetrics(senderId);
-          socket.emit('channel_message_sent_success', { tempId, realId: savedMsg.id });
-        } catch (e) {
-          console.error('Failed to save channel message:', e);
-          return;
-        }
-
-        socket.to(`channel_${data.channelId}`).emit('receive_channel_message', data.message);
-      });
-
-      socket.on('delete_channel_message', async (data: { channelId: string, messageId: string }) => {
-        if (!socket.data.user?.sub) return;
-
-        try {
-          const msg = await prisma.channelMessage.findUnique({ where: { id: data.messageId } });
-          if (msg && msg.senderId === socket.data.user.sub) {
-            await prisma.channelMessage.delete({ where: { id: data.messageId } });
-            await invalidateStudyMetrics(socket.data.user.sub);
-            socket.to(`channel_${data.channelId}`).emit('channel_message_deleted', { messageId: data.messageId });
-          }
-        } catch (e) {
-          console.error('Failed to delete channel message:', e);
-        }
-      });
-
-      // ============================================
-      // GROUP MESSAGING
-      // ============================================
-
-      socket.on('join_group_room', async (groupId: string) => {
-        if (!userId || !(await canAccessGroup(userId, groupId))) {
-          socket.emit('group_error', { message: 'You must be a member to join this group' });
-          return;
-        }
-        socket.join(`group_${groupId}`);
-      });
-
-      socket.on('send_group_message', async (data: { groupId: string, message: any }) => {
-        if (!data.message || !socket.data.user?.sub) return;
-
-        const senderId = socket.data.user.sub;
-        const tempId = data.message.id;
-
-        try {
-          const membership = await prisma.groupMember.findUnique({
-            where: { groupId_userId: { groupId: data.groupId, userId: senderId } },
-          });
-
-          if (!membership) {
-            socket.emit('group_error', { message: 'You must be a member to send messages' });
-            return;
-          }
-
-          data.message.senderId = senderId;
-
-          const savedMsg = await prisma.groupMessage.create({
-            data: {
-              content: data.message.content || "",
-              fileUrl: data.message.fileUrl || null,
-              fileType: data.message.fileType || null,
-              fileName: data.message.fileName || null,
-              senderId,
-              groupId: data.groupId,
-            },
-          });
-
-          data.message.id = savedMsg.id;
-          data.message.timestamp = savedMsg.createdAt;
-          await invalidateStudyMetrics(senderId);
-          socket.emit('group_message_sent_success', { tempId, realId: savedMsg.id });
-        } catch (e) {
-          console.error('Failed to save group message:', e);
-          return;
-        }
-
-        socket.to(`group_${data.groupId}`).emit('receive_group_message', data.message);
-      });
-
-      socket.on('delete_group_message', async (data: { groupId: string, messageId: string }) => {
-        if (!socket.data.user?.sub) return;
-
-        try {
-          const msg = await prisma.groupMessage.findUnique({ where: { id: data.messageId } });
-          if (msg && msg.senderId === socket.data.user.sub) {
-            await prisma.groupMessage.delete({ where: { id: data.messageId } });
-            await invalidateStudyMetrics(socket.data.user.sub);
-            socket.to(`group_${data.groupId}`).emit('group_message_deleted', { messageId: data.messageId });
-          }
-        } catch (e) {
-          console.error('Failed to delete group message:', e);
-        }
-      });
-
-      // ============================================
-      // TYPING INDICATORS
-      // ============================================
-
-      socket.on('typing', (data: { roomId: string, senderName: string, type: 'channel' | 'group' | 'dm' }) => {
-        let targetRoom = data.roomId;
-        if (data.type === 'channel') targetRoom = `channel_${data.roomId}`;
-        if (data.type === 'group') targetRoom = `group_${data.roomId}`;
-        
-        socket.to(targetRoom).emit('user_typing', { senderName: data.senderName });
-      });
-
-      socket.on('stop_typing', (data: { roomId: string, senderName: string, type: 'channel' | 'group' | 'dm' }) => {
-        let targetRoom = data.roomId;
-        if (data.type === 'channel') targetRoom = `channel_${data.roomId}`;
-        if (data.type === 'group') targetRoom = `group_${data.roomId}`;
-        
-        socket.to(targetRoom).emit('user_stopped_typing', { senderName: data.senderName });
-      });
+      registerRoomChatHandlers({ socket, prisma, userId });
 
       // ============================================
       // WEBRTC CALL SIGNALING (User ID based, not room based)
