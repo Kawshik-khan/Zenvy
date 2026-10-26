@@ -1,7 +1,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import { ButtonLink } from "@/components/ui";
 import { Magnetic } from "@/components/motion/Magnetic";
-import { PointerParallax } from "@/components/motion/PointerParallax";
 import { HeroDecorations } from "./Decorations";
 import { HeroCards } from "./HeroCards";
 
@@ -9,7 +8,7 @@ const WORDS = ["Find", "your", "study"];
 
 export function Hero({ jobsEnabled }: { jobsEnabled: boolean }) {
   return (
-    <PointerParallax className="relative overflow-hidden bg-canvas bg-grid">
+    <div className="relative overflow-hidden bg-canvas bg-grid">
       <section id="top" aria-labelledby="hero-title" className="relative">
         <HeroDecorations />
         <div className="relative z-[1] mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 md:px-6 lg:grid-cols-[1.05fr_1fr] lg:py-20">
@@ -66,6 +65,6 @@ export function Hero({ jobsEnabled }: { jobsEnabled: boolean }) {
           </div>
         </div>
       </section>
-    </PointerParallax>
+    </div>
   );
 }
