@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../data/sample.dart';
+import '../../data/models.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../util/dialogs.dart';
 import '../../widgets/widgets.dart';
-import '../missing.dart';
+import 'connect.dart';
 
 /// Action bar pinned to the bottom of detail screens.
 class ActionBar extends StatelessWidget {
@@ -32,40 +31,105 @@ class PartnerProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = partnerById(id);
-    if (p == null) return const Missing(to: '/partners');
     final app = AppScope.of(context);
-    final connected = app.connected(p.id);
-    final requested = app.flag(Flag.requested, p.id);
+    return Loader<Person>(
+      load: () => app.api.person(id),
+      frame: (context, body) => Screen(
+        header: const TopBar(fallback: '/partners'),
+        body: body,
+      ),
+      builder: (context, p, reload) => _Profile(person: p, reload: reload),
+    );
+  }
+}
 
+class _Profile extends StatelessWidget {
+  const _Profile({required this.person, required this.reload});
+  final Person person;
+  final Future<void> Function() reload;
+
+  Future<void> _moreActions(BuildContext context) async {
+    final p = person;
+    final app = AppScope.read(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Palette.paper,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        side: BorderSide(color: Palette.ink, width: 3),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              ZText(p.name, variant: TextVariant.h2),
+              ZButton(label: 'Report ${p.firstName}', variant: ButtonVariant.secondary, icon: LucideIcons.flag, onTap: () => Navigator.pop(context, 'report')),
+              if (!p.blockedByMe)
+                ZButton(label: 'Block ${p.firstName}', variant: ButtonVariant.danger, icon: LucideIcons.userX, onTap: () => Navigator.pop(context, 'block')),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    if (choice == 'block') {
+      await confirm(context, 'Block ${p.name}?', "They won't be able to message you, and you won't see each other in suggestions.", 'Block', () async {
+        if (await attempt(context, () => app.api.block(p.id), success: '${p.name} is blocked')) {
+          app.touch();
+          if (context.mounted) goBack(context, '/partners');
+        }
+      });
+    } else if (choice == 'report') {
+      final reason = await _askReason(context);
+      if (reason != null && context.mounted) await attempt(context, () => app.api.report(p.id, reason), success: 'Report sent. Thanks for telling us.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = person;
+    final app = AppScope.read(context);
+    final c = p.connection;
     return Screen(
       safeTop: false,
       padding: const EdgeInsets.only(bottom: 28),
       gap: 0,
+      onRefresh: reload,
       footer: ActionBar(
         children: [
-          Expanded(
-            child: ZButton(label: 'Message', variant: ButtonVariant.chat, icon: LucideIcons.messageSquare, href: '/dm/${p.id}'),
-          ),
-          Expanded(
-            child: connected
-                ? const ZButton(label: 'Partners', variant: ButtonVariant.match, settled: true)
-                : ZButton(
-                    label: requested ? 'Requested' : 'Connect',
-                    variant: ButtonVariant.match,
-                    icon: LucideIcons.userPlus,
-                    settled: requested,
-                    onTap: () {
-                      // Prototype: Tanvir has already requested you, so connecting is an instant match.
-                      if (p.id == 'tanvir') {
-                        app.connect(p.id);
-                        context.push('/matched/${p.id}');
-                      } else {
-                        app.toggle(Flag.requested, p.id);
-                      }
-                    },
-                  ),
-          ),
+          if (c?.pendingIncoming == true) ...[
+            Expanded(
+              child: ZButton(
+                label: 'Decline',
+                variant: ButtonVariant.secondary,
+                onTap: () async {
+                  if (await attempt(context, () => app.api.respondToRequest(p.id, accept: false))) {
+                    app.touch();
+                  }
+                },
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: ConnectButton(person: p, size: ButtonSize.md, onChanged: (_) => reload()),
+            ),
+          ] else ...[
+            if (c?.accepted == true) ...[
+              Expanded(
+                child: ZButton(label: 'Message', variant: ButtonVariant.chat, icon: LucideIcons.messageSquare, href: '/dm/${p.id}'),
+              ),
+              const Expanded(
+                child: ZButton(label: 'Partners', variant: ButtonVariant.match, settled: true, icon: LucideIcons.userCheck),
+              ),
+            ] else
+              Expanded(
+                child: ConnectButton(person: p, size: ButtonSize.md, onChanged: (_) => reload()),
+              ),
+          ],
         ],
       ),
       children: [
@@ -78,20 +142,7 @@ class PartnerProfileScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ZIconButton(icon: LucideIcons.chevronLeft, label: 'Back', onTap: () => goBack(context, '/partners')),
-              ZIconButton(
-                icon: LucideIcons.ellipsis,
-                label: 'Block or report',
-                onTap: () => confirm(
-                  context,
-                  'Block ${p.name}?',
-                  "They won't be able to message you or see your profile. You can also report them from Settings.",
-                  'Block',
-                  () {
-                    notify(context, 'Blocked', '${p.name} can no longer contact you.');
-                    goBack(context, '/partners');
-                  },
-                ),
-              ),
+              ZIconButton(icon: LucideIcons.ellipsis, label: 'Block or report', onTap: () => _moreActions(context)),
             ],
           ),
         ),
@@ -107,12 +158,7 @@ class PartnerProfileScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Surface(
-                      radius: Radii.pill,
-                      borderWidth: 0,
-                      fill: const Color(0x00000000),
-                      child: Avatar(initials: p.initials, color: p.color, size: 104),
-                    ),
+                    Surface(radius: Radii.pill, borderWidth: 0, fill: const Color(0x00000000), child: Avatar.of(p, size: 104)),
                     Surface(
                       tone: Tone.focus,
                       shadow: ShadowSize.sm,
@@ -131,73 +177,72 @@ class PartnerProfileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ZText(p.name, variant: TextVariant.title, header: true),
-                    ZText('${p.major} · Semester ${p.semester} · ${p.college}', variant: TextVariant.small, muted: true, style: const TextStyle(fontSize: 14)),
+                    if (p.academicLine.isNotEmpty) ZText(p.academicLine, variant: TextVariant.small, muted: true, style: const TextStyle(fontSize: 14)),
                   ],
                 ),
+                if (c?.pendingIncoming == true)
+                  Surface(
+                    tone: Tone.match,
+                    shadow: ShadowSize.sm,
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 4,
+                      children: [
+                        ZText('${p.firstName} wants to study together', variant: TextVariant.h3),
+                        if (p.requestNote != null) ZText('“${p.requestNote}”'),
+                      ],
+                    ),
+                  ),
+                if (c?.pendingOutgoing == true)
+                  ZText('Request sent. You can message ${p.firstName} once they accept.', variant: TextVariant.small, muted: true),
                 if (p.bio != null) ZText(p.bio!),
-                Surface(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 10,
-                    children: [
-                      const ZText('Why you match', variant: TextVariant.h3),
-                      for (final b in p.breakdown)
-                        Semantics(
-                          label: '${b.label}: ${b.note}',
-                          excludeSemantics: true,
-                          child: Row(
+                if (p.reasons.isNotEmpty)
+                  Surface(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 10,
+                      children: [
+                        const ZText('Why you match', variant: TextVariant.h3),
+                        for (final r in p.reasons)
+                          Row(
                             spacing: 10,
                             children: [
-                              SizedBox(width: 86, child: ZText(b.label, variant: TextVariant.small)),
-                              Expanded(
-                                child: Container(
-                                  height: 12,
-                                  clipBehavior: Clip.antiAlias,
-                                  decoration: BoxDecoration(
-                                    color: Palette.white,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: Palette.ink, width: 2),
-                                  ),
-                                  child: FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: b.value,
-                                    child: const ColoredBox(color: Palette.match),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 54,
-                                child: ZText(b.note, variant: TextVariant.mono, align: TextAlign.right, style: const TextStyle(fontSize: 12)),
-                              ),
+                              const Icon(LucideIcons.check, size: 16, color: Palette.ink),
+                              Expanded(child: ZText(r, variant: TextVariant.small)),
                             ],
                           ),
-                        ),
+                      ],
+                    ),
+                  ),
+                if (p.interests.isNotEmpty || p.studyStyle != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 8,
+                    children: [
+                      const ZText('Interests', variant: TextVariant.h3),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final t in p.interests)
+                            ZBadge(label: t, tone: (app.me?.interests.map((e) => e.toLowerCase()).contains(t.toLowerCase()) ?? false) ? Tone.chat : Tone.card),
+                          if (p.studyStyle != null) ZBadge(label: p.studyStyle!, tone: Tone.match),
+                        ],
+                      ),
                     ],
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    const ZText('Interests', variant: TextVariant.h3),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [for (final t in p.interests) ZBadge(label: t, tone: app.profile.interests.contains(t) ? Tone.chat : Tone.card)],
-                    ),
-                  ],
-                ),
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: 10,
                     children: [
                       Expanded(
-                        child: InfoTile(label: 'Available', value: p.availability ?? ''),
+                        child: InfoTile(label: 'Available', value: p.availability ?? 'Not set'),
                       ),
                       Expanded(
-                        child: InfoTile(label: 'In common', value: p.inCommon ?? ''),
+                        child: InfoTile(label: 'Groups in common', value: p.sharedGroups.isEmpty ? 'None yet' : p.sharedGroups.map((g) => g.name).join(', ')),
                       ),
                     ],
                   ),
@@ -209,6 +254,32 @@ class PartnerProfileScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+Future<String?> _askReason(BuildContext context) {
+  final controller = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: Palette.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+        side: const BorderSide(color: Palette.ink, width: 3),
+      ),
+      title: Text('What happened?', style: variantStyle(TextVariant.h2).copyWith(color: Palette.ink)),
+      content: Field(label: 'Reason', controller: controller, multiline: true, maxLength: 500, placeholder: 'Spam, harassment, fake profile…'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const ZText('Cancel', variant: TextVariant.strong),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, controller.text.trim().isEmpty ? null : controller.text.trim()),
+          child: const ZText('Send report', variant: TextVariant.strong),
+        ),
+      ],
+    ),
+  ).whenComplete(controller.dispose);
 }
 
 /// Small label-over-value tile (availability, job facts).

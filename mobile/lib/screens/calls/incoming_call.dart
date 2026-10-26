@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../data/sample.dart';
+import '../../data/models.dart';
 import '../../router.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../widgets/widgets.dart';
-
-const _quick = ["Can't talk, text me", '5 min', 'In a session'];
 
 class _CallButton extends StatelessWidget {
   const _CallButton({required this.label, required this.fill, required this.onTap, required this.child});
@@ -65,14 +63,48 @@ class _CallButton extends StatelessWidget {
   }
 }
 
-class IncomingCallScreen extends StatelessWidget {
-  const IncomingCallScreen({super.key, required this.id});
-  final String id;
+class IncomingCallScreen extends StatefulWidget {
+  const IncomingCallScreen({super.key, required this.callId, this.callerId, required this.callerName, this.video = false});
+  final String callId;
+  final String? callerId;
+  final String callerName;
+  final bool video;
+
+  @override
+  State<IncomingCallScreen> createState() => _IncomingCallScreenState();
+}
+
+class _IncomingCallScreenState extends State<IncomingCallScreen> {
+  bool _busy = false;
+
+  Future<void> _decline({String? reply}) async {
+    final app = AppScope.read(context);
+    setState(() => _busy = true);
+    await app.api.declineCall(widget.callId).catchError((_) {});
+    app.dismissIncomingCall();
+    if (!mounted) return;
+    if (reply != null && widget.callerId != null) {
+      // Opens the DM; the quick reply is sent from there so it lands in the right conversation.
+      try {
+        final conversation = await app.api.openDm(widget.callerId!);
+        await app.api.sendDm(conversation.id, reply);
+      } catch (error) {
+        if (mounted) showError(context, error);
+      }
+      if (mounted) context.pushReplacement('/dm/${widget.callerId}');
+    } else {
+      goBack(context, '/home');
+    }
+  }
+
+  void _accept() {
+    AppScope.read(context).dismissIncomingCall();
+    context.pushReplacement(withQuery('/call/active', {'callId': widget.callId, 'title': widget.callerName, 'video': widget.video ? '1' : null}));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final caller = person(id);
-    final partner = partnerById(id);
+    final caller = UserRef(id: widget.callerId ?? widget.callId, name: widget.callerName);
     return Screen(
       background: Palette.ink,
       lightStatusBar: true,
@@ -85,7 +117,6 @@ class IncomingCallScreen extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: c.maxHeight),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(28, 40, 28, 24),
-                  // Fills the screen height without intrinsics: the call buttons sit at the bottom.
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -97,7 +128,7 @@ class IncomingCallScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(99),
                               border: Border.all(color: Palette.paper, width: 2),
                             ),
-                            child: const ZText('Incoming video call', variant: TextVariant.label, color: Palette.paper),
+                            child: ZText(widget.video ? 'Incoming video call' : 'Incoming call', variant: TextVariant.label, color: Palette.paper),
                           ),
                           const SizedBox(height: 44),
                           ExcludeSemantics(
@@ -147,41 +178,40 @@ class IncomingCallScreen extends StatelessWidget {
                             variant: TextVariant.title,
                             color: Palette.paper,
                             header: true,
+                            align: TextAlign.center,
                             style: const TextStyle(fontSize: 32, height: 36 / 32),
                           ),
-                          ZText(partner != null ? 'Study partner · ${partner.inCommon}' : 'Classmate', color: Palette.quietShade),
+                          const ZText('Study partner', color: Palette.quietShade),
                           const SizedBox(height: 32),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final q in _quick)
-                                Semantics(
-                                  button: true,
-                                  label: 'Decline and reply: $q',
-                                  excludeSemantics: true,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      AppScope.read(context).sendDm(caller.id, q);
-                                      context.pushReplacement('/dm/${caller.id}');
-                                    },
-                                    child: Container(
-                                      height: kTouch,
-                                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(99),
-                                        border: Border.all(color: Palette.paper, width: 2),
-                                      ),
-                                      child: Center(
-                                        widthFactor: 1,
-                                        child: ZText(q, variant: TextVariant.strong, color: Palette.paper, style: const TextStyle(fontSize: 14)),
+                          if (widget.callerId != null)
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final q in const ["Can't talk, text me", 'Call you in 5 min', 'In a focus session'])
+                                  Semantics(
+                                    button: true,
+                                    label: 'Decline and reply: $q',
+                                    excludeSemantics: true,
+                                    child: GestureDetector(
+                                      onTap: _busy ? null : () => _decline(reply: q),
+                                      child: Container(
+                                        height: kTouch,
+                                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(99),
+                                          border: Border.all(color: Palette.paper, width: 2),
+                                        ),
+                                        child: Center(
+                                          widthFactor: 1,
+                                          child: ZText(q, variant: TextVariant.strong, color: Palette.paper, style: const TextStyle(fontSize: 14)),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
+                              ],
+                            ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -191,7 +221,7 @@ class IncomingCallScreen extends StatelessWidget {
                           _CallButton(
                             label: 'Decline call',
                             fill: Palette.alert,
-                            onTap: () => goBack(context, '/messages'),
+                            onTap: _busy ? () {} : () => _decline(),
                             child: Transform.rotate(
                               angle: 135 * math.pi / 180,
                               child: const Icon(LucideIcons.phone, size: 32, color: Palette.ink),
@@ -200,8 +230,8 @@ class IncomingCallScreen extends StatelessWidget {
                           _CallButton(
                             label: 'Accept call',
                             fill: Palette.live,
-                            onTap: () => context.pushReplacement(withQuery('/call/active', {'title': caller.name})),
-                            child: const Icon(LucideIcons.video, size: 32, color: Palette.ink),
+                            onTap: _busy ? () {} : _accept,
+                            child: Icon(widget.video ? LucideIcons.video : LucideIcons.phone, size: 32, color: Palette.ink),
                           ),
                         ],
                       ),

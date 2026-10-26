@@ -37,6 +37,11 @@ dependencies:
   go_router: ^18.1.1
   google_fonts: ^9.0.0
   lucide_icons_flutter: ^4.0.1
+  http: ^1.6.0
+  flutter_secure_storage: ^11.2.0
+  url_launcher: ^6.3.3
+  image_picker: ^1.2.4
+  livekit_client: ^2.13.2
 
 dev_dependencies:
   flutter_test:

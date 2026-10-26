@@ -3,7 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../theme/tokens.dart';
-import '../../util/dialogs.dart';
+import '../../api/client.dart';
+import '../../state/app_state.dart';
 import '../../util/validation.dart';
 import '../../widgets/widgets.dart';
 
@@ -20,14 +21,25 @@ class _LogInScreenState extends State<LogInScreen> {
   bool _show = false;
   bool _remember = true;
   String? _error;
+  bool _busy = false;
 
-  void _submit() {
-    if (!isEmail(_email) || _password.length < 8) {
-      setState(() => _error = 'Check your email and password and try again.');
+  Future<void> _submit() async {
+    if (!isEmail(_email) || _password.isEmpty) {
+      setState(() => _error = 'Enter your email and password.');
       return;
     }
-    setState(() => _error = null);
-    context.go('/home');
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    try {
+      // On success the router moves on to Home (or profile setup).
+      await AppScope.read(context).signIn(_email, _password, remember: _remember);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.status == 401 ? 'That email and password don\'t match. Try again.' : e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -100,7 +112,7 @@ class _LogInScreenState extends State<LogInScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => notify(context, 'Reset your password', 'Password reset emails come from the web app until the mobile flow is wired.'),
+                      onPressed: () => context.push('/forgot-password'),
                       style: TextButton.styleFrom(minimumSize: const Size(kTouch, kTouch), foregroundColor: Palette.ink),
                       child: const ZText(
                         'Forgot password?',
@@ -112,8 +124,7 @@ class _LogInScreenState extends State<LogInScreen> {
                 ],
               ),
               CheckRow(checked: _remember, onChanged: (v) => setState(() => _remember = v), label: 'Keep me signed in'),
-              ZButton(label: 'Log in', size: ButtonSize.lg, onTap: _submit),
-              GoogleButton(onTap: () => context.go('/home')),
+              ZButton(label: _busy ? 'Logging in…' : 'Log in', size: ButtonSize.lg, disabled: _busy, onTap: _submit),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

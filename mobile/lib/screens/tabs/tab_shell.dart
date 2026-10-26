@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../data/models.dart';
-import '../../data/sample.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
@@ -26,7 +24,7 @@ class TabShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final unread = formatBadge(conversations.where((c) => c.kind == ConversationKind.people).fold(0, (n, c) => n + c.unread));
+    final unread = formatBadge(AppScope.of(context).unreadMessages);
     return Stack(
       children: [
         Positioned.fill(child: shell),

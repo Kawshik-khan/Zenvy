@@ -4,14 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../data/models.dart';
 import '../../router.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../util/focus_timer.dart';
 import '../../widgets/widgets.dart';
-
-const _sounds = ['Lofi focus', 'Soft rain', 'Deep night'];
 
 class FocusScreen extends StatefulWidget {
   const FocusScreen({super.key});
@@ -21,14 +20,12 @@ class FocusScreen extends StatefulWidget {
 }
 
 class _FocusScreenState extends State<FocusScreen> {
-  String _sound = 'Lofi focus';
   int _round = 1;
   late final FocusTimer _timer = FocusTimer(
-    onComplete: (mode) {
+    onComplete: (mode, startedAt) {
       if (mode != FocusMode.focus || !mounted) return;
-      AppScope.read(context).completeSession(25);
       setState(() => _round = _round % 4 + 1);
-      context.push(withQuery('/focus-done', {'minutes': '25'}));
+      _log(minutes: 25, startedAt: startedAt);
     },
   );
 
@@ -38,11 +35,31 @@ class _FocusScreenState extends State<FocusScreen> {
     super.dispose();
   }
 
+  /// Saves a finished focus round to the server (it counts toward stats, streaks and XP),
+  /// then shows the session summary.
+  Future<void> _log({required int minutes, required DateTime startedAt}) async {
+    final app = AppScope.read(context);
+    var saved = true;
+    try {
+      await app.api.logFocusSession(startedAt: startedAt, endedAt: DateTime.now(), plannedMinutes: 25, completedMinutes: minutes);
+      app.touch();
+    } catch (error) {
+      saved = false;
+      if (mounted) showError(context, error);
+    }
+    if (mounted) context.push(withQuery('/focus-done', {'minutes': '$minutes', 'saved': saved ? '1' : '0'}));
+  }
+
   void _skip() {
     if (_timer.mode != FocusMode.focus) return _timer.setMode(FocusMode.focus);
-    final minutes = _timer.finish();
-    AppScope.read(context).completeSession(minutes);
-    context.push(withQuery('/focus-done', {'minutes': '$minutes'}));
+    if (_timer.roundStartedAt == null) return showMessage(context, 'Start the timer first.');
+    final elapsed = _timer.total - _timer.remaining;
+    if (elapsed < 60) {
+      _timer.reset();
+      return showMessage(context, 'Under a minute, so this round wasn\'t saved.');
+    }
+    final round = _timer.finish();
+    _log(minutes: round.minutes, startedAt: round.startedAt);
   }
 
   @override
@@ -113,43 +130,36 @@ class _FocusScreenState extends State<FocusScreen> {
               children: [
                 ZIconButton(icon: LucideIcons.rotateCcw, label: 'Reset timer', onTap: t.reset, size: 48),
                 _PlayButton(running: t.running, onTap: t.running ? t.pause : t.start),
-                ZIconButton(icon: LucideIcons.skipForward, label: 'Finish session', size: 48, onTap: _skip),
-              ],
-            ),
-            Row(
-              spacing: 12,
-              children: [
-                Expanded(
-                  child: _Stat(value: '${app.sessionsToday}', label: 'Sessions done'),
-                ),
-                Expanded(
-                  child: _Stat(value: '${app.focusMinutesToday}', label: 'Minutes focused'),
+                ZIconButton(
+                  icon: LucideIcons.skipForward,
+                  label: t.mode == FocusMode.focus ? 'Finish and save this round' : 'Back to focus',
+                  size: 48,
+                  onTap: _skip,
                 ),
               ],
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 10,
-              children: [
-                const Row(
-                  spacing: 8,
+            Loader<StudyStats>(
+              load: app.api.stats,
+              frame: (context, body) => const SizedBox(height: 72),
+              builder: (context, stats, _) => IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 12,
                   children: [
-                    Icon(LucideIcons.headphones, size: 18, color: Palette.quietInk),
-                    ZText('Background sound', variant: TextVariant.h3),
+                    Expanded(
+                      child: _Stat(value: '${stats.todaySessions}', label: 'Sessions today'),
+                    ),
+                    Expanded(
+                      child: _Stat(value: formatMinutes(stats.todayMinutes), label: 'Focused today'),
+                    ),
+                    Expanded(
+                      child: _Stat(value: '${stats.streakDays}d', label: 'Streak'),
+                    ),
                   ],
                 ),
-                // Playback needs just_audio and the tracks from public/audio in the web app.
-                Row(
-                  spacing: 8,
-                  children: [
-                    for (final s in _sounds)
-                      Expanded(
-                        child: ZChip(label: s, tone: Tone.focus, padding: 6, selected: _sound == s, onTap: () => setState(() => _sound = s)),
-                      ),
-                  ],
-                ),
-              ],
+              ),
             ),
+            ZText('Finished rounds are saved to your study stats.', variant: TextVariant.small, muted: true, align: TextAlign.center),
           ],
         );
       },

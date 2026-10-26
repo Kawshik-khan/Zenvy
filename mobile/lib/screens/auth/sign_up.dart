@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../router.dart';
+import '../../api/client.dart';
+import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../util/validation.dart';
 import '../../widgets/widgets.dart';
@@ -19,19 +19,42 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String _password = '';
   bool _show = false;
   bool _submitted = false;
+  bool _busy = false;
+  String? _error;
+  Map<String, String> _serverErrors = const {};
+
+  String? get _nameError => _name.trim().isEmpty ? 'Enter your name.' : null;
+  String? get _emailError => !isEmail(_email) ? 'Enter a valid email address.' : null;
+
+  Future<void> _submit() async {
+    final valid = _nameError == null && _emailError == null && passwordProblem(_password) == null;
+    setState(() {
+      _submitted = true;
+      _serverErrors = const {};
+      _error = null;
+    });
+    if (!valid || _busy) return;
+    setState(() => _busy = true);
+    try {
+      // On success the router moves on to profile setup.
+      await AppScope.read(context).signUp(_name, _email, _password);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _serverErrors = e.fieldErrors;
+        _error = e.fieldErrors.isEmpty ? e.message : null;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final strength = passwordStrength(_password);
-    final nameError = _name.trim().isEmpty ? 'Enter your name.' : null;
-    final emailError = !isEmail(_email) ? 'Enter a valid email address.' : null;
-    final passwordError = strength.score < 2 ? 'Use at least 8 characters with a number.' : null;
-    final valid = nameError == null && emailError == null && passwordError == null;
-
-    void submit() {
-      setState(() => _submitted = true);
-      if (valid) context.push(withQuery('/verify', {'email': _email.trim()}));
-    }
+    final nameError = _nameError;
+    final emailError = _emailError;
+    final passwordError = passwordProblem(_password);
 
     return Screen(
       header: const TopBar(
@@ -52,15 +75,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ZText('Takes a minute. Your university email helps classmates trust you.', muted: true),
           ],
         ),
-        GoogleButton(onTap: () => context.push('/onboarding-about')),
-        const OrDivider(),
+        if (_error != null)
+          Semantics(
+            liveRegion: true,
+            child: Surface(
+              tone: Tone.alert,
+              shadow: ShadowSize.sm,
+              padding: const EdgeInsets.all(12),
+              child: ZText(_error!, variant: TextVariant.strong),
+            ),
+          ),
         Field(
           label: 'Full name',
           placeholder: 'Nadia Rahman',
           autofillHints: const [AutofillHints.name],
           capitalization: TextCapitalization.words,
           onChanged: (v) => setState(() => _name = v),
-          error: _submitted ? nameError : null,
+          error: _serverErrors['name'] ?? (_submitted ? nameError : null),
         ),
         Field(
           label: 'Email',
@@ -69,7 +100,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           autofillHints: const [AutofillHints.email],
           capitalization: TextCapitalization.none,
           onChanged: (v) => setState(() => _email = v),
-          error: _submitted ? emailError : null,
+          error: _serverErrors['email'] ?? (_submitted ? emailError : null),
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,7 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               autofillHints: const [AutofillHints.newPassword],
               capitalization: TextCapitalization.none,
               onChanged: (v) => setState(() => _password = v),
-              error: _submitted ? passwordError : null,
+              error: _serverErrors['password'] ?? (_submitted ? passwordError : null),
               right: RevealButton(shown: _show, onToggle: () => setState(() => _show = !_show)),
             ),
             ExcludeSemantics(
@@ -105,7 +136,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             Semantics(
               liveRegion: true,
               child: ZText(
-                '${_password.isNotEmpty ? '${strength.label}. ' : ''}At least 8 characters with a number.',
+                '${strength.label.isNotEmpty ? '${strength.label}. ' : ''}8+ characters with an uppercase letter and a number.',
                 variant: TextVariant.small,
                 muted: true,
                 style: const TextStyle(fontSize: 12),
@@ -113,7 +144,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ],
         ),
-        ZButton(label: 'Create account', size: ButtonSize.lg, onTap: submit),
+        ZButton(label: _busy ? 'Creating account…' : 'Create account', size: ButtonSize.lg, disabled: _busy, onTap: _submit),
         ZText(
           'By continuing you agree to the Terms and Privacy Policy.',
           variant: TextVariant.small,

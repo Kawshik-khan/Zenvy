@@ -1,0 +1,220 @@
+{
+ "group": {
+  "id": "cmvpey1yg000z90eh4twgxgkd",
+  "name": "Algorithms Circle",
+  "subject": "Algorithms",
+  "description": "Timed problem sets every Tue & Thu. Bring one problem you're stuck on.",
+  "createdAt": "2026-10-26T15:30:20.393Z",
+  "isMember": true,
+  "myRole": "MEMBER",
+  "memberCount": 5,
+  "members": [
+   {
+    "id": "cmvpey1x4000890eha3c4m9ao",
+    "name": "Farhan Jamil",
+    "uniqueId": "farhan_dev",
+    "image": null,
+    "college": "BRAC University",
+    "major": "Computer Science",
+    "semester": 6,
+    "bio": "Codeforces most nights. Ask me about DP.",
+    "studyStyle": "Focused solo work",
+    "interests": [
+     "Algorithms",
+     "Competitive programming"
+    ],
+    "availability": "Evenings",
+    "role": "ADMIN"
+   },
+   {
+    "id": "cmvpey1wn000290ehxb7q6b3a",
+    "name": "Tanvir Ahmed",
+    "uniqueId": "tanvir_dev",
+    "image": null,
+    "college": "BRAC University",
+    "major": "Computer Science",
+    "semester": 5,
+    "bio": "Grinding CSE221 and LeetCode before internship season.",
+    "studyStyle": "Pair programming",
+    "interests": [
+     "Algorithms",
+     "Data structures",
+     "React",
+     "C++"
+    ],
+    "availability": "Evenings",
+    "role": "MEMBER"
+   },
+   {
+    "id": "cmvpey1x8000a90ehnes44reh",
+    "name": "Rafia Islam",
+    "uniqueId": "rafia_dev",
+    "image": null,
+    "college": "BRAC University",
+    "major": "Computer Science",
+    "semester": 5,
+    "bio": "Design-minded CS student. I take good notes.",
+    "studyStyle": "Group discussion",
+    "interests": [
+     "Calculus",
+     "UI design",
+     "React"
+    ],
+    "availability": "Morning",
+    "role": "MEMBER"
+   },
+   {
+    "id": "cmvpey1wa000090ehtuciyd49",
+    "name": "Nadia Rahman",
+    "uniqueId": "nadia_dev",
+    "image": null,
+    "college": "BRAC University",
+    "major": "Computer Science",
+    "semester": 5,
+    "bio": "Prepping for CSE221 and summer internships. I like pair programming and explaining things out loud.",
+    "studyStyle": "Pair programming",
+    "interests": [
+     "Algorithms",
+     "React",
+     "Data structures",
+     "UI design"
+    ],
+    "availability": "Evenings",
+    "role": "MEMBER"
+   },
+   {
+    "id": "cmvpey1wy000690ehtoqmevuy",
+    "name": "Mahin Karim",
+    "uniqueId": "mahin_dev",
+    "image": null,
+    "college": "BRAC University",
+    "major": "Electrical Engineering",
+    "semester": 5,
+    "bio": "Night owl. Calculus II and circuits, mostly.",
+    "studyStyle": "Group discussion",
+    "interests": [
+     "Calculus",
+     "Physics",
+     "Circuits"
+    ],
+    "availability": "Late",
+    "role": "MEMBER"
+   }
+  ],
+  "resources": [
+   {
+    "id": "cmvpey1yh001790ehsvzchnjq",
+    "title": "Graph algorithms cheatsheet",
+    "description": null,
+    "type": "LINK",
+    "url": "https://cp-algorithms.com/graph/breadth-first-search.html",
+    "fileName": null,
+    "fileType": null,
+    "pinned": true,
+    "creatorName": "Farhan Jamil",
+    "createdAt": "2026-10-26T15:30:20.393Z"
+   },
+   {
+    "id": "cmvpey1yh001890ehfcb3rr3s",
+    "title": "CSE221 past papers (2022\u201325)",
+    "description": null,
+    "type": "LINK",
+    "url": "https://example.com/cse221-papers",
+    "fileName": null,
+    "fileType": null,
+    "pinned": false,
+    "creatorName": "Rafia Islam",
+    "createdAt": "2026-10-26T15:30:20.393Z"
+   },
+   {
+    "id": "cmvpey1yh001990ehn48evd0o",
+    "title": "Knapsack notes",
+    "description": "Iterate W backwards for 0/1, forwards for unbounded.",
+    "type": "NOTE",
+    "url": null,
+    "fileName": null,
+    "fileType": null,
+    "pinned": false,
+    "creatorName": "Tanvir Ahmed",
+    "createdAt": "2026-10-26T15:30:20.393Z"
+   }
+  ],
+  "events": [
+   {
+    "id": "cmvpey1zt002690ehj0bgghzy",
+    "title": "DP problem set review",
+    "description": null,
+    "startTime": "2026-10-27T13:00:00.000Z",
+    "endTime": "2026-10-27T14:30:00.000Z",
+    "location": "Online",
+    "type": "VIRTUAL",
+    "group": {
+     "id": "cmvpey1yg000z90eh4twgxgkd",
+     "name": "Algorithms Circle"
+    },
+    "creator": {
+     "id": "cmvpey1x4000890eha3c4m9ao",
+     "name": "Farhan Jamil"
+    },
+    "goingCount": 4,
+    "going": [
+     {
+      "id": "cmvpey1x4000890eha3c4m9ao",
+      "name": "Farhan Jamil",
+      "image": null
+     },
+     {
+      "id": "cmvpey1wn000290ehxb7q6b3a",
+      "name": "Tanvir Ahmed",
+      "image": null
+     },
+     {
+      "id": "cmvpey1x8000a90ehnes44reh",
+      "name": "Rafia Islam",
+      "image": null
+     },
+     {
+      "id": "cmvpey1wa000090ehtuciyd49",
+      "name": "Nadia Rahman",
+      "image": null
+     }
+    ],
+    "myStatus": "GOING",
+    "canCancel": false
+   },
+   {
+    "id": "cmvpey200002d90ehd8ack93i",
+    "title": "Greedy vs DP drill",
+    "description": null,
+    "startTime": "2026-10-29T14:30:00.000Z",
+    "endTime": "2026-10-29T16:00:00.000Z",
+    "location": "Library room 3",
+    "type": "IN_PERSON",
+    "group": {
+     "id": "cmvpey1yg000z90eh4twgxgkd",
+     "name": "Algorithms Circle"
+    },
+    "creator": {
+     "id": "cmvpey1wn000290ehxb7q6b3a",
+     "name": "Tanvir Ahmed"
+    },
+    "goingCount": 2,
+    "going": [
+     {
+      "id": "cmvpey1wn000290ehxb7q6b3a",
+      "name": "Tanvir Ahmed",
+      "image": null
+     },
+     {
+      "id": "cmvpey1x4000890eha3c4m9ao",
+      "name": "Farhan Jamil",
+      "image": null
+     }
+    ],
+    "myStatus": null,
+    "canCancel": false
+   }
+  ],
+  "liveCall": null
+ }
+}

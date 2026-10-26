@@ -1,0 +1,39 @@
+{
+ "person": {
+  "id": "cmvpey1wt000490ehp3tfonhq",
+  "name": "Sadia Hossain",
+  "uniqueId": "sadia_dev",
+  "image": null,
+  "college": "BRAC University",
+  "major": "Computer Science",
+  "semester": 6,
+  "bio": "Databases TA-in-training. Happy to trade ER diagram reviews for ML help.",
+  "studyStyle": "Exam prep",
+  "interests": [
+   "Databases",
+   "Python",
+   "Machine learning"
+  ],
+  "availability": "Afternoons",
+  "score": 60,
+  "reasons": [
+   "Same major",
+   "Availability set",
+   "Same college",
+   "Similar semester"
+  ],
+  "connection": {
+   "status": "PENDING",
+   "direction": "incoming"
+  },
+  "requestNotificationId": "cmvpey1xn000l90ehrerdngh3",
+  "requestNote": "Want to swap ER diagram reviews for ML help?",
+  "sharedGroups": [
+   {
+    "id": "cmvpey1yz001h90ehh47hbi9m",
+    "name": "DB Design Lab"
+   }
+  ],
+  "blockedByMe": false
+ }
+}

@@ -2,37 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../data/sample.dart';
+import '../data/models.dart';
 import '../state/app_state.dart';
 import '../theme/tokens.dart';
 import '../theme/type.dart';
 import '../widgets/widgets.dart';
+import 'tabs/home.dart' show dailyGoalMinutes;
 
-const _ratings = ['Scattered', 'Okay', 'Locked in'];
-
-class FocusDoneScreen extends StatefulWidget {
-  const FocusDoneScreen({super.key, this.minutes});
+class FocusDoneScreen extends StatelessWidget {
+  const FocusDoneScreen({super.key, this.minutes, this.saved = true});
   final int? minutes;
-
-  @override
-  State<FocusDoneScreen> createState() => _FocusDoneScreenState();
-}
-
-class _FocusDoneScreenState extends State<FocusDoneScreen> {
-  String _rating = 'Locked in';
-  bool _share = true;
+  final bool saved;
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final banked = widget.minutes ?? 25;
-    final goal = ((app.focusMinutesToday / Stats.goalMinutes).clamp(0.0, 1.0) * 100).round();
-    final tiles = [
-      (value: formatMinutes(app.focusMinutesToday).replaceAll(' ', ''), label: 'Today'),
-      (value: '${Stats.streakDays + 1}d', label: 'Streak'),
-      (value: '$goal%', label: 'Goal'),
-    ];
-
+    final banked = minutes ?? 25;
     return Screen(
       safeTop: false,
       padding: const EdgeInsets.only(bottom: 28),
@@ -62,9 +47,10 @@ class _FocusDoneScreenState extends State<FocusDoneScreen> {
                 TextSpan(
                   children: [
                     TextSpan(text: '$banked min', style: zStyle(context, TextVariant.mono).copyWith(fontSize: 16)),
-                    TextSpan(text: " banked. That's ${app.sessionsToday} today."),
+                    TextSpan(text: saved ? ' banked to your stats.' : ' focused, but not saved.'),
                   ],
                 ),
+                textAlign: TextAlign.center,
                 style: zStyle(context, TextVariant.body).copyWith(fontSize: 16),
               ),
             ],
@@ -76,49 +62,45 @@ class _FocusDoneScreenState extends State<FocusDoneScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 18,
             children: [
-              Row(
-                spacing: 10,
-                children: [
-                  for (final t in tiles)
-                    Expanded(
-                      child: Surface(
-                        shadow: ShadowSize.sm,
-                        radius: 12,
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          children: [
-                            Text(t.value, style: mono(FontWeight.w700, 21, 28).copyWith(color: Palette.ink)),
-                            ZText(t.label, variant: TextVariant.small, muted: true, style: const TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const Field(label: 'What did you work on?', placeholder: 'Knapsack + LCS practice problems'),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 8,
-                children: [
-                  const ZText('How focused were you?', variant: TextVariant.h3, style: TextStyle(fontSize: 14)),
-                  Row(
-                    spacing: 8,
+              Loader<StudyStats>(
+                load: app.api.stats,
+                frame: (context, body) => const SizedBox(height: 80),
+                builder: (context, stats, _) {
+                  final goal = ((stats.todayMinutes / dailyGoalMinutes).clamp(0.0, 1.0) * 100).round();
+                  final tiles = [
+                    (value: formatMinutes(stats.todayMinutes).replaceAll(' ', ''), label: 'Today'),
+                    (value: '${stats.streakDays}d', label: 'Streak'),
+                    (value: '$goal%', label: 'Daily goal'),
+                  ];
+                  return Row(
+                    spacing: 10,
                     children: [
-                      for (final r in _ratings)
+                      for (final t in tiles)
                         Expanded(
-                          child: ZChip(label: r, tone: Tone.focus, padding: 4, selected: _rating == r, onTap: () => setState(() => _rating = r)),
+                          child: Surface(
+                            shadow: ShadowSize.sm,
+                            radius: 12,
+                            padding: const EdgeInsets.all(10),
+                            child: Column(
+                              children: [
+                                Text(t.value, style: mono(FontWeight.w700, 21, 28).copyWith(color: Palette.ink)),
+                                ZText(t.label, variant: TextVariant.small, muted: true, style: const TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
                         ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
-              CheckRow(checked: _share, onChanged: (v) => setState(() => _share = v), label: 'Share progress with Algorithms Circle'),
+              if (!saved) ZText("We couldn't reach Zenvy, so this round isn't in your stats.", variant: TextVariant.small, color: Palette.alert),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 12,
                 children: [
                   ZButton(label: 'Take a 5 min break', variant: ButtonVariant.live, size: ButtonSize.lg, onTap: () => goBack(context, '/focus')),
-                  ZButton(label: 'Done for now', variant: ButtonVariant.secondary, size: ButtonSize.lg, onTap: () => context.go('/home')),
+                  ZButton(label: 'See my stats', variant: ButtonVariant.secondary, size: ButtonSize.lg, onTap: () => context.pushReplacement('/stats')),
+                  ZButton(label: 'Done for now', variant: ButtonVariant.ghost, onTap: () => context.go('/home')),
                 ],
               ),
             ],

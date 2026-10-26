@@ -1,0 +1,26 @@
+{
+ "conversation": {
+  "id": "cmvpey1xr000m90eh8tf0ur2i",
+  "type": "DM",
+  "title": "Tanvir Ahmed",
+  "avatar": null,
+  "dmPeerId": "cmvpey1wn000290ehxb7q6b3a",
+  "lastMessageAt": "2026-10-26T15:10:20.242Z",
+  "lastMessage": null,
+  "unreadCount": 2,
+  "muted": false,
+  "archived": false,
+  "participants": [
+   {
+    "id": "cmvpey1wa000090ehtuciyd49",
+    "name": "Nadia Rahman",
+    "image": null
+   },
+   {
+    "id": "cmvpey1wn000290ehxb7q6b3a",
+    "name": "Tanvir Ahmed",
+    "image": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "messages": [
+  {
+   "id": "cmvpey1xy000r90ehkij29v3g",
+   "conversationId": "cmvpey1xr000m90eh8tf0ur2i",
+   "senderId": "cmvpey1wn000290ehxb7q6b3a",
+   "senderName": "Tanvir Ahmed",
+   "senderImage": null,
+   "content": "Did you finish the knapsack variant from the problem set?",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "status": "SENT",
+   "timestamp": "2026-10-26T14:46:20.242Z",
+   "isSelf": false
+  },
+  {
+   "id": "cmvpey1y6000t90ehnimi4oyq",
+   "conversationId": "cmvpey1xr000m90eh8tf0ur2i",
+   "senderId": "cmvpey1wa000090ehtuciyd49",
+   "senderName": "Nadia Rahman",
+   "senderImage": null,
+   "content": "Almost. Stuck on the space optimisation. 1D array keeps overwriting.",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "status": "SENT",
+   "timestamp": "2026-10-26T14:49:20.242Z",
+   "isSelf": true
+  },
+  {
+   "id": "cmvpey1y9000v90eh1ainn30a",
+   "conversationId": "cmvpey1xr000m90eh8tf0ur2i",
+   "senderId": "cmvpey1wn000290ehxb7q6b3a",
+   "senderName": "Tanvir Ahmed",
+   "senderImage": null,
+   "content": "Iterate capacity backwards.",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "status": "SENT",
+   "timestamp": "2026-10-26T15:08:20.242Z",
+   "isSelf": false
+  },
+  {
+   "id": "cmvpey1yb000x90eh8md4pw7a",
+   "conversationId": "cmvpey1xr000m90eh8tf0ur2i",
+   "senderId": "cmvpey1wn000290ehxb7q6b3a",
+   "senderName": "Tanvir Ahmed",
+   "senderImage": null,
+   "content": "Library room 3 at 7? Bringing the DP notes.",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "status": "SENT",
+   "timestamp": "2026-10-26T15:10:20.242Z",
+   "isSelf": false
+  }
+ ],
+ "nextCursor": null
+}

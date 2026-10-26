@@ -1,0 +1,82 @@
+{
+ "enabled": true,
+ "jobs": [
+  {
+   "id": "cmvpey21s003z90ehrp2gnq73",
+   "type": "PART_TIME",
+   "title": "Teaching Assistant, CSE110",
+   "company": "BRAC University",
+   "location": "Dhaka",
+   "workMode": "ONSITE",
+   "pay": "BDT 8k / month",
+   "tags": [
+    "python",
+    "teaching"
+   ],
+   "deadline": "2026-11-20T15:30:20.242Z",
+   "deadlineLabel": "Closes Nov 20",
+   "closingSoon": false,
+   "status": "LIVE",
+   "postedAt": "2026-10-26T15:30:20.512Z",
+   "saved": false,
+   "imageUrl": null,
+   "author": {
+    "id": "cmvpey1x4000890eha3c4m9ao",
+    "name": "Farhan Jamil",
+    "posterTrust": "STUDENT"
+   }
+  },
+  {
+   "id": "cmvpey21q003x90eh6y7ml13q",
+   "type": "INTERNSHIP",
+   "title": "Data Analyst Intern",
+   "company": "Nodi Health",
+   "location": "Remote",
+   "workMode": "REMOTE",
+   "pay": "BDT 20k / month",
+   "tags": [
+    "sql",
+    "python"
+   ],
+   "deadline": "2026-11-12T15:30:20.242Z",
+   "deadlineLabel": "Closes Nov 12",
+   "closingSoon": false,
+   "status": "LIVE",
+   "postedAt": "2026-10-26T15:30:20.510Z",
+   "saved": false,
+   "imageUrl": null,
+   "author": {
+    "id": "cmvpey1wt000490ehp3tfonhq",
+    "name": "Sadia Hossain",
+    "posterTrust": "STUDENT"
+   }
+  },
+  {
+   "id": "cmvpey21l003v90ehy5v93lz7",
+   "type": "INTERNSHIP",
+   "title": "Frontend Intern (React)",
+   "company": "Kothay Labs",
+   "location": "Dhaka",
+   "workMode": "HYBRID",
+   "pay": "BDT 25k / month",
+   "tags": [
+    "react",
+    "internship",
+    "typescript"
+   ],
+   "deadline": "2026-10-28T15:30:20.242Z",
+   "deadlineLabel": "Closes in 2 days",
+   "closingSoon": true,
+   "status": "LIVE",
+   "postedAt": "2026-10-26T15:30:20.506Z",
+   "saved": false,
+   "imageUrl": null,
+   "author": {
+    "id": "cmvpey1x4000890eha3c4m9ao",
+    "name": "Farhan Jamil",
+    "posterTrust": "STUDENT"
+   }
+  }
+ ],
+ "nextCursor": null
+}

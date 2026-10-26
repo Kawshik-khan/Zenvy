@@ -1,0 +1,27 @@
+{
+ "me": {
+  "id": "cmvpey1wa000090ehtuciyd49",
+  "name": "Nadia Rahman",
+  "uniqueId": "nadia_dev",
+  "image": null,
+  "college": "BRAC University",
+  "major": "Computer Science",
+  "semester": 5,
+  "bio": "Prepping for CSE221 and summer internships. I like pair programming and explaining things out loud.",
+  "studyStyle": "Pair programming",
+  "interests": [
+   "Algorithms",
+   "React",
+   "Data structures",
+   "UI design"
+  ],
+  "availability": "Evenings",
+  "email": "nadia@zenvy.dev",
+  "matchingAvailable": true,
+  "onboarded": true,
+  "counts": {
+   "partners": 2,
+   "groups": 2
+  }
+ }
+}

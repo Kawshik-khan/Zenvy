@@ -1,0 +1,58 @@
+{
+ "mine": [
+  {
+   "id": "cmvpey1yg000z90eh4twgxgkd",
+   "name": "Algorithms Circle",
+   "subject": "Algorithms",
+   "description": "Timed problem sets every Tue & Thu. Bring one problem you're stuck on.",
+   "memberCount": 5,
+   "myRole": "MEMBER",
+   "lastMessage": {
+    "content": "So each item is used once. Forward lets you reuse it, that's the unbounded version.",
+    "senderName": "Nadia Rahman",
+    "createdAt": "2026-10-26T15:23:20.242Z"
+   },
+   "reasons": []
+  },
+  {
+   "id": "cmvpey1yz001h90ehh47hbi9m",
+   "name": "DB Design Lab",
+   "subject": "Databases",
+   "description": "ER diagrams, normalization and SQL drills.",
+   "memberCount": 3,
+   "myRole": "MEMBER",
+   "lastMessage": {
+    "content": "Normalization quiz Thursday. 3NF and BCNF only.",
+    "senderName": "Sadia Hossain",
+    "createdAt": "2026-10-26T12:30:20.242Z"
+   },
+   "reasons": []
+  }
+ ],
+ "discover": [
+  {
+   "id": "cmvpey1za001p90ehglxp4f9w",
+   "name": "Calculus II Crew",
+   "subject": "Calculus",
+   "description": "Past papers and integration practice.",
+   "memberCount": 2,
+   "myRole": null,
+   "lastMessage": null,
+   "reasons": [
+    "2 members"
+   ]
+  },
+  {
+   "id": "cmvpey1zf001u90ehmitr6fwh",
+   "name": "ML Paper Club",
+   "subject": "Machine learning",
+   "description": "One paper a week, explained simply.",
+   "memberCount": 1,
+   "myRole": null,
+   "lastMessage": null,
+   "reasons": [
+    "1 member"
+   ]
+  }
+ ]
+}

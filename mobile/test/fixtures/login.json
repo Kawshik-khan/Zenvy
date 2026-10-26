@@ -1,0 +1,20 @@
+{
+ "user": {
+  "id": "cmvpey1wa000090ehtuciyd49",
+  "name": "Nadia Rahman",
+  "email": "nadia@zenvy.dev"
+ },
+ "session": {
+  "cookies": [
+   {
+    "name": "authjs.session-token",
+    "value": "test-session-token"
+   },
+   {
+    "name": "__Secure-authjs.session-token",
+    "value": "test-session-token"
+   }
+  ],
+  "expiresAt": "2026-11-25T15:30:29.205Z"
+ }
+}

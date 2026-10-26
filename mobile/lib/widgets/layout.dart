@@ -27,7 +27,14 @@ class Screen extends StatelessWidget {
     this.padding,
     this.gap = 16,
     this.lightStatusBar = false,
+    this.onRefresh,
   });
+
+  /// Pull to refresh the scrolling content.
+  final Future<void> Function()? onRefresh;
+
+  Widget _refreshable(Widget child) =>
+      onRefresh == null ? child : RefreshIndicator(onRefresh: onRefresh!, color: Palette.ink, backgroundColor: Palette.white, child: child);
 
   final Volume volume;
   final List<Widget> children;
@@ -71,10 +78,13 @@ class Screen extends StatelessWidget {
                 Expanded(
                   child:
                       body ??
-                      SingleChildScrollView(
-                        padding: pad,
-                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: gap, children: children),
+                      _refreshable(
+                        SingleChildScrollView(
+                          padding: pad,
+                          physics: onRefresh == null ? null : const AlwaysScrollableScrollPhysics(),
+                          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, spacing: gap, children: children),
+                        ),
                       ),
                 ),
                 ?footer,
@@ -156,7 +166,7 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          ZText(title, variant: TextVariant.h2, header: true),
+          Expanded(child: ZText(title, variant: TextVariant.h2, header: true, maxLines: 1)),
           ?action,
         ],
       ),

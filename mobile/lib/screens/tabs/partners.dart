@@ -1,21 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../data/models.dart';
-import '../../data/sample.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../widgets/widgets.dart';
+import '../partners/connect.dart';
 
-const _filters = ['Same major', 'Evenings', 'Exam prep', 'Pair programming'];
+const _filters = ['Not connected', 'Same major', 'Shared interests', 'Evenings'];
 
-bool _passes(Partner p, String f) => switch (f) {
-  'Same major' => p.major == 'Computer Science',
-  'Evenings' => RegExp('night|eve|PM', caseSensitive: false).hasMatch(p.availability ?? ''),
-  'Exam prep' => p.studyStyle == 'Exam prep' || p.interests.contains('Exam prep'),
-  _ => p.studyStyle == f,
+bool _passes(Person p, String f, Me? me) => switch (f) {
+  'Not connected' => p.connection?.accepted != true,
+  'Same major' => me?.major != null && p.major?.toLowerCase() == me!.major!.toLowerCase(),
+  'Shared interests' => p.reasons.any((r) => r.contains('shared interest')),
+  'Evenings' => RegExp('eve|night|late', caseSensitive: false).hasMatch(p.availability ?? ''),
+  _ => true,
 };
 
 class PartnersScreen extends StatefulWidget {
@@ -27,66 +30,134 @@ class PartnersScreen extends StatefulWidget {
 
 class _PartnersScreenState extends State<PartnersScreen> {
   String _query = '';
+  Timer? _debounce;
   final Set<String> _active = {};
+  final _loader = GlobalKey<LoaderState<({List<Person> partners, List<StudyAd> studyAds})>>();
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _search(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () => setState(() => _query = value.trim()));
+  }
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final q = _query.trim().toLowerCase();
-    final list =
-        partners
-            .where((p) => q.isEmpty || [p.name, p.major, ...p.interests].any((s) => s.toLowerCase().contains(q)))
-            .where((p) => _active.every((f) => _passes(p, f)))
-            .toList()
-          ..sort((a, b) => b.score - a.score);
+    final header = [
+      const Row(
+        spacing: 12,
+        children: [
+          Expanded(child: ZText('Find partners', variant: TextVariant.title, header: true)),
+          ZButton(label: 'Post ad', variant: ButtonVariant.match, size: ButtonSize.sm, icon: LucideIcons.plus, href: '/post-ad'),
+        ],
+      ),
+      SearchBox(placeholder: 'Search by name, course or skill', label: 'Search people', onChanged: _search),
+      ChipRail(
+        children: [
+          for (final f in _filters)
+            ZChip(label: f, selected: _active.contains(f), onTap: () => setState(() => _active.contains(f) ? _active.remove(f) : _active.add(f))),
+        ],
+      ),
+    ];
 
     return Screen(
       tabBar: true,
+      onRefresh: () async => _loader.currentState?.reload(),
       children: [
-        const Row(
-          spacing: 12,
-          children: [
-            Expanded(child: ZText('Find partners', variant: TextVariant.title, header: true)),
-            ZButton(label: 'Post ad', variant: ButtonVariant.match, size: ButtonSize.sm, icon: LucideIcons.plus, href: '/post-ad'),
-          ],
-        ),
-        SearchBox(placeholder: 'Search by name, course or skill', label: 'Search people', onChanged: (v) => setState(() => _query = v)),
-        ChipRail(
-          children: [
-            for (final f in _filters)
-              ZChip(label: f, selected: _active.contains(f), onTap: () => setState(() => _active.contains(f) ? _active.remove(f) : _active.add(f))),
-          ],
-        ),
-        SectionLabel('${list.length} classmates · best match first'),
-        if (list.isEmpty)
-          Surface(
-            dashed: true,
-            shadow: ShadowSize.none,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              spacing: 6,
+        ...header,
+        Loader<({List<Person> partners, List<StudyAd> studyAds})>(
+          key: _loader,
+          reloadKey: _query,
+          load: () => app.api.partners(query: _query),
+          builder: (context, data, reload) {
+            final list = data.partners.where((p) => _active.every((f) => _passes(p, f, app.me))).toList();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 16,
               children: [
-                const ZText('No one matches those filters', variant: TextVariant.h3),
-                ZText('Try removing a filter or posting a study ad so people can find you.', variant: TextVariant.small, muted: true, align: TextAlign.center),
+                if (data.studyAds.isNotEmpty && _query.isEmpty) ...[
+                  const SectionLabel('Study ads'),
+                  for (final ad in data.studyAds.take(3)) _StudyAdCard(ad: ad, mine: ad.author.id == app.me?.id),
+                ],
+                SectionLabel(
+                  _query.isEmpty ? '${list.length} classmates · best match first' : '${list.length} result${list.length == 1 ? '' : 's'} for “$_query”',
+                ),
+                if (list.isEmpty)
+                  EmptyCard(
+                    title: _query.isEmpty && _active.isEmpty ? 'No classmates to suggest yet' : 'No one matches that',
+                    detail: 'Try removing a filter, or post a study ad so people can find you.',
+                  ),
+                for (final p in list) _PartnerCard(partner: p, reload: reload),
               ],
-            ),
-          ),
-        for (final p in list) _PartnerCard(partner: p, app: app),
+            );
+          },
+        ),
       ],
     );
   }
 }
 
+class _StudyAdCard extends StatelessWidget {
+  const _StudyAdCard({required this.ad, required this.mine});
+  final StudyAd ad;
+  final bool mine;
+
+  @override
+  Widget build(BuildContext context) {
+    return Surface(
+      tone: Tone.focus,
+      shadow: ShadowSize.sm,
+      onTap: mine ? null : () => context.push('/partner/${ad.author.id}'),
+      semanticLabel: '${ad.title}, posted by ${ad.author.name}',
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          Row(
+            spacing: 10,
+            children: [
+              Avatar.of(ad.author, size: 36),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ZText(ad.title, variant: TextVariant.h3, maxLines: 2),
+                    ZText('${mine ? 'You' : ad.author.name} · ${timeAgo(ad.createdAt)}', variant: TextVariant.small, style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          ZText(ad.description, variant: TextVariant.small, maxLines: 3),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              ZBadge(label: ad.subjects, tone: Tone.card),
+              ZBadge(label: ad.availability, tone: Tone.card),
+              ZBadge(label: ad.modeLabel, tone: Tone.card),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PartnerCard extends StatelessWidget {
-  const _PartnerCard({required this.partner, required this.app});
-  final Partner partner;
-  final AppState app;
+  const _PartnerCard({required this.partner, required this.reload});
+  final Person partner;
+  final Future<void> Function() reload;
 
   @override
   Widget build(BuildContext context) {
     final p = partner;
-    final connected = app.connected(p.id);
-    final requested = app.flag(Flag.requested, p.id);
     return Surface(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -96,13 +167,13 @@ class _PartnerCard extends StatelessWidget {
           Row(
             spacing: 12,
             children: [
-              Avatar(initials: p.initials, color: p.color, size: 52),
+              Avatar.of(p, size: 52),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ZText(p.name, variant: TextVariant.h3, style: const TextStyle(fontSize: 16)),
-                    ZText('${shortMajor(p.major)} · Semester ${p.semester} · ${p.college}', variant: TextVariant.small, muted: true),
+                    if (p.academicLine.isNotEmpty) ZText(p.academicLine, variant: TextVariant.small, muted: true, maxLines: 2),
                   ],
                 ),
               ),
@@ -122,33 +193,25 @@ class _PartnerCard extends StatelessWidget {
               ),
             ],
           ),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Why you match: ',
-                  style: zStyle(context, TextVariant.small).copyWith(fontWeight: FontWeight.w700),
-                ),
-                TextSpan(text: p.why),
-              ],
+          if (p.reasons.isNotEmpty)
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Why you match: ',
+                    style: zStyle(context, TextVariant.small).copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: p.reasons.join(', ').toLowerCase()),
+                ],
+              ),
+              style: zStyle(context, TextVariant.small),
             ),
-            style: zStyle(context, TextVariant.small),
-          ),
-          Wrap(spacing: 6, runSpacing: 6, children: [for (final t in p.interests.take(3)) ZBadge(label: t)]),
+          if (p.interests.isNotEmpty) Wrap(spacing: 6, runSpacing: 6, children: [for (final t in p.interests.take(3)) ZBadge(label: t)]),
           Row(
             spacing: 10,
             children: [
               Expanded(
-                child: connected
-                    ? ZButton(label: 'Message', variant: ButtonVariant.chat, size: ButtonSize.sm, href: '/dm/${p.id}')
-                    : ZButton(
-                        label: requested ? 'Requested' : 'Connect',
-                        variant: ButtonVariant.match,
-                        size: ButtonSize.sm,
-                        settled: requested,
-                        onTap: () => app.toggle(Flag.requested, p.id),
-                        semanticLabel: requested ? 'Cancel request to ${p.name}' : 'Connect with ${p.name}',
-                      ),
+                child: ConnectButton(person: p, onChanged: (_) => reload()),
               ),
               Expanded(
                 child: ZButton(label: 'View profile', variant: ButtonVariant.secondary, size: ButtonSize.sm, onTap: () => context.push('/partner/${p.id}')),

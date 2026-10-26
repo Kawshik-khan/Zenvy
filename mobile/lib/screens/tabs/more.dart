@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../data/sample.dart';
+import '../../api/config.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
+import '../../util/dialogs.dart';
 import '../../widgets/widgets.dart';
 
 const _links = [
@@ -17,13 +18,14 @@ const _links = [
 ];
 
 class _LinkRow extends StatelessWidget {
-  const _LinkRow({required this.label, this.onTap, this.icon, this.fill, this.trailing});
+  const _LinkRow({required this.label, this.onTap, this.icon, this.fill, this.trailing, this.badge});
 
   final String label;
   final VoidCallback? onTap;
   final IconData? icon;
   final Color? fill;
   final Widget? trailing;
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,7 @@ class _LinkRow extends StatelessWidget {
         children: [
           if (icon != null && fill != null) IconTile(icon: icon!, fill: fill!, size: 36),
           Expanded(child: ZText(label, variant: TextVariant.strong)),
+          if (badge != null) CountBadge(value: badge!),
           trailing ?? (onTap != null ? const Icon(LucideIcons.chevronRight, size: 18, color: Palette.ink) : const SizedBox()),
         ],
       ),
@@ -53,32 +56,34 @@ class MoreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final soon = ZText('Soon', variant: TextVariant.small, muted: true);
+    final me = app.me;
     return Screen(
       tabBar: true,
+      onRefresh: app.refreshMe,
       children: [
         const ZText('More', variant: TextVariant.title, header: true),
-        Surface(
-          href: '/profile',
-          semanticLabel: 'View and edit your profile',
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            spacing: 12,
-            children: [
-              Avatar(initials: me.initials, color: me.color, size: 52),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ZText(me.name, variant: TextVariant.h3, style: const TextStyle(fontSize: 16)),
-                    ZText('View and edit profile', variant: TextVariant.small, muted: true),
-                  ],
+        if (me != null)
+          Surface(
+            href: '/profile',
+            semanticLabel: 'View and edit your profile',
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              spacing: 12,
+              children: [
+                Avatar.of(me, size: 52),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ZText(me.name, variant: TextVariant.h3, style: const TextStyle(fontSize: 16)),
+                      ZText(me.email ?? 'View and edit profile', variant: TextVariant.small, muted: true, maxLines: 1),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(LucideIcons.chevronRight, size: 18, color: Palette.ink),
-            ],
+                const Icon(LucideIcons.chevronRight, size: 18, color: Palette.ink),
+              ],
+            ),
           ),
-        ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 8,
@@ -87,7 +92,16 @@ class MoreScreen extends StatelessWidget {
             Surface(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: separated([for (final l in _links) _LinkRow(label: l.label, icon: l.icon, fill: l.fill, onTap: () => context.push(l.href))]),
+                children: separated([
+                  for (final l in _links)
+                    _LinkRow(
+                      label: l.label,
+                      icon: l.icon,
+                      fill: l.fill,
+                      badge: l.href == '/notifications' ? formatBadge(app.unreadNotifications) : null,
+                      onTap: () => context.push(l.href),
+                    ),
+                ]),
               ),
             ),
           ],
@@ -102,29 +116,30 @@ class MoreScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: separated([
                   _LinkRow(
-                    label: 'Push notifications',
-                    trailing: Toggle(
-                      value: app.profile.push,
-                      label: 'Push notifications',
-                      onChanged: (v) => app.updateProfile((p) => p.copyWith(push: v)),
-                    ),
-                  ),
-                  _LinkRow(
                     label: 'Available for matching',
                     trailing: Toggle(
-                      value: app.profile.available,
+                      value: me?.matchingAvailable ?? true,
                       label: 'Available for matching',
-                      onChanged: (v) => app.updateProfile((p) => p.copyWith(available: v)),
+                      onChanged: (v) => attempt(context, () => app.updateMe({'matchingAvailable': v})),
                     ),
                   ),
-                  _LinkRow(label: 'Privacy & blocked users', trailing: soon),
-                  _LinkRow(label: 'Help & feedback', trailing: soon),
+                  _LinkRow(label: 'Edit profile', onTap: () => context.push('/profile')),
+                  _LinkRow(
+                    label: 'Privacy & blocked users',
+                    onTap: () => notify(context, 'Privacy', 'Block or report someone from their profile. Manage blocked users on the web at $kApiBaseUrl.'),
+                  ),
                 ]),
               ),
             ),
           ],
         ),
-        ZButton(label: 'Log out', variant: ButtonVariant.danger, icon: LucideIcons.logOut, size: ButtonSize.lg, onTap: () => context.go('/welcome')),
+        ZButton(
+          label: 'Log out',
+          variant: ButtonVariant.danger,
+          icon: LucideIcons.logOut,
+          size: ButtonSize.lg,
+          onTap: () => confirm(context, 'Log out?', "You'll need your email and password to sign back in.", 'Log out', app.signOut),
+        ),
       ],
     );
   }

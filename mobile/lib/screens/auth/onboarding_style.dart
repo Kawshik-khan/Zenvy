@@ -5,24 +5,50 @@ import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/widgets.dart';
 
-const _styles = ['Focused solo work', 'Pair programming', 'Group discussion', 'Exam prep', 'Project collaboration'];
-const _topics = ['Algorithms', 'React', 'Data structures', 'Physics', 'Calculus', 'Machine learning', 'Databases', 'UI design'];
-const _times = ['Morning', 'Day', 'Evening', 'Late'];
+const studyStyles = ['Focused solo work', 'Pair programming', 'Group discussion', 'Exam prep', 'Project collaboration'];
+const suggestedTopics = ['Algorithms', 'Data structures', 'React', 'Python', 'Databases', 'Machine learning', 'Calculus', 'Physics', 'UI design', 'Circuits'];
+const studyTimes = ['Morning', 'Afternoons', 'Evenings', 'Late'];
 
 List<String> toggleIn(List<String> list, String item) => list.contains(item) ? list.where((x) => x != item).toList() : [...list, item];
 
-class OnboardingStyleScreen extends StatelessWidget {
+/// Availability is free text on the server; the app stores picked times as "Evenings & Late".
+List<String> parseTimes(String? availability) => studyTimes.where((t) => (availability ?? '').toLowerCase().contains(t.toLowerCase())).toList();
+
+class OnboardingStyleScreen extends StatefulWidget {
   const OnboardingStyleScreen({super.key});
 
   @override
+  State<OnboardingStyleScreen> createState() => _OnboardingStyleScreenState();
+}
+
+class _OnboardingStyleScreenState extends State<OnboardingStyleScreen> {
+  late final _me = AppScope.read(context).me;
+  late String? _style = _me?.studyStyle;
+  late List<String> _interests = [...?_me?.interests];
+  late List<String> _times = parseTimes(_me?.availability);
+  late bool _available = _me?.matchingAvailable ?? true;
+  bool _busy = false;
+
+  Future<void> _finish() async {
+    setState(() => _busy = true);
+    final ok = await attempt(
+      context,
+      () =>
+          AppScope.read(context).updateMe({'studyStyle': _style, 'interests': _interests, 'availability': _times.join(' & '), 'matchingAvailable': _available}),
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) context.go('/home');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final app = AppScope.of(context);
-    final p = app.profile;
+    final topics = {...suggestedTopics, ..._interests}.toList();
     return Screen(
       header: const TopBar(fallback: '/onboarding-about', center: StepProgress(step: 2, total: 2)),
       footer: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: ZButton(label: 'Finish setup', size: ButtonSize.lg, disabled: p.interests.isEmpty, onTap: () => context.go('/home')),
+        child: ZButton(label: _busy ? 'Saving…' : 'Finish setup', size: ButtonSize.lg, disabled: _interests.isEmpty || _busy, onTap: _finish),
       ),
       children: [
         Column(
@@ -46,14 +72,7 @@ class OnboardingStyleScreen extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: [
-                for (final s in _styles)
-                  ZChip(
-                    label: s,
-                    selected: p.studyStyle == s,
-                    onTap: () => app.updateProfile((p) => p.copyWith(studyStyle: s)),
-                  ),
-              ],
+              children: [for (final s in studyStyles) ZChip(label: s, selected: _style == s, onTap: () => setState(() => _style = s))],
             ),
           ],
         ),
@@ -73,13 +92,8 @@ class OnboardingStyleScreen extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final t in _topics)
-                  ZChip(
-                    label: t,
-                    tone: Tone.chat,
-                    selected: p.interests.contains(t),
-                    onTap: () => app.updateProfile((p) => p.copyWith(interests: toggleIn(p.interests, t))),
-                  ),
+                for (final t in topics)
+                  ZChip(label: t, tone: Tone.chat, selected: _interests.contains(t), onTap: () => setState(() => _interests = toggleIn(_interests, t))),
               ],
             ),
           ],
@@ -89,19 +103,12 @@ class OnboardingStyleScreen extends StatelessWidget {
           spacing: 10,
           children: [
             const ZText('Best times', variant: TextVariant.h3),
-            Row(
+            Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
-                for (final t in _times)
-                  Expanded(
-                    child: ZChip(
-                      label: t,
-                      tone: Tone.focus,
-                      padding: 4,
-                      selected: p.times.contains(t),
-                      onTap: () => app.updateProfile((p) => p.copyWith(times: toggleIn(p.times, t))),
-                    ),
-                  ),
+                for (final t in studyTimes)
+                  ZChip(label: t, tone: Tone.focus, selected: _times.contains(t), onTap: () => setState(() => _times = toggleIn(_times, t))),
               ],
             ),
           ],
@@ -121,11 +128,7 @@ class OnboardingStyleScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Toggle(
-                value: p.available,
-                label: 'Available for matching',
-                onChanged: (v) => app.updateProfile((p) => p.copyWith(available: v)),
-              ),
+              Toggle(value: _available, label: 'Available for matching', onChanged: (v) => setState(() => _available = v)),
             ],
           ),
         ),

@@ -1,123 +1,188 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
+import '../api/client.dart';
+import '../api/session.dart';
+import '../api/zenvy_api.dart';
 import '../data/models.dart';
-import '../data/sample.dart' as sample;
 
-class Profile {
-  const Profile({required this.studyStyle, required this.interests, required this.times, required this.available, required this.push});
+enum AuthStatus { loading, signedOut, signedIn }
 
-  final String studyStyle;
-  final List<String> interests;
-  final List<String> times;
-  final bool available;
-  final bool push;
+/// App-wide state: the session, the signed-in user, unread badges and incoming calls.
+/// Screens load their own data through [api] and call [touch] after changing something,
+/// so other screens refresh.
+class AppState extends ChangeNotifier with WidgetsBindingObserver {
+  AppState({required this.api, required this.sessions, this.poll = true}) {
+    api.client.onUnauthorized = _onUnauthorized;
+  }
 
-  Profile copyWith({String? studyStyle, List<String>? interests, List<String>? times, bool? available, bool? push}) => Profile(
-    studyStyle: studyStyle ?? this.studyStyle,
-    interests: interests ?? this.interests,
-    times: times ?? this.times,
-    available: available ?? this.available,
-    push: push ?? this.push,
-  );
-}
+  final ZenvyApi api;
+  final SessionStore sessions;
 
-enum Flag { requested, joinedGroups, rsvp, savedJobs, appliedJobs }
+  /// Poll for badges and incoming calls while signed in (off in tests).
+  final bool poll;
 
-String _nowLabel() {
-  final d = DateTime.now();
-  final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
-  final m = d.minute.toString().padLeft(2, '0');
-  return '$h:$m ${d.hour < 12 ? 'AM' : 'PM'}';
-}
+  AuthStatus status = AuthStatus.loading;
+  Me? me;
+  int unreadMessages = 0;
+  int unreadNotifications = 0;
 
-/// In-memory app state for the prototype. Replace the setters with API calls when wiring the backend.
-class AppState extends ChangeNotifier {
-  final Map<Flag, Map<String, bool>> _flags = {
-    Flag.requested: {},
-    Flag.joinedGroups: {for (final g in sample.groups) g.id: g.joined},
-    Flag.rsvp: {'e1': true},
-    Flag.savedJobs: {'nh-data': true},
-    Flag.appliedJobs: {},
-  };
-  final Map<String, bool> _connected = {'tanvir': false};
-  final Map<String, List<ChatMessage>> dms = {
-    for (final e in sample.dmThreads.entries) e.key: [...e.value],
-  };
-  final Map<String, List<ChatMessage>> groupChats = {
-    for (final e in sample.groupThreads.entries) e.key: [...e.value],
-  };
-  List<AppNotification> notifications = [...sample.notifications];
-  int focusMinutesToday = sample.Stats.todayMinutes;
-  int sessionsToday = sample.Stats.sessionsToday;
-  Profile profile = Profile(
-    studyStyle: 'Pair programming',
-    interests: sample.me.interests.take(3).toList(),
-    times: const ['Evening', 'Late'],
-    available: true,
-    push: true,
-  );
+  /// Bumped after any change, so screens showing server data reload.
+  int revision = 0;
 
-  bool flag(Flag f, String id) => _flags[f]![id] ?? false;
-  bool connected(String id) => _connected[id] ?? false;
+  /// A direct call ringing for this user, picked up by the tab shell.
+  final incomingCall = ValueNotifier<CallSession?>(null);
+  final Set<String> _seenCalls = {};
 
-  int get unreadNotifications => notifications.where((n) => n.unread).length;
+  Timer? _badgeTimer;
+  Timer? _callTimer;
+  bool _foreground = true;
 
-  void toggle(Flag f, String id) {
-    _flags[f]![id] = !flag(f, id);
+  Future<void> bootstrap() async {
+    WidgetsBinding.instance.addObserver(this);
+    final saved = await sessions.read();
+    if (saved == null) return _setSignedOut();
+    api.client.session = saved;
+    try {
+      if (saved.needsRefresh) await _store(await api.refreshSession());
+      me = await api.me();
+      _setSignedIn();
+    } on ApiException catch (e) {
+      // Offline: keep the session and retry when screens load; a rejected session signs out.
+      if (e.unauthorized) return _setSignedOut();
+      status = AuthStatus.signedIn;
+      _startPolling();
+      notifyListeners();
+    }
+  }
+
+  /// Signs in; with [remember] false the session lasts until the app is closed.
+  Future<void> signIn(String email, String password, {bool remember = true}) async {
+    await _store(await api.login(email, password), persist: remember);
+    me = await api.me();
+    _setSignedIn();
+  }
+
+  Future<void> signUp(String name, String email, String password) async {
+    await _store(await api.register(name, email, password));
+    me = await api.me();
+    _setSignedIn();
+  }
+
+  Future<void> signOut() async {
+    await sessions.clear();
+    _setSignedOut();
+  }
+
+  Future<void> refreshMe() async {
+    me = await api.me();
     notifyListeners();
   }
 
-  void connect(String id) {
-    _connected[id] = true;
-    _flags[Flag.requested]![id] = false;
+  Future<void> updateMe(Map<String, Object?> patch) async {
+    me = await api.updateMe(patch);
+    touch();
+  }
+
+  /// Marks server data as changed so visible screens reload.
+  void touch() {
+    revision++;
+    notifyListeners();
+    unawaited(refreshBadges());
+  }
+
+  Future<void> refreshBadges() async {
+    if (status != AuthStatus.signedIn) return;
+    try {
+      final results = await Future.wait([api.unreadMessages(), api.notifications()]);
+      final messages = results[0] as int;
+      final notifications = (results[1] as List<AppNotification>).where((n) => !n.read).length;
+      if (messages != unreadMessages || notifications != unreadNotifications) {
+        unreadMessages = messages;
+        unreadNotifications = notifications;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Badges are best effort.
+    }
+  }
+
+  void dismissIncomingCall() => incomingCall.value = null;
+
+  Future<void> _store(Session session, {bool persist = true}) async {
+    api.client.session = session;
+    if (persist) {
+      await sessions.write(session);
+    } else {
+      await sessions.clear();
+    }
+  }
+
+  void _setSignedIn() {
+    status = AuthStatus.signedIn;
+    notifyListeners();
+    _startPolling();
+    unawaited(refreshBadges());
+  }
+
+  void _setSignedOut() {
+    _stopPolling();
+    api.client.session = null;
+    me = null;
+    unreadMessages = 0;
+    unreadNotifications = 0;
+    incomingCall.value = null;
+    status = AuthStatus.signedOut;
     notifyListeners();
   }
 
-  ChatMessage _local(String text) => ChatMessage(id: 'local-${DateTime.now().microsecondsSinceEpoch}', authorId: 'me', text: text, time: _nowLabel());
-
-  void sendDm(String personId, String text) {
-    dms.putIfAbsent(personId, () => []).add(_local(text));
-    notifyListeners();
+  void _onUnauthorized() {
+    if (status == AuthStatus.signedIn) unawaited(signOut());
   }
 
-  void sendGroup(String groupId, String text) {
-    groupChats.putIfAbsent(groupId, () => []).add(_local(text));
-    notifyListeners();
+  void _startPolling() {
+    _stopPolling();
+    if (!poll) return;
+    _badgeTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_foreground) unawaited(refreshBadges());
+    });
+    _callTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (_foreground) unawaited(_checkIncomingCall());
+    });
   }
 
-  void markAllRead() {
-    notifications = [for (final n in notifications) n.copyWith(unread: false)];
-    notifyListeners();
+  void _stopPolling() {
+    _badgeTimer?.cancel();
+    _callTimer?.cancel();
+    _badgeTimer = null;
+    _callTimer = null;
   }
 
-  void resolveRequest(String notificationId, bool accept) {
-    notifications = [
-      for (final n in notifications)
-        if (n.id == notificationId)
-          n.copyWith(
-            kind: NotificationKind.match,
-            unread: false,
-            body: accept ? 'is now your study partner.' : 'request declined.',
-            time: 'Just now',
-            refId: () => accept ? n.refId : null,
-          )
-        else
-          n,
-    ];
-    final ref = notifications.firstWhere((n) => n.id == notificationId).refId;
-    if (accept && ref != null) _connected[ref] = true;
-    notifyListeners();
+  Future<void> _checkIncomingCall() async {
+    if (status != AuthStatus.signedIn || incomingCall.value != null) return;
+    try {
+      final call = await api.incomingCall();
+      if (call != null && _seenCalls.add(call.id)) incomingCall.value = call;
+    } catch (_) {}
   }
 
-  void completeSession(int minutes) {
-    focusMinutesToday += minutes;
-    sessionsToday += 1;
-    notifyListeners();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    if (_foreground) {
+      unawaited(refreshBadges());
+      revision++;
+      notifyListeners();
+    }
   }
 
-  void updateProfile(Profile Function(Profile p) patch) {
-    profile = patch(profile);
-    notifyListeners();
+  @override
+  void dispose() {
+    _stopPolling();
+    WidgetsBinding.instance.removeObserver(this);
+    incomingCall.dispose();
+    super.dispose();
   }
 }
 

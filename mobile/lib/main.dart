@@ -1,7 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'api/client.dart';
+import 'api/config.dart';
+import 'api/session.dart';
+import 'api/zenvy_api.dart';
 import 'router.dart';
 import 'state/app_state.dart';
 import 'theme/tokens.dart';
@@ -10,13 +15,22 @@ import 'theme/type.dart';
 void main() {
   // Fonts ship in google_fonts/, so the app never downloads them at runtime.
   GoogleFonts.config.allowRuntimeFetching = false;
-  runApp(ZenvyApp(state: AppState()));
+  WidgetsFlutterBinding.ensureInitialized();
+  final app = AppState(
+    api: ZenvyApi(ApiClient(baseUrl: kApiBaseUrl)),
+    sessions: SecureSessionStore(),
+  );
+  final router = buildRouter(app);
+  wireIncomingCalls(app, router);
+  app.bootstrap();
+  runApp(ZenvyApp(state: app, router: router));
 }
 
 class ZenvyApp extends StatelessWidget {
-  const ZenvyApp({super.key, required this.state});
+  const ZenvyApp({super.key, required this.state, required this.router});
 
   final AppState state;
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {

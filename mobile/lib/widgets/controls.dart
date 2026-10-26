@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/models.dart';
 import '../theme/tokens.dart';
 import '../theme/type.dart';
 import '../theme/volume.dart';
@@ -84,8 +85,8 @@ class ZButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: grotesk(FontWeight.w700, lg ? 17 : 15, 20).copyWith(color: fg),
               );
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              final row = Row(
+                mainAxisSize: MainAxisSize.min,
                 spacing: 8,
                 children: [
                   if (icon != null) Icon(icon, size: lg ? 20 : 18, color: fg),
@@ -93,6 +94,8 @@ class ZButton extends StatelessWidget {
                   if (iconRight != null) Icon(iconRight, size: 18, color: fg),
                 ],
               );
+              // Fills a width it's given (Expanded, a stretched column) but hugs its label in a Wrap.
+              return c.hasTightWidth ? Center(child: row) : Center(widthFactor: 1, child: row);
             },
           ),
         ),
@@ -282,12 +285,17 @@ class ZBadge extends StatelessWidget {
 }
 
 class Avatar extends StatelessWidget {
-  const Avatar({super.key, required this.initials, required this.color, this.size = 44, this.square = false});
+  const Avatar({super.key, required this.initials, required this.color, this.size = 44, this.square = false, this.image});
+
+  /// Avatar for a person or group; shows their photo when they have one.
+  factory Avatar.of(UserRef user, {double size = 44, bool square = false}) =>
+      Avatar(initials: user.initials, color: user.color, size: size, square: square, image: user.image);
 
   final String initials;
   final Color color;
   final double size;
   final bool square;
+  final String? image;
 
   @override
   Widget build(BuildContext context) {
@@ -301,8 +309,11 @@ class Avatar extends StatelessWidget {
           color: color,
           borderRadius: BorderRadius.circular(square ? (size * 0.24).roundToDouble() : size / 2),
           border: Border.all(color: v.line, width: size > 40 ? v.border : v.border - 1),
+          image: image == null ? null : DecorationImage(image: NetworkImage(image!), fit: BoxFit.cover, onError: (_, _) {}),
         ),
-        child: Text(initials, style: grotesk(FontWeight.w700, (size * 0.34).roundToDouble(), (size * 0.42).roundToDouble()).copyWith(color: v.fg)),
+        child: image != null
+            ? null
+            : Text(initials, style: grotesk(FontWeight.w700, (size * 0.34).roundToDouble(), (size * 0.42).roundToDouble()).copyWith(color: v.fg)),
       ),
     );
   }

@@ -1,0 +1,40 @@
+{
+ "messages": [
+  {
+   "id": "cmvpey1yp001b90ehol5z2ly2",
+   "senderId": "cmvpey1x4000890eha3c4m9ao",
+   "senderName": "Farhan Jamil",
+   "senderImage": null,
+   "content": "Pushed the memo table solution for Q4. Runs in O(n\u00b7W).",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "timestamp": "2026-10-26T15:12:20.242Z",
+   "isSelf": false
+  },
+  {
+   "id": "cmvpey1ys001d90eh6p234qtc",
+   "senderId": "cmvpey1wy000690ehtoqmevuy",
+   "senderName": "Mahin Karim",
+   "senderImage": null,
+   "content": "Hey all! Can someone explain why we iterate W backwards?",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "timestamp": "2026-10-26T15:21:20.242Z",
+   "isSelf": false
+  },
+  {
+   "id": "cmvpey1yw001f90ehkagqhc38",
+   "senderId": "cmvpey1wa000090ehtuciyd49",
+   "senderName": "Nadia Rahman",
+   "senderImage": null,
+   "content": "So each item is used once. Forward lets you reuse it, that's the unbounded version.",
+   "fileUrl": null,
+   "fileType": null,
+   "fileName": null,
+   "timestamp": "2026-10-26T15:23:20.242Z",
+   "isSelf": true
+  }
+ ]
+}

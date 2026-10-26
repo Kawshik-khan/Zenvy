@@ -16,12 +16,16 @@ String formatClock(num seconds) {
 class FocusTimer extends ChangeNotifier {
   FocusTimer({required this.onComplete});
 
-  final void Function(FocusMode mode) onComplete;
+  /// Called when a round runs out, with when it first started (for logging the session).
+  final void Function(FocusMode mode, DateTime startedAt) onComplete;
 
   FocusMode mode = FocusMode.focus;
   double remaining = modeSeconds[FocusMode.focus]!.toDouble();
   DateTime? _endsAt;
   Timer? _ticker;
+
+  /// When the current round was first started; pauses don't move it. Null before the first start.
+  DateTime? roundStartedAt;
 
   int get total => modeSeconds[mode]!;
   bool get running => _endsAt != null;
@@ -31,10 +35,12 @@ class FocusTimer extends ChangeNotifier {
     if (end == null) return;
     final left = end.difference(DateTime.now()).inMilliseconds / 1000;
     if (left <= 0) {
+      final startedAt = roundStartedAt ?? DateTime.now().subtract(Duration(seconds: total));
       _stop();
+      roundStartedAt = null;
       remaining = total.toDouble();
       notifyListeners();
-      onComplete(mode);
+      onComplete(mode, startedAt);
     } else {
       remaining = left;
       notifyListeners();
@@ -50,6 +56,7 @@ class FocusTimer extends ChangeNotifier {
   void start() {
     final left = remaining <= 0 ? total.toDouble() : remaining;
     remaining = left;
+    roundStartedAt ??= DateTime.now();
     _endsAt = DateTime.now().add(Duration(milliseconds: (left * 1000).round()));
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(milliseconds: 250), (_) => _tick());
@@ -63,24 +70,28 @@ class FocusTimer extends ChangeNotifier {
 
   void reset() {
     _stop();
+    roundStartedAt = null;
     remaining = total.toDouble();
     notifyListeners();
   }
 
   void setMode(FocusMode next) {
     _stop();
+    roundStartedAt = null;
     mode = next;
     remaining = total.toDouble();
     notifyListeners();
   }
 
-  /// Ends the current round now, returning the elapsed minutes.
-  int finish() {
+  /// Ends the current round now, returning the elapsed minutes and when it started.
+  ({int minutes, DateTime startedAt}) finish() {
     final elapsed = total - remaining;
+    final startedAt = roundStartedAt ?? DateTime.now().subtract(Duration(seconds: elapsed.round()));
     _stop();
+    roundStartedAt = null;
     remaining = total.toDouble();
     notifyListeners();
-    return (elapsed / 60).round().clamp(1, 1 << 31);
+    return (minutes: (elapsed / 60).round().clamp(1, total ~/ 60), startedAt: startedAt);
   }
 
   @override
