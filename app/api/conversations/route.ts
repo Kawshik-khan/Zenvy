@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { prisma } from "@/lib/prisma";
 import { assertCanAccessConversation, serializeConversation } from "@/lib/conversations";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const userId = session.user.id;
+  const userId = currentUser.id;
 
   const conversations = await prisma.conversation.findMany({
     where: {

@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { createSocketToken } from "@/lib/socket-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await auth();
+  const currentUser = await getRequestUser();
 
-  if (!session?.user?.id) {
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const token = createSocketToken(session.user.id);
+  const token = createSocketToken(currentUser.id);
   if (!token) {
     return NextResponse.json({ error: "Socket auth is not configured" }, { status: 500 });
   }

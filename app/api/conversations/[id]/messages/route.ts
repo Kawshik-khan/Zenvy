@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { prisma } from "@/lib/prisma";
 import {
   assertCanAccessConversation,
@@ -11,8 +11,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,7 +22,7 @@ export async function GET(
   const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
 
   try {
-    await assertCanAccessConversation(session.user.id, id);
+    await assertCanAccessConversation(currentUser.id, id);
 
     const messages = await prisma.conversationMessage.findMany({
       where: { conversationId: id },
@@ -37,7 +37,7 @@ export async function GET(
     const ordered = page.reverse();
 
     return NextResponse.json({
-      messages: ordered.map((message) => formatConversationMessage(message, session.user!.id)),
+      messages: ordered.map((message) => formatConversationMessage(message, currentUser!.id)),
       nextCursor: hasMore ? page[page.length - 1]?.id : null,
     });
   } catch (error: any) {
@@ -49,8 +49,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -64,7 +64,7 @@ export async function POST(
   try {
     const message = await createConversationMessage({
       conversationId: id,
-      senderId: session.user.id,
+      senderId: currentUser.id,
       content,
       fileUrl: body?.fileUrl || null,
       fileType: body?.fileType || null,

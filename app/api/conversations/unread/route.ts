@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { prisma } from "@/lib/prisma";
 import { cacheKeys, getJsonCache, setJsonCache } from "@/lib/cache";
 
@@ -11,13 +11,13 @@ type UnreadCountRow = {
 };
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const cacheKey = cacheKeys.conversationUnread(session.user.id);
+    const cacheKey = cacheKeys.conversationUnread(currentUser.id);
     const cachedUnreadCount = await getJsonCache<number>(cacheKey);
     if (typeof cachedUnreadCount === "number") {
       return NextResponse.json({ unreadCount: cachedUnreadCount });
@@ -28,9 +28,9 @@ export async function GET() {
       FROM "ConversationMessage" message
       INNER JOIN "ConversationParticipant" participant
         ON participant."conversationId" = message."conversationId"
-       AND participant."userId" = ${session.user.id}
+       AND participant."userId" = ${currentUser.id}
       WHERE participant."archived" = false
-        AND message."senderId" <> ${session.user.id}
+        AND message."senderId" <> ${currentUser.id}
         AND message."status" <> 'DELETED'
         AND message."createdAt" > COALESCE(participant."lastReadAt", to_timestamp(0))
     `;

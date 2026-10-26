@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { prisma } from "@/lib/prisma";
 import {
   assertCanAccessCallScope,
@@ -19,8 +19,8 @@ function parseScope(body: any): CallScope | null {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const scopeData: any = await assertCanAccessCallScope(session.user.id, scope);
+    const scopeData: any = await assertCanAccessCallScope(currentUser.id, scope);
     const roomId = getCallRoomId(scope);
 
     const call = await prisma.callSession.upsert({
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         type: scope.type,
         mediaType,
         status: scope.type === "DM" ? "RINGING" : "ACTIVE",
-        startedById: session.user.id,
+        startedById: currentUser.id,
         startedAt: new Date(),
         endedAt: null,
         conversationId: scope.type === "DM" ? scope.conversationId : null,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         type: scope.type,
         mediaType,
         status: scope.type === "DM" ? "RINGING" : "ACTIVE",
-        startedById: session.user.id,
+        startedById: currentUser.id,
         startedAt: new Date(),
         conversationId: scope.type === "DM" ? scope.conversationId : null,
         groupId: scope.type === "GROUP" ? scope.groupId : null,
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     });
 
     await prisma.callParticipant.upsert({
-      where: { callId_userId: { callId: call.id, userId: session.user.id } },
+      where: { callId_userId: { callId: call.id, userId: currentUser.id } },
       update: {
         role: "HOST",
         status: "JOINED",
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       },
       create: {
         callId: call.id,
-        userId: session.user.id,
+        userId: currentUser.id,
         role: "HOST",
         status: "JOINED",
         videoEnabled: mediaType === "VIDEO",
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     if (scope.type === "DM" && scopeData?.participants) {
       for (const participant of scopeData.participants) {
-        if (participant.userId === session.user.id) continue;
+        if (participant.userId === currentUser.id) continue;
         await prisma.callParticipant.upsert({
           where: { callId_userId: { callId: call.id, userId: participant.userId } },
           update: { status: "INVITED", leftAt: null, lastSeenAt: new Date() },
@@ -101,8 +101,8 @@ export async function POST(req: NextRequest) {
     const updated = await getCallWithParticipants(call.id);
     const liveKit = await createLiveKitCallCredentials({
       callId: call.id,
-      userId: session.user.id,
-      userName: session.user.name,
+      userId: currentUser.id,
+      userName: currentUser.name,
     });
 
     return NextResponse.json({ call: serializeCall(updated), liveKit });

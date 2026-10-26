@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { prisma } from "@/lib/prisma";
 import {
   assertCanAccessCallScope,
@@ -20,8 +20,8 @@ function parseScope(searchParams: URLSearchParams): CallScope | null {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await assertCanAccessCallScope(session.user.id, scope);
+    await assertCanAccessCallScope(currentUser.id, scope);
     const call = await prisma.callSession.findUnique({
       where: { roomId: getCallRoomId(scope) },
       select: { id: true, status: true },

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { resolveDmConversation, serializeConversation } from "@/lib/conversations";
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -15,9 +15,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing targetUserId" }, { status: 400 });
     }
 
-    const conversation = await resolveDmConversation(session.user.id, targetUserId);
+    const conversation = await resolveDmConversation(currentUser.id, targetUserId);
     return NextResponse.json({
-      conversation: await serializeConversation(conversation, session.user.id),
+      conversation: await serializeConversation(conversation, currentUser.id),
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Unable to resolve conversation" }, { status: 400 });

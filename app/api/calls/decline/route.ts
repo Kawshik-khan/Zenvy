@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { prisma } from "@/lib/prisma";
 import { assertCanAccessCall } from "@/lib/calls";
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const call = await assertCanAccessCall(session.user.id, callId, { includeParticipants: false });
+    const call = await assertCanAccessCall(currentUser.id, callId, { includeParticipants: false });
     await prisma.callParticipant.update({
-      where: { callId_userId: { callId: call.id, userId: session.user.id } },
+      where: { callId_userId: { callId: call.id, userId: currentUser.id } },
       data: {
         status: "DECLINED",
         leftAt: new Date(),

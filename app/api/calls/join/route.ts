@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/auth';
+import { getRequestUser } from "@/lib/request-user";
 import { assertCanAccessCall, getCallWithParticipants, serializeCall } from '@/lib/calls';
 import { createLiveKitCallCredentials } from '@/lib/livekit';
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session || !session.user?.id) {
+    const currentUser = await getRequestUser();
+    if (!currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { callId, roomId } = await req.json();
-    const userId = session.user.id;
+    const userId = currentUser.id;
 
     if (!callId && !roomId) {
       return NextResponse.json({ error: 'Missing callId' }, { status: 400 });
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const liveKit = await createLiveKitCallCredentials({
       callId: callSession.id,
       userId,
-      userName: session.user.name,
+      userName: currentUser.name,
     });
 
     return NextResponse.json({ success: true, call: serializeCall(updated), liveKit }, { status: 200 });

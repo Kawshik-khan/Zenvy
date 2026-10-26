@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/auth';
+import { getRequestUser } from "@/lib/request-user";
 import { assertCanAccessCall } from '@/lib/calls';
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session || !session.user?.id) {
+    const currentUser = await getRequestUser();
+    if (!currentUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { callId, roomId } = await req.json();
-    const userId = session.user.id;
+    const userId = currentUser.id;
 
     if (!callId && !roomId) {
       return NextResponse.json({ error: 'Missing callId' }, { status: 400 });

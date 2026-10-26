@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getRequestUser } from "@/lib/request-user";
 import { assertCanAccessCall } from "@/lib/calls";
 import { createLiveKitCallCredentials } from "@/lib/livekit";
 
@@ -7,8 +7,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getRequestUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -18,11 +18,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await assertCanAccessCall(session.user.id, callId);
+    await assertCanAccessCall(currentUser.id, callId);
     const liveKit = await createLiveKitCallCredentials({
       callId,
-      userId: session.user.id,
-      userName: session.user.name,
+      userId: currentUser.id,
+      userName: currentUser.name,
     });
     return NextResponse.json(liveKit);
   } catch (error) {
