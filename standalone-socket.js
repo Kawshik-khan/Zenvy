@@ -5,6 +5,7 @@ const { getToken } = require('next-auth/jwt');
 const { verifySocketToken } = require('./lib/socket-auth');
 const { invalidateStudyMetrics } = require('./lib/cache-runtime');
 const { canDmUsers, registerConversationHandlers } = require('./lib/conversation-socket');
+const { registerRoomChatHandlers } = require('./lib/room-chat-socket');
 
 // Initialize Prisma
 const prisma = new PrismaClient();
@@ -232,6 +233,7 @@ io.on('connection', (socket) => {
   addUserSocket(userId, socket.id);
   socket.join(`user_${userId}`);
   registerConversationHandlers({ io, socket, prisma, userId });
+  registerRoomChatHandlers({ socket, prisma, userId });
 
   socket.on('authenticate', () => {
     socket.emit('authenticated', { userId });
@@ -276,40 +278,6 @@ io.on('connection', (socket) => {
       }
     }
     socket.to(data.roomId).emit('receive_message', data.message);
-  });
-
-  socket.on('send_channel_message', async (data) => {
-    if (!data.message || !userId) return;
-
-    try {
-      const membership = await prisma.channelMember.findUnique({
-        where: { channelId_userId: { channelId: data.channelId, userId } },
-      });
-
-      if (!membership) {
-        socket.emit('channel_error', { message: 'You must be a member' });
-        return;
-      }
-
-      data.message.senderId = userId;
-
-      const savedMsg = await prisma.channelMessage.create({
-        data: {
-          content: data.message.content,
-          senderId: userId,
-          channelId: data.channelId,
-        },
-      });
-
-      data.message.id = savedMsg.id;
-      data.message.timestamp = savedMsg.createdAt;
-      await invalidateStudyMetrics(userId);
-    } catch (e) {
-      console.error('Failed to save channel message:', e);
-      return;
-    }
-
-    socket.to(`channel_${data.channelId}`).emit('receive_channel_message', data.message);
   });
 
   // ============================================
