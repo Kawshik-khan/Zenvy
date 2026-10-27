@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Zenvy Intro</title>
+<!--
+  Zenvy intro video, "From alone to together".
+  Every frame is a pure function of time: render.mjs calls window.seek(t)
+  for each frame and screenshots the stage. Open this file in a browser to
+  preview it (it plays itself, click to restart).
+  Scene timings are synced to assets/voiceover.mp3.
+-->
+<style>
+  @font-face { font-family: "Space Grotesk"; font-weight: 500; src: url(fonts/space-grotesk-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Space Grotesk"; font-weight: 700; src: url(fonts/space-grotesk-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 500; src: url(fonts/jetbrains-mono-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 700; src: url(fonts/jetbrains-mono-latin-700-normal.woff2) format("woff2"); }
+
+  /* Brand tokens, mirrored from app/globals.css */
+  :root {
+    --paper: #fff8ec; --ink: #111111; --match: #ff6b9d; --chat: #4d96ff;
+    --focus: #ffd23f; --live: #3ddc97; --alert: #ff5a36; --career: #b794f6;
+    --quiet-paper: #f4eee2; --shade: #e8dfcc;
+  }
+  html, body { margin: 0; background: #111; }
+  #stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    background-color: var(--paper);
+    background-image: radial-gradient(#11111114 2.2px, transparent 2.8px);
+    background-size: 36px 36px;
+    font-family: "Space Grotesk", sans-serif; color: var(--ink);
+  }
+  .a { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  #world { transform-origin: 0 0; width: 1920px; height: 1080px; }
+  .card { background: #fff; border: 4px solid var(--ink); border-radius: 14px; box-shadow: 8px 8px 0 var(--ink); box-sizing: border-box; overflow: hidden; }
+  .chip {
+    font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 26px; letter-spacing: .08em;
+    text-transform: uppercase; padding: 10px 20px; border: 3px solid var(--ink); border-radius: 999px;
+    background: #fff; box-shadow: 4px 4px 0 var(--ink); display: inline-flex; align-items: center; gap: 12px; white-space: nowrap;
+  }
+  .dot { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--ink); }
+  .bubble {
+    font-size: 44px; font-weight: 700; padding: 18px 30px; border: 4px solid var(--ink);
+    border-radius: 30px; box-shadow: 6px 6px 0 var(--ink); white-space: nowrap;
+  }
+  .tile { width: 200px; height: 200px; border: 6px solid var(--ink); border-radius: 26px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center; font-size: 150px; font-weight: 700; line-height: 1; }
+  .word { display: inline-block; position: relative; margin: 0 14px; }
+  svg { overflow: visible; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world" class="a">
+    <svg id="links" class="a" width="1920" height="1080"></svg>
+  </div>
+  <div id="ui" class="a" style="width:1920px;height:1080px"></div>
+</div>
+<script>
+"use strict";
+const DUR = 26, FPS = 30;
+const C = { paper: "#fff8ec", ink: "#111111", match: "#ff6b9d", chat: "#4d96ff", focus: "#ffd23f",
+  live: "#3ddc97", alert: "#ff5a36", career: "#b794f6", quiet: "#f4eee2", shade: "#e8dfcc" };
+
+/* ---------- easing & time helpers ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const p = (t, a, b) => clamp((t - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+const eOut = k => 1 - Math.pow(1 - k, 3);
+const eIn = k => k * k * k;
+const eIO = k => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const eBack = k => { const c1 = 2.1, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const eSpring = k => (k <= 0 ? 0 : k >= 1 ? 1 : 1 - Math.exp(-6.5 * k) * Math.cos(k * 15));
+const pop = (t, at, d = .35) => eBack(p(t, at, at + d));
+// deterministic pseudo-random so every render is identical
+const rnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+
+/* ---------- DOM helpers ---------- */
+const ui = document.getElementById("ui"), world = document.getElementById("world"), links = document.getElementById("links");
+function el(parent, cls, html = "", style = "") {
+  const e = document.createElement("div");
+  e.className = "a " + cls; e.innerHTML = html; if (style) e.style.cssText += style;
+  parent.appendChild(e); return e;
+}
+// place by centre point; keeps every transform in one call
+function T(e, x, y, s = 1, r = 0, o = 1) {
+  e.style.transform = `translate(${x}px,${y}px) translate(-50%,-50%) rotate(${r}deg) scale(${s})`;
+  e.style.opacity = o; e.style.visibility = o <= 0.001 ? "hidden" : "visible";
+}
+const hide = e => { e.style.visibility = "hidden"; };
+
+/* ---------- the character ---------- */
+// One study-desk vignette in a 320x200 box. Everything is ink-outlined.
+function person(o, t) {
+  const sk = o.skin || "#f2c9a0", sh = o.shirt || "#cfcfcf", hr = o.hair || C.ink;
+  const sl = o.slump || 0, hy = 78 + (o.headY || 0) + sl;
+  let s = `<svg viewBox="0 0 320 200" width="100%" height="100%" style="display:block">`;
+  s += `<g fill="none" stroke="${C.ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">`;
+  if (o.night) {
+    s += `<rect x="22" y="20" width="78" height="62" rx="6" fill="#2b2b2b"/>`;
+    s += `<circle cx="46" cy="42" r="11" fill="${C.focus}" stroke="none"/><circle cx="52" cy="38" r="10" fill="#2b2b2b" stroke="none"/>`;
+    s += `<circle cx="80" cy="34" r="1.8" fill="#fff" stroke="none"/><circle cx="72" cy="62" r="1.5" fill="#fff" stroke="none"/><circle cx="88" cy="54" r="1.2" fill="#fff" stroke="none"/>`;
+    s += `<line x1="61" y1="20" x2="61" y2="82" stroke-width="2.5"/>`;
+  }
+  if (o.clock != null) {
+    const m = o.clock * Math.PI * 2, h = m / 12;
+    s += `<circle cx="226" cy="40" r="19" fill="#fff"/>`;
+    s += `<line x1="226" y1="40" x2="${226 + 13 * Math.sin(m)}" y2="${40 - 13 * Math.cos(m)}" stroke-width="2.5"/>`;
+    s += `<line x1="226" y1="40" x2="${226 + 8 * Math.sin(h + 2)}" y2="${40 - 8 * Math.cos(h + 2)}" stroke-width="3.5"/>`;
+  }
+  if (o.lamp) {
+    s += `<polygon points="270,80 238,140 304,140" fill="${C.focus}" opacity="${o.lamp}" stroke="none"/>`;
+    s += `<path d="M292 140 v-8 M284 132 h18 M293 132 L300 98 L282 72"/>`;
+    s += `<path d="M266 60 L292 66 L282 84 Z" fill="${C.ink}"/>`;
+  }
+  // body
+  s += `<rect x="128" y="${100 + sl}" width="64" height="52" rx="24" fill="${sh}"/>`;
+  // arms
+  if (o.wave) {
+    const w = Math.sin(o.wave * Math.PI * 6) * 8;
+    s += `<path d="M186 ${112 + sl} q22 -14 ${18 + w} -48"/><circle cx="${204 + w}" cy="${62 + sl}" r="7" fill="${sk}"/>`;
+  } else if (o.prop === "phone") {
+    s += `<path d="M186 ${114 + sl} q10 0 -6 -22"/><rect x="170" y="${84 + sl}" width="16" height="26" rx="3" fill="${C.chat}"/>`;
+  } else {
+    s += `<path d="M186 ${114 + sl} q8 16 -8 24"/>`;
+  }
+  if (o.mood === "bored") s += `<path d="M134 ${114 + sl} q-6 -6 10 -22"/>`;
+  else if (o.mood === "yawn") s += `<path d="M134 ${112 + sl} q-24 -14 -18 -50"/><circle cx="116" cy="${60 + sl}" r="7" fill="${sk}"/>`;
+  else s += `<path d="M134 ${114 + sl} q-8 16 8 24"/>`;
+  // head
+  const sleepy = o.mood === "sleep";
+  const hx = sleepy ? 150 : 160, hY = sleepy ? 118 : hy;
+  s += `<g transform="rotate(${sleepy ? -18 : (o.tilt || 0)} ${hx} ${hY})">`;
+  s += `<circle cx="${hx}" cy="${hY}" r="22" fill="${sk}"/>`;
+  s += `<path d="M${hx - 22} ${hY - 2} a22 22 0 0 1 44 0 q-10 -9 -24 -7 q-12 2 -20 7 z" fill="${hr}"/>`;
+  const ey = hY + 3;
+  if (o.mood === "happy") {
+    s += `<path d="M${hx - 12} ${ey} q4 -6 8 0 M${hx + 4} ${ey} q4 -6 8 0"/>`;
+    s += `<path d="M${hx - 9} ${hY + 10} q9 11 18 0 z" fill="${C.ink}"/>`;
+    s += `<circle cx="${hx - 14}" cy="${hY + 10}" r="4" fill="${C.match}" stroke="none" opacity=".7"/><circle cx="${hx + 14}" cy="${hY + 10}" r="4" fill="${C.match}" stroke="none" opacity=".7"/>`;
+  } else if (sleepy || o.mood === "yawn") {
+    s += `<path d="M${hx - 12} ${ey} h8 M${hx + 4} ${ey} h8"/>`;
+    if (o.mood === "yawn") s += `<ellipse cx="${hx}" cy="${hY + 13}" rx="5" ry="7" fill="${C.ink}"/>`;
+  } else if (o.mood === "tired") {
+    s += `<path d="M${hx - 12} ${ey - 1} q4 3 8 0 M${hx + 4} ${ey - 1} q4 3 8 0" />`;
+    s += `<path d="M${hx - 11} ${ey + 5} q3 2 6 0 M${hx + 5} ${ey + 5} q3 2 6 0" stroke-width="1.8" opacity=".5"/>`;
+    s += `<path d="M${hx - 6} ${hY + 15} q6 -4 12 0"/>`;
+  } else {
+    s += `<circle cx="${hx - 8}" cy="${ey}" r="2.6" fill="${C.ink}" stroke="none"/><circle cx="${hx + 8}" cy="${ey}" r="2.6" fill="${C.ink}" stroke="none"/>`;
+    s += o.mood === "bored" ? `<path d="M${hx - 5} ${hY + 14} h10"/>` : `<path d="M${hx - 6} ${hY + 14} q6 -4 12 0"/>`;
+  }
+  s += `</g>`;
+  // desk
+  s += `<rect x="28" y="140" width="264" height="12" rx="3" fill="${C.shade}"/><path d="M48 152 v44 M272 152 v44"/>`;
+  if (o.prop !== "phone") s += `<path d="M124 140 l18 -11 l18 5 l18 -5 l18 11 z" fill="#fff"/><path d="M160 134 v6" stroke-width="2"/>`;
+  if (o.cup) {
+    s += `<rect x="84" y="120" width="20" height="20" rx="3" fill="#fff"/><path d="M104 125 q8 0 0 9"/>`;
+    const st = (t * 22) % 12;
+    s += `<path d="M90 ${112 - st} q-4 -5 0 -10 M98 ${114 - st} q4 -5 0 -10" stroke-width="2" opacity="${(1 - st / 12) * .6}"/>`;
+  }
+  if (sleepy) {
+    for (let i = 0; i < 3; i++) {
+      const k = ((t * .7 + i / 3) % 1);
+      s += `<text x="${178 + k * 30}" y="${100 - k * 46}" font-family="JetBrains Mono" font-weight="700" font-size="${14 + k * 10}" fill="${C.ink}" stroke="none" opacity="${1 - k}">z</text>`;
+    }
+  }
+  return s + `</g></svg>`;
+}
+
+/* ---------- build the scene graph ---------- */
+// Scene 1–3: a 5x3 grid of lonely desks in world space. Cell 6 is our hero, cell 8 the match.
+const HERO = 6, MATE = 8;
+const POSES = ["sleep", "yawn", "phone", "study", "bored"];
+const HAIR = [C.ink, "#5a3a22", C.ink, "#2b2b2b", "#7a4a2a"];
+const SKIN = ["#f2c9a0", "#c98d5e", "#e8b48a", "#8d5a3b", "#f6d3b3"];
+const cells = [];
+for (let i = 0; i < 15; i++) {
+  const c = i % 5, r = Math.floor(i / 5);
+  const e = el(world, "card", "", "width:320px;height:200px;");
+  const pose = POSES[i % 5];
+  cells.push({ e, x: 240 + c * 360, y: 350 + r * 240, i,
+    o: { mood: pose === "study" || pose === "phone" ? "neutral" : pose, prop: pose === "phone" ? "phone" : "book",
+      hair: HAIR[(i * 3) % 5], skin: SKIN[(i * 2) % 5], night: true, shirt: "#9a9a9a" } });
+}
+Object.assign(cells[HERO].o, { mood: "tired", clock: 0, lamp: .55, cup: true, shirt: C.chat, hair: C.ink, skin: "#c98d5e" });
+Object.assign(cells[MATE].o, { mood: "neutral", lamp: .55, shirt: C.match, hair: "#5a3a22", skin: "#f2c9a0", prop: "book" });
+// pop-in order: nearest to the hero first
+const order = cells.filter(c => c.i !== HERO)
+  .sort((a, b) => Math.hypot(a.x - 600, a.y - 590) - Math.hypot(b.x - 600, b.y - 590));
+order.forEach((c, k) => { c.popAt = 4.75 + k * .15; });
+cells[HERO].popAt = -1;
+
+// match visuals (world space)
+links.innerHTML = `<line id="mlineB" x1="760" y1="590" x2="1160" y2="590" stroke="${C.ink}" stroke-width="16" stroke-linecap="round"/>
+  <line id="mline" x1="760" y1="590" x2="1160" y2="590" stroke="${C.match}" stroke-width="8" stroke-linecap="round"/>`;
+const mline = document.getElementById("mline"), mlineB = document.getElementById("mlineB");
+const badge = el(world, "", `<svg width="200" height="200" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="86" fill="#fff" stroke="${C.ink}" stroke-width="6"/>
+  <circle id="bring" cx="100" cy="100" r="70" fill="none" stroke="${C.match}" stroke-width="18" stroke-dasharray="440" stroke-dashoffset="440" transform="rotate(-90 100 100)"/>
+  <circle cx="100" cy="100" r="58" fill="none" stroke="${C.ink}" stroke-width="3"/>
+  <text id="bnum" x="100" y="114" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="46" fill="${C.ink}">0%</text></svg>`);
+const bring = badge.querySelector("#bring"), bnum = badge.querySelector("#bnum");
+const matchLbl = el(world, "chip", "Match", `background:${C.match};font-size:22px;`);
+const TAGS = [["CSE", "Night owl", "Physics"], ["EEE", "Night owl", "Physics"]];
+const tags = [];
+TAGS.forEach((list, side) => list.forEach((txt, j) => {
+  const e = el(world, "chip", txt, "font-size:20px;padding:6px 14px;");
+  tags.push({ e, side, j, shared: j > 0 });
+}));
+
+// screen-space UI
+const topChip = el(ui, "chip", "");
+const timeChip = el(ui, "chip", "", "font-size:30px;background:#2b2b2b;color:#fff;border-color:#2b2b2b;box-shadow:4px 4px 0 #111;");
+const alone = el(ui, "card", "Studying alone?", "font-size:92px;font-weight:700;padding:18px 44px;white-space:nowrap;border-width:6px;box-shadow:12px 12px 0 #111;");
+const stamp = el(ui, "", "ALONE.", `font-size:190px;font-weight:700;color:#fff;background:${C.alert};padding:10px 50px;border:8px solid ${C.ink};border-radius:20px;box-shadow:14px 14px 0 ${C.ink};letter-spacing:-.02em;`);
+
+// call scene
+const frame = el(ui, "card", `
+  <div style="height:72px;border-bottom:4px solid ${C.ink};display:flex;align-items:center;gap:14px;padding:0 26px;background:#fff">
+    <span class="dot" style="background:${C.alert}"></span><span class="dot" style="background:${C.focus}"></span><span class="dot" style="background:${C.live}"></span>
+    <span style="font-family:JetBrains Mono;font-weight:700;font-size:26px;margin-left:16px;letter-spacing:.06em">STUDY CALL · PHYSICS CH.4</span></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:104px;border-top:4px solid ${C.ink};background:#fff;display:flex;align-items:center;justify-content:center;gap:34px">
+    ${["#fff", "#fff", C.alert].map((b, k) => `<div style="width:68px;height:68px;border-radius:50%;border:4px solid ${C.ink};background:${b};box-shadow:4px 4px 0 ${C.ink};display:flex;align-items:center;justify-content:center">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="${C.ink}" stroke-width="3.5" stroke-linecap="round">${
+        k === 0 ? '<rect x="11" y="3" width="12" height="18" rx="6"/><path d="M6 16a11 11 0 0 0 22 0M17 27v4"/>' :
+        k === 1 ? '<rect x="3" y="9" width="20" height="16" rx="3"/><path d="M23 15l8-5v14l-8-5"/>' :
+        '<path d="M4 20c8-8 18-8 26 0l-4 4-5-3v-4c-3-1-5-1-8 0v4l-5 3z" fill="#fff"/>'}</svg></div>`).join("")}
+  </div>`, `width:1560px;height:820px;background:${C.quiet};border-width:6px;box-shadow:14px 14px 0 ${C.ink};`);
+const tileA = el(ui, "card", "", "border-width:5px;");
+const tileB = el(ui, "card", "", "border-width:5px;");
+const nameA = el(ui, "chip", "You", "font-size:22px;padding:6px 14px;");
+const nameB = el(ui, "chip", "Mitu", "font-size:22px;padding:6px 14px;");
+const bub1 = el(ui, "bubble", "Physics tonight? 📚", `background:${C.chat};color:#fff;border-bottom-left-radius:6px;`);
+const typing = el(ui, "bubble", `<span style="letter-spacing:10px">•••</span>`, "background:#fff;border-bottom-right-radius:6px;");
+const bub2 = el(ui, "bubble", "Let's go 🔥", "background:#fff;border-bottom-right-radius:6px;");
+const live = el(ui, "chip", `<span class="dot" style="background:#fff"></span>LIVE`, `background:${C.live};font-size:34px;padding:10px 24px;`);
+const liveRing = el(ui, "", "", `width:150px;height:62px;border-radius:999px;border:6px solid ${C.live};`);
+const sparks = [];
+for (let i = 0; i < 6; i++) sparks.push(el(ui, "", `<svg width="60" height="60" viewBox="-30 -30 60 60"><path d="M0 -26 Q4 -4 26 0 Q4 4 0 26 Q-4 4 -26 0 Q-4 -4 0 -26Z" fill="${[C.focus, C.match, C.chat][i % 3]}" stroke="${C.ink}" stroke-width="3"/></svg>`));
+
+// focus + streak
+const timer = el(ui, "", `<svg width="560" height="560" viewBox="0 0 560 560">
+  <circle cx="280" cy="280" r="240" fill="#fff" stroke="${C.ink}" stroke-width="8"/>
+  <circle cx="280" cy="280" r="200" fill="none" stroke="${C.quiet}" stroke-width="44"/>
+  <circle id="tring" cx="280" cy="280" r="200" fill="none" stroke="${C.focus}" stroke-width="44" stroke-dasharray="1257" stroke-dashoffset="1257" transform="rotate(-90 280 280)"/>
+  <circle cx="280" cy="280" r="222" fill="none" stroke="${C.ink}" stroke-width="5"/>
+  <circle cx="280" cy="280" r="178" fill="none" stroke="${C.ink}" stroke-width="5"/>
+  <text id="ttxt" x="280" y="310" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="92" fill="${C.ink}">25:00</text></svg>`);
+const tring = timer.querySelector("#tring"), ttxt = timer.querySelector("#ttxt");
+const focusChip = el(ui, "chip", `<span class="dot" style="background:${C.focus}"></span>Focus`);
+const streak = el(ui, "card", `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:6px">
+  <div id="flame" style="font-size:150px;line-height:1">🔥</div>
+  <div id="snum" style="font-size:150px;font-weight:700;line-height:1;letter-spacing:-.03em">3</div>
+  <div class="chip" style="position:static;background:${C.focus}">day streak</div></div>`, "width:500px;height:520px;border-width:6px;box-shadow:12px 12px 0 #111;");
+const flame = streak.querySelector("#flame"), snum = streak.querySelector("#snum");
+
+// lounge: 6x4 happy, connected desks
+const LCOL = [C.match, C.chat, C.focus, C.live, C.career];
+const lounge = [];
+for (let i = 0; i < 24; i++) {
+  const c = i % 6, r = Math.floor(i / 6);
+  const e = el(ui, "card", "", `width:240px;height:150px;border-radius:12px;box-shadow:6px 6px 0 ${C.ink};`);
+  e.innerHTML = person({ mood: i % 4 === 1 ? "neutral" : "happy", shirt: LCOL[i % 5], hair: HAIR[(i * 7) % 5], skin: SKIN[(i * 3) % 5], prop: i % 7 === 3 ? "phone" : "book", lamp: i % 3 === 0 ? .5 : 0 }, 0) +
+    `<span class="dot a" style="left:12px;top:12px;background:${C.live}"></span>`;
+  const x = 300 + c * 264, y = 300 + r * 186;
+  lounge.push({ e, x, y, i, d: Math.hypot(x - 960, y - 580) });
+}
+const lsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+lsvg.setAttribute("width", 1920); lsvg.setAttribute("height", 1080); lsvg.setAttribute("class", "a");
+ui.insertBefore(lsvg, lounge[0].e);
+const lpairs = [];
+for (let i = 0; i < 24; i++) {
+  if (i % 6 < 5 && rnd(i) > .35) lpairs.push([i, i + 1]);
+  if (i < 18 && rnd(i + 50) > .45) lpairs.push([i, i + 6]);
+}
+lsvg.innerHTML = lpairs.map(([a, b], k) => {
+  const A = lounge[a], B = lounge[b], col = LCOL[k % 5];
+  const len = Math.hypot(B.x - A.x, B.y - A.y);
+  return `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${C.ink}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${len}" stroke-dashoffset="${len}"/>
+    <line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${len}" stroke-dashoffset="${len}"/>`;
+}).join("");
+const lLines = [...lsvg.querySelectorAll("line")];
+
+// logo + end card
+const burst = el(ui, "", `<svg width="1400" height="700" viewBox="-700 -350 1400 700">${Array.from({ length: 14 }, (_, i) => {
+  const a = i / 14 * Math.PI * 2; const r1 = 330, r2 = 420;
+  return `<line x1="${Math.cos(a) * r1 * 1.5}" y1="${Math.sin(a) * r1 * .8}" x2="${Math.cos(a) * r2 * 1.5}" y2="${Math.sin(a) * r2 * .8}" stroke="${C.ink}" stroke-width="10" stroke-linecap="round"/>`;
+}).join("")}</svg>`);
+const LETTERS = [["Z", C.match], ["E", C.chat], ["N", C.focus], ["V", C.live], ["Y", C.career]];
+const logo = el(ui, "", "", "width:1096px;height:200px;");
+const letters = LETTERS.map(([ch, col]) => {
+  const e = document.createElement("div");
+  e.className = "a tile"; e.textContent = ch; e.style.background = col;
+  logo.appendChild(e); return e;
+});
+const tagline = el(ui, "", ["Find", "your", "study", "people."].map(w => `<span class="word">${w}</span>`).join(""),
+  "font-size:108px;font-weight:700;white-space:nowrap;letter-spacing:-.02em;");
+const words = [...tagline.querySelectorAll(".word")];
+const marker = document.createElement("div");
+marker.style.cssText = `position:absolute;left:2px;right:-8px;top:22%;bottom:4%;background:${C.focus};border:4px solid ${C.ink};border-radius:10px;z-index:-1;transform-origin:0 50%;`;
+const hiWrap = document.createElement("span");
+hiWrap.style.cssText = "position:relative;display:inline-block;z-index:0";
+words[2].before(hiWrap); hiWrap.append(marker, words[2], words[3]);
+const cta = el(ui, "", `Join free <span style="font-family:JetBrains Mono">→</span>`,
+  `font-size:58px;font-weight:700;padding:22px 52px;background:${C.match};border:6px solid ${C.ink};border-radius:20px;white-space:nowrap;`);
+const ripple = el(ui, "", "", `width:120px;height:120px;border-radius:50%;border:6px solid ${C.ink};`);
+const cursor = el(ui, "", `<svg width="70" height="84" viewBox="0 0 70 84"><path d="M6 4 L6 64 L22 50 L34 78 L46 72 L34 46 L56 46 Z" fill="#fff" stroke="${C.ink}" stroke-width="5" stroke-linejoin="round"/></svg>`);
+const confetti = [];
+for (let i = 0; i < 34; i++) confetti.push(el(ui, "", "", `width:${14 + rnd(i) * 14}px;height:${24 + rnd(i + 9) * 16}px;background:${LCOL[i % 5]};border:3px solid ${C.ink};border-radius:4px;`));
+
+/* ---------- sound cues (read by render.mjs -> make_audio.py) ---------- */
+const CUES = [];
+for (let k = 0; k < 9; k++) CUES.push([k * .5, "tick"]);
+CUES.push([1.8, "flicker"], [3.11, "type"], [3.35, "type"], [4.41, "whoosh"]);
+order.forEach(c => CUES.push([c.popAt, "thock"]));
+CUES.push([7.67, "stamp"], [8.98, "sparkle"], [9.3, "draw"], [11.25, "ding"], [12.1, "fall"],
+  [12.5, "pop"], [12.75, "type"], [13.0, "pop"], [13.26, "whoosh"], [13.6, "chime"], [14.08, "sparkle"],
+  [15.05, "stamp"], [15.6, "whoosh"], [16.06, "pop"]);
+for (let k = 0; k < 9; k++) CUES.push([16.15 + k * .2, "tick"]);
+CUES.push([17.0, "whoosh"], [17.17, "stamp"], [17.45, "stamp"], [17.75, "stamp"], [18.25, "whoosh"]);
+lounge.slice().sort((a, b) => a.d - b.d).forEach((c, k) => { c.popAt = 18.35 + k * .04; if (k % 3 === 0) CUES.push([c.popAt, "pop"]); });
+CUES.push([19.0, "draw"], [19.5, "riser"], [20.2, "fall"]);
+LETTERS.forEach((_, i) => CUES.push([20.42 + i * .1 + .22, "clack"]));
+CUES.push([21.12, "hit"], [22.0, "pop"], [22.25, "pop"], [22.55, "pop"], [22.95, "pop"], [23.1, "draw"],
+  [23.8, "pop"], [24.3, "click"], [24.35, "sparkle"]);
+window.CUES = CUES.sort((a, b) => a[0] - b[0]);
+
+/* ---------- camera ---------- */
+function camera(t) {
+  // S1 slow push-in on the hero, S2 pull back to reveal the grid, S3 gentle drift
+  let s, cx, cy;
+  if (t < 4.41) { s = lerp(5.0, 5.45, eIO(p(t, 0, 4.41))); cx = 600; cy = 590; }
+  else {
+    const k = eIO(p(t, 4.41, 5.35));
+    s = Math.exp(lerp(Math.log(5.45), Math.log(1), k));
+    cx = lerp(600, 960, k); cy = lerp(590, 590, k);
+    s *= lerp(1, 1.04, eIO(p(t, 8.98, 12.1)));
+  }
+  // camera bump on "Same desk"
+  s *= 1 + .03 * Math.sin(Math.PI * p(t, 1.8, 2.2));
+  return { s, cx, cy };
+}
+
+/* ---------- seek: draw the frame at time t ---------- */
+function seek(t) {
+  const cam = camera(t);
+  world.style.transform = `translate(${960 - cam.cx * cam.s}px,${540 - cam.cy * cam.s}px) scale(${cam.s})`;
+  world.style.opacity = t < 12.6 ? 1 : 0; // opacity, not visibility: children set their own visibility
+
+  /* ----- S1-S3 grid ----- */
+  const colorK = eOut(p(t, 8.98, 9.4));
+  const fallK = p(t, 12.08, 12.7);
+  cells.forEach(c => {
+    const o = c.o, isHero = c.i === HERO, isMate = c.i === MATE, star = isHero || isMate;
+    if (isHero) {
+      o.clock = t < 4.41 ? t * .9 : 4.41 * .9;
+      o.slump = 6 * eOut(p(t, 3.11, 3.7));
+      o.headY = 4 * eOut(p(t, 3.11, 3.7));
+      o.lamp = t > 1.8 && t < 2.05 && Math.floor(t * 30) % 2 ? .1 : .55;
+      if (t > 8.98) { o.mood = "happy"; o.slump = 0; o.headY = 0; }
+    } else if (!star) {
+      // everyone sighs together on "all doing the same thing"
+      o.slump = 5 * Math.sin(Math.PI * p(t, 6.1, 7.1));
+    }
+    if (isMate && t > 8.98) o.mood = "happy";
+    c.e.innerHTML = person(o, t + c.i * .37);
+    let s = c.popAt < 0 ? 1 : pop(t, c.popAt, .4), y = c.y, r = 0, op = 1;
+    if (t >= 7.67 && t < 8.3 && !star) { const sh = Math.sin((t - 7.67) * 60) * 6 * (1 - p(t, 7.67, 8.2)); r = sh * .4; }
+    let sat = .12;
+    if (star) {
+      sat = lerp(.12, 1, colorK);
+      s *= lerp(1, 1.08, colorK);
+      c.e.style.borderColor = colorK > .5 ? C.match : C.ink;
+      c.e.style.boxShadow = colorK > .5 ? `8px 8px 0 ${C.ink}, 0 0 0 ${8 * colorK}px ${C.match}55` : `8px 8px 0 ${C.ink}`;
+    } else {
+      op = lerp(1, .32, colorK);
+      if (fallK > 0) { y += 1400 * eIn(fallK); r += (rnd(c.i) - .5) * 70 * fallK; }
+    }
+    c.e.style.filter = `saturate(${sat})`;
+    T(c.e, c.x, y, s, r, s <= 0.01 ? 0 : op);
+  });
+
+  // match line + badge + tags
+  const lineK = eOut(p(t, 9.3, 10.0));
+  const lineOff = 400 * (1 - lineK);
+  [mline, mlineB].forEach(l => { l.setAttribute("stroke-dasharray", 400); l.setAttribute("stroke-dashoffset", lineOff); l.style.opacity = 1 - p(t, 12.0, 12.3); });
+  const bk = p(t, 9.55, 11.25);
+  const pct = Math.round(92 * eOut(bk));
+  bring.setAttribute("stroke-dashoffset", 440 * (1 - pct / 100));
+  bnum.textContent = pct + "%";
+  const bPulse = 1 + .14 * Math.sin(Math.PI * p(t, 11.25, 11.55));
+  T(badge, 960, 590, pop(t, 9.5) * bPulse * (1 - eIn(p(t, 12.0, 12.3))), 0, t < 9.5 ? 0 : 1);
+  T(matchLbl, 960, 715, pop(t, 11.3) * (1 - eIn(p(t, 12.0, 12.3))), -4, t < 11.3 ? 0 : 1);
+  tags.forEach(g => {
+    const at = 10.0 + g.j * .12 + g.side * .06;
+    const k = pop(t, at) * (1 - eIn(p(t, 12.0, 12.3)));
+    const lit = g.shared && t > 10.8 + g.j * .1;
+    g.e.style.background = lit ? C.match : "#fff";
+    T(g.e, g.side ? 1320 : 600, 735 + g.j * 58, k * (lit ? 1.06 : 1), 0, t < at ? 0 : 1);
+  });
+
+  /* ----- screen chips ----- */
+  const mins = 47 + Math.floor(t * 3.2);
+  timeChip.textContent = `02:${String(Math.min(mins, 59)).padStart(2, "0")} AM`;
+  T(timeChip, 200, 80, pop(t, .15) * (1 - eIn(p(t, 4.3, 4.6))), 0, t < .15 || t > 4.6 ? 0 : 1);
+
+  const chipStates = [
+    [8.98, 12.0, `<span class="dot" style="background:${C.match}"></span>Smart matching`],
+    [12.5, 13.26, `<span class="dot" style="background:${C.chat}"></span>Chat`],
+    [13.26, 15.5, `<span class="dot" style="background:${C.live}"></span>Call`],
+    [18.4, 20.1, `<span class="dot" style="background:${C.live}"></span>Study lounge · live`],
+  ];
+  const cs = chipStates.find(([a, b]) => t >= a && t < b);
+  if (cs) {
+    topChip.innerHTML = cs[2];
+    T(topChip, 960, 90, pop(t, cs[0], .3) * (1 - eIn(p(t, cs[1] - .2, cs[1]))), 0, 1);
+  } else hide(topChip);
+
+  // "Studying alone?" typed on the third phrase
+  const txt = "Studying alone?", n = Math.round(txt.length * p(t, 3.08, 3.55));
+  alone.innerHTML = txt.slice(0, n).replace("alone", `<span style="background:linear-gradient(transparent 58%, ${C.focus} 58%)">alone</span>`) +
+    `<span style="opacity:${Math.floor(t * 4) % 2 ? 1 : 0}">|</span>`;
+  T(alone, 960, 905, pop(t, 3.0, .3) * (1 - eIn(p(t, 4.35, 4.6))), -1.5, t < 3.0 || t > 4.6 ? 0 : 1);
+
+  // "ALONE." stamp
+  const stK = p(t, 7.67, 7.82);
+  T(stamp, 960, 590, t < 8.85 ? lerp(2.4, 1, eOut(stK)) : 1 - eIn(p(t, 8.85, 9.0)), -7, t < 7.67 || t > 9.0 ? 0 : clamp(stK * 3));
+
+  /* ----- S4 chat -> call ----- */
+  const s4 = t >= 12.4 && t < 16.2;
+  const moveK = eIO(p(t, 12.4, 12.9)), callK = eBack(p(t, 13.26, 13.75)), outK = eIn(p(t, 15.55, 16.05));
+  if (s4) {
+    // tiles take over from the grid cells at exactly their screen spot
+    const cs0 = camera(12.4);
+    const g = (wx, wy) => [960 + (wx - cs0.cx) * cs0.s, 540 + (wy - cs0.cy) * cs0.s];
+    const [ax0, ay0] = g(600, 590), [bx0, by0] = g(1320, 590);
+    const w0 = 320 * cs0.s * 1.08, h0 = 200 * cs0.s * 1.08;
+    let ax = lerp(ax0, 560, moveK), bx = lerp(bx0, 1360, moveK), y = lerp(ay0, 470, moveK);
+    let w = lerp(w0, 600, moveK), h = lerp(h0, 375, moveK);
+    const cK = clamp(p(t, 13.26, 13.75));
+    ax = lerp(ax, 590, eIO(cK)); bx = lerp(bx, 1330, eIO(cK)); y = lerp(y, 545, eIO(cK));
+    w = lerp(w, 700, eIO(cK)); h = lerp(h, 438, eIO(cK));
+    const happy = { mood: "happy", night: true, lamp: .5 };
+    tileA.innerHTML = person({ ...cells[HERO].o, ...happy, clock: null, cup: true, wave: t > 13.6 && t < 14.4 ? p(t, 13.6, 14.4) : 0 }, t);
+    tileB.innerHTML = person({ ...cells[MATE].o, ...happy, wave: t > 13.7 && t < 14.5 ? p(t, 13.7, 14.5) : 0 }, t + 1);
+    [tileA, tileB].forEach(e => { e.style.width = w + "px"; e.style.height = h + "px"; e.style.borderColor = t < 12.9 ? C.match : C.ink; });
+    const oy = -700 * outK, os = 1 - .6 * outK;
+    T(tileA, 960 + (ax - 960) * os, y * os + 540 * (1 - os) + oy, 1, 0, 1 - outK);
+    T(tileB, 960 + (bx - 960) * os, y * os + 540 * (1 - os) + oy, 1, 0, 1 - outK);
+    tileA.style.transform += ` scale(${os})`; tileB.style.transform += ` scale(${os})`;
+    T(nameA, 960 + (ax - w / 2 + 70 - 960) * os, (y + h / 2 - 34) * os + 540 * (1 - os) + oy, pop(t, 13.7) * os, 0, t < 13.7 ? 0 : 1 - outK);
+    T(nameB, 960 + (bx - w / 2 + 80 - 960) * os, (y + h / 2 - 34) * os + 540 * (1 - os) + oy, pop(t, 13.8) * os, 0, t < 13.8 ? 0 : 1 - outK);
+    T(frame, 960, 560 + oy, (t < 13.26 ? 0 : lerp(.5, 1, callK)) * os, 0, t < 13.26 ? 0 : 1 - outK);
+    frame.style.borderColor = t > 15.05 && t < 15.4 ? C.live : C.ink;
+  } else [tileA, tileB, nameA, nameB, frame].forEach(hide);
+
+  const bOut = eIn(p(t, 13.26, 13.45));
+  T(bub1, 560, 790, pop(t, 12.5) * (1 - bOut), 0, t < 12.5 || t > 13.45 ? 0 : 1);
+  T(typing, 1360, 870, pop(t, 12.72, .2) * (1 - eIn(p(t, 12.95, 13.0))), 0, t < 12.72 || t > 13.0 ? 0 : 1);
+  T(bub2, 1360, 870, pop(t, 13.0) * (1 - bOut), 0, t < 13.0 || t > 13.45 ? 0 : 1);
+  sparks.forEach((e, i) => {
+    const at = 14.08 + i * .07, k = p(t, at, at + .7);
+    const x = 960 + (i % 2 ? 1 : -1) * (120 + i * 40), y = 300 + (i % 3) * 180;
+    T(e, x, y - 40 * k, eBack(p(t, at, at + .25)) * (1 - eIn(p(t, at + .5, at + .75))), k * 120, t < at || k >= 1 ? 0 : 1);
+  });
+  const lk = p(t, 15.05, 15.2), lp = p(t, 15.05, 15.9);
+  T(live, 1590, 186 - 700 * outK, t < 15.05 ? 0 : lerp(2.2, 1, eOut(lk)) * (1 + .06 * Math.sin(t * 18) * (1 - lp)), 0, t < 15.05 ? 0 : 1 - outK);
+  T(liveRing, 1590, 186, 1 + lp * 1.6, 0, t < 15.05 ? 0 : (1 - lp) * .9);
+
+  /* ----- S5 focus + streak ----- */
+  const s5out = eIn(p(t, 18.15, 18.45));
+  const tk = eIO(p(t, 16.15, 17.95));
+  tring.setAttribute("stroke-dashoffset", 1257 * (1 - tk));
+  const rem = Math.round(25 * 60 * (1 - tk));
+  ttxt.textContent = `${String(Math.floor(rem / 60)).padStart(2, "0")}:${String(rem % 60).padStart(2, "0")}`;
+  T(timer, lerp(620, 960, s5out), 560, pop(t, 16.0, .45) * (1 - s5out), -20 * s5out, t < 16.0 || t > 18.45 ? 0 : 1);
+  T(focusChip, lerp(620, 960, s5out), 230, pop(t, 16.1) * (1 - s5out), -3, t < 16.1 || t > 18.45 ? 0 : 1);
+  const n3 = t < 17.45 ? 3 : t < 17.75 ? 7 : 30;
+  const lastStamp = t < 17.45 ? 17.17 : t < 17.75 ? 17.45 : 17.75;
+  snum.textContent = n3;
+  snum.style.transform = `scale(${lerp(1.5, 1, eOut(p(t, lastStamp, lastStamp + .14)))})`;
+  flame.style.transform = `scale(${({ 3: 1, 7: 1.12, 30: 1.28 })[n3] * (1 + .05 * Math.sin(t * 20))})`;
+  T(streak, lerp(1960 + 300, 1340, eBack(p(t, 16.95, 17.3))), 560, 1 - s5out, 3 - 20 * s5out, t < 16.95 || t > 18.45 ? 0 : 1);
+
+  /* ----- S5b lounge ----- */
+  const suck = p(t, 20.15, 20.6);
+  const lz = lerp(1, 1.05, eIO(p(t, 18.3, 20.15)));
+  lounge.forEach(c => {
+    const k = pop(t, c.popAt, .35);
+    const sk = eIn(clamp((suck * 1.6) - (1 - c.d / 900) * .6));
+    const x = lerp(960 + (c.x - 960) * lz, 960, sk), y = lerp(580 + (c.y - 580) * lz, 560, sk);
+    T(c.e, x, y, k * lz * (1 - sk), sk * (rnd(c.i) - .5) * 400, t < c.popAt || sk >= 1 ? 0 : 1);
+  });
+  const dk = eOut(p(t, 19.0, 19.8));
+  lLines.forEach(l => { const len = +l.getAttribute("stroke-dasharray"); l.setAttribute("stroke-dashoffset", len * (1 - dk)); });
+  lsvg.style.transformOrigin = "960px 580px";
+  lsvg.style.transform = `scale(${lz})`;
+  lsvg.style.opacity = 1 - p(t, 20.1, 20.3);
+  lsvg.style.visibility = t > 18.9 && t < 20.4 ? "visible" : "hidden";
+
+  /* ----- S6 logo slam ----- */
+  const slam = p(t, 21.12, 21.4);
+  const up = eIO(p(t, 21.9, 22.4));
+  const shake = t > 21.12 && t < 21.45 ? Math.sin(t * 90) * 14 * (1 - p(t, 21.12, 21.45)) : 0;
+  const logoS = (t < 21.12 ? 1.06 : lerp(1.12, 1, eOut(slam))) * lerp(1, .74, up);
+  T(logo, 960 + shake, lerp(440, 300, up) + shake * .5, logoS, 0, t < 20.4 ? 0 : 1);
+  letters.forEach((e, i) => {
+    const at = 20.42 + i * .1, k = p(t, at, at + .22);
+    const y = lerp(-900, 0, eIn(k)) + (k >= 1 && t < 21.12 ? -18 * Math.sin(Math.PI * p(t, at + .22, at + .36)) : 0);
+    const sh = t < 21.12 ? 4 : lerp(22, 12, eOut(slam));
+    e.style.boxShadow = `${sh}px ${sh}px 0 ${C.ink}`;
+    e.style.left = (i * 224) + "px"; e.style.top = "0px";
+    e.style.transform = `translate(0px,${y}px) rotate(${(1 - k) * (i % 2 ? 14 : -14)}deg)`;
+    e.style.visibility = t < at ? "hidden" : "visible";
+  });
+  T(burst, 960, 440, lerp(.8, 1.25, eOut(p(t, 21.12, 21.5))), 0, t < 21.12 ? 0 : 1 - p(t, 21.2, 21.55));
+
+  /* ----- S7 tagline + CTA ----- */
+  const wAt = [22.0, 22.25, 22.55, 22.95];
+  words.forEach((w, i) => {
+    const k = pop(t, wAt[i], .3);
+    w.style.transform = `translateY(${(1 - clamp(k)) * 60}px) scale(${k})`;
+    w.style.opacity = t < wAt[i] ? 0 : 1;
+  });
+  marker.style.transform = `scaleX(${eOut(p(t, 23.1, 23.4))})`;
+  T(tagline, 960, 640, 1, 0, t < 21.95 ? 0 : 1);
+  const press = t > 24.3 && t < 24.48;
+  cta.style.boxShadow = press ? `2px 2px 0 ${C.ink}` : `10px 10px 0 ${C.ink}`;
+  T(cta, 960 + (press ? 8 : 0), 830 + (press ? 8 : 0), pop(t, 23.8, .4) * (1 + .03 * Math.sin(Math.max(0, t - 24.6) * 5)), 0, t < 23.8 ? 0 : 1);
+  const ck = eOut(p(t, 23.85, 24.28));
+  T(cursor, lerp(1640, 1060, ck) + 28, lerp(1160, 846, ck) + 36, press ? .88 : 1, 0, t < 23.85 ? 0 : 1);
+  const rk = p(t, 24.3, 24.9);
+  T(ripple, 1060, 846, .3 + rk * 3, 0, t < 24.3 ? 0 : (1 - rk) * .8);
+  confetti.forEach((e, i) => {
+    const dt = t - 24.35; if (dt < 0) { hide(e); return; }
+    const a = -Math.PI / 2 + (rnd(i + 3) - .5) * 2.6, v = 900 + rnd(i + 7) * 900;
+    const x = 960 + Math.cos(a) * v * dt, y = 830 + Math.sin(a) * v * dt + 1500 * dt * dt;
+    T(e, x, y, 1, dt * (rnd(i) - .5) * 1600, y > 1200 ? 0 : 1);
+  });
+}
+window.seek = seek; window.DUR = DUR; window.FPS = FPS;
+
+// live preview when opened directly (render.mjs sets ?render)
+if (!location.search.includes("render")) {
+  const audio = new Audio("assets/voiceover.mp3");
+  let t0 = null;
+  const loop = now => { if (t0 === null) t0 = now; const t = (now - t0) / 1000; seek(Math.min(t, DUR)); if (t < DUR) requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => { seek(0); document.body.addEventListener("click", () => { t0 = null; audio.currentTime = 0; audio.play(); requestAnimationFrame(loop); }); });
+  const fit = () => { document.getElementById("stage").style.zoom = Math.min(innerWidth / 1920, innerHeight / 1080); };
+  addEventListener("resize", fit); fit();
+}
+</script>
+</body>
+</html>
