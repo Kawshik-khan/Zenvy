@@ -1,4 +1,3 @@
-import { CustomCursor } from "@/components/motion/CustomCursor";
 import { Hero } from "./Hero";
 import { LandingFooter } from "./LandingFooter";
 import { LandingNav } from "./LandingNav";
@@ -8,7 +7,6 @@ import { ChannelStrip, Communities, Features, FinalCta, Focus, HowItWorks, Jobs,
 export default function LandingPage({ jobsEnabled = false }: { jobsEnabled?: boolean }) {
   return (
     <div className="nb-cursor min-h-dvh overflow-x-clip bg-canvas font-grotesk text-fg">
-      <CustomCursor />
       <LandingNav jobsEnabled={jobsEnabled} />
       <main>
         <Hero jobsEnabled={jobsEnabled} />

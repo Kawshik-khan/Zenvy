@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { cx } from "@/components/ui";
 import { KeyInMailIllustration, KeyToLockIllustration, LostKeyIllustration, UnlockedIllustration } from "@/components/illustrations/AuthIllustrations";
-import { CustomCursor } from "@/components/motion/CustomCursor";
 
 export type ResetStep = 0 | 1 | 2 | 3;
 
@@ -25,7 +24,6 @@ export function ResetLayout({ step, children }: { step: ResetStep; children: Rea
   const story = STORY[step];
   return (
     <div className="nb-cursor quiet flex min-h-dvh flex-col bg-canvas font-grotesk text-fg">
-      <CustomCursor />
       <header className="border-b-[length:var(--nb-border-width)] border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-8">
           <Logo />

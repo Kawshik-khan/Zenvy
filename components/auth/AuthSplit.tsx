@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { CustomCursor } from "@/components/motion/CustomCursor";
 import { FeaturePanel } from "./FeaturePanel";
 
 /** Sign-in and sign-up frame: rotating feature panel on the left, the form on the right. */
 export function AuthSplit({ action, jobsEnabled, children }: { action?: ReactNode; jobsEnabled?: boolean; children: ReactNode }) {
   return (
     <div className="nb-cursor grid min-h-dvh bg-canvas font-grotesk text-fg lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-      <CustomCursor />
       <div className="order-2 flex lg:order-1">
         <FeaturePanel jobsEnabled={jobsEnabled} />
       </div>

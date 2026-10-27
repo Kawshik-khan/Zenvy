@@ -3,7 +3,6 @@
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cx } from "@/components/ui";
-import { Depth } from "@/components/motion/PointerParallax";
 import { Tilt } from "@/components/motion/Tilt";
 import { useReducedMotion } from "@/components/motion/useMotionOk";
 
@@ -133,7 +132,6 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
           <div
             key={card.id}
             onClick={() => bringToFront(deckIndex)}
-            data-cursor-label={front ? undefined : "Shuffle"}
             className={cx("absolute top-[70px] left-1/2 w-[280px] transition-transform duration-[650ms] ease-[var(--ease-nb-spring)]", !front && "cursor-pointer")}
             style={slotStyle(slot)}
           >
@@ -146,21 +144,21 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
         );
       })}
 
-      <Depth depth={-18} className="absolute top-0 right-0 z-10">
-        <div className="animate-nb-float">
+      <div className="absolute top-0 right-0 z-10">
+        <div>
           <div className="rotate-[5deg] rounded-nb border-nb bg-focus px-3.5 py-2.5 text-ink shadow-nb-md">
             <span className="block text-[11px] font-bold tracking-[0.08em]">FOCUS · 2 OF 4</span>
             <LiveTimer />
           </div>
         </div>
-      </Depth>
-      <Depth depth={14} className="absolute bottom-11 left-0 z-10">
-        <div className="max-w-[210px] origin-left animate-nb-sway rounded-[14px_14px_14px_4px] border-nb bg-chat px-3.5 py-2.5 font-bold text-ink shadow-nb-md">
+      </div>
+      <div className="absolute bottom-11 left-0 z-10">
+        <div className="max-w-[210px] origin-left rounded-[14px_14px_14px_4px] border-nb bg-chat px-3.5 py-2.5 font-bold text-ink shadow-nb-md">
           Library at 7? I&apos;ll bring the past papers.
         </div>
-      </Depth>
-      <Depth depth={-10} className="absolute right-0 bottom-0 z-10">
-        <div className="animate-nb-float [animation-delay:-1.3s]">
+      </div>
+      <div className="absolute right-0 bottom-0 z-10">
+        <div>
           <div className="flex items-center gap-2.5 rounded-nb border-nb bg-card px-3.5 py-2.5 text-ink shadow-nb-md">
             <span className="inline-flex size-8 items-center justify-center rounded-lg border-2 border-line bg-live">
               <Check size={16} strokeWidth={3} />
@@ -171,7 +169,7 @@ export function HeroCards({ jobsEnabled }: { jobsEnabled: boolean }) {
             </span>
           </div>
         </div>
-      </Depth>
+      </div>
     </div>
     </div>
   );

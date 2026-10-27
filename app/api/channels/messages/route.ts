@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { invalidateStudyMetrics } from '@/lib/cache';
+import { parseRoomMessageInput, roomMessageJson } from '@/lib/room-messages';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
@@ -60,48 +61,36 @@ export async function GET(request: Request) {
   }
 }
 
-/** Sends a channel message over HTTP (the mobile app). Body: { channelId, content }. */
+/**
+ * Saves a channel message. The web and mobile apps both send this way, so messages persist even when
+ * the socket server is down; the web app then asks the socket server to broadcast the saved row.
+ * Body: { channelId, content, fileUrl?, fileType?, fileName? }.
+ */
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
+  const userId = session?.user?.id;
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const channelId = typeof body?.channelId === 'string' ? body.channelId : '';
-  const content = typeof body?.content === 'string' ? body.content.trim() : '';
-  if (!channelId || !content) {
-    return NextResponse.json({ error: 'Message content is required' }, { status: 400 });
-  }
-  if (content.length > 4000) {
-    return NextResponse.json({ error: 'Messages can be up to 4000 characters' }, { status: 400 });
+  const input = parseRoomMessageInput('channel', await request.json().catch(() => null));
+  if (!input.ok) {
+    return NextResponse.json({ error: input.error }, { status: 400 });
   }
 
   const membership = await prisma.channelMember.findUnique({
-    where: { channelId_userId: { channelId, userId: session.user.id } },
+    where: { channelId_userId: { channelId: input.roomId, userId } },
+    select: { id: true },
   });
   if (!membership) {
-    return NextResponse.json({ error: 'Not a member of this channel' }, { status: 403 });
+    return NextResponse.json({ error: 'You must be a member to send messages' }, { status: 403 });
   }
 
   const message = await prisma.channelMessage.create({
-    data: { content, channelId, senderId: session.user.id },
+    data: { content: input.content, ...input.file, channelId: input.roomId, senderId: userId },
     include: { sender: { select: { name: true, image: true } } },
   });
-  await invalidateStudyMetrics(session.user.id);
+  await invalidateStudyMetrics(userId);
 
-  return NextResponse.json({
-    message: {
-      id: message.id,
-      senderId: message.senderId,
-      senderName: message.sender.name || 'Anonymous',
-      senderImage: message.sender.image,
-      content: message.content,
-      fileUrl: null,
-      fileType: null,
-      fileName: null,
-      timestamp: message.createdAt,
-      isSelf: true,
-    },
-  });
+  return NextResponse.json({ message: roomMessageJson(message, userId) }, { status: 201 });
 }
