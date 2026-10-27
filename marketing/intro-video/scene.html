@@ -6,8 +6,8 @@
 <!--
   Zenvy intro video, "From alone to together".
   Every frame is a pure function of time: render.mjs calls window.seek(t)
-  for each frame and screenshots the stage. Open this file in a browser to
-  preview it (it plays itself, click to restart).
+  for each frame and screenshots the stage. Open this file in a browser and
+  click to preview it; add ?vertical for the 9:16 Reels cut.
   Scene timings are synced to assets/voiceover.mp3.
 -->
 <style>
@@ -59,6 +59,26 @@
 <script>
 "use strict";
 const DUR = 26, FPS = 30;
+// ?vertical renders the 9:16 Reels/Shorts cut; everything that moves reads its spot from L.
+const V = /vertical/.test(location.search);
+const W = V ? 1080 : 1920, H = V ? 1920 : 1080, CX = W / 2, CY = H / 2;
+const L = V ? {
+  grid: { cols: 3, rows: 5, x0: 190, px: 350, y0: 440, py: 230, hero: 3, mate: 11 }, zoom: [3.2, 3.45], gridC: [540, 900],
+  tagDir: [1, -1], chipY: 250, timeChip: [540, 250], alone: [540, 1420],
+  chatA: [540, 540], chatB: [540, 1200], chatSize: [600, 375], bub1: [470, 810], bub2: [610, 915],
+  callA: [540, 664], callB: [540, 1224], callSize: [860, 520], frame: [540, 944, 960, 1300], live: [905, 330], sparkY: [500, 380],
+  timer: [540, 660, .85], focusChip: [540, 330], streak: [540, 1230, .85],
+  lounge: { cols: 4, rows: 6, x0: 165, px: 250, y0: 450, py: 180, c: [540, 900] },
+  logo: [540, 820, .8, 560, .62], tagline: [540, 990], cta: [540, 1330], cursorFrom: [1000, 1760],
+} : {
+  grid: { cols: 5, rows: 3, x0: 240, px: 360, y0: 350, py: 240, hero: 6, mate: 8 }, zoom: [5.0, 5.45], gridC: [960, 590],
+  tagDir: [1, 1], chipY: 90, timeChip: [200, 80], alone: [960, 905],
+  chatA: [560, 470], chatB: [1360, 470], chatSize: [600, 375], bub1: [560, 790], bub2: [1360, 870],
+  callA: [590, 545], callB: [1330, 545], callSize: [700, 438], frame: [960, 560, 1560, 820], live: [1590, 186], sparkY: [300, 180],
+  timer: [620, 560, 1], focusChip: [620, 230], streak: [1340, 560, 1],
+  lounge: { cols: 6, rows: 4, x0: 300, px: 264, y0: 300, py: 186, c: [960, 580] },
+  logo: [960, 440, 1, 300, .74], tagline: [960, 640], cta: [960, 830], cursorFrom: [1640, 1160],
+};
 const C = { paper: "#fff8ec", ink: "#111111", match: "#ff6b9d", chat: "#4d96ff", focus: "#ffd23f",
   live: "#3ddc97", alert: "#ff5a36", career: "#b794f6", quiet: "#f4eee2", shade: "#e8dfcc" };
 
@@ -77,6 +97,8 @@ const rnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x 
 
 /* ---------- DOM helpers ---------- */
 const ui = document.getElementById("ui"), world = document.getElementById("world"), links = document.getElementById("links");
+for (const e of [document.getElementById("stage"), ui, world]) { e.style.width = W + "px"; e.style.height = H + "px"; }
+links.setAttribute("width", W); links.setAttribute("height", H);
 function el(parent, cls, html = "", style = "") {
   const e = document.createElement("div");
   e.className = "a " + cls; e.innerHTML = html; if (style) e.style.cssText += style;
@@ -168,31 +190,34 @@ function person(o, t) {
 }
 
 /* ---------- build the scene graph ---------- */
-// Scene 1–3: a 5x3 grid of lonely desks in world space. Cell 6 is our hero, cell 8 the match.
-const HERO = 6, MATE = 8;
+// Scene 1–3: a grid of lonely desks in world space, with our hero and their match.
+const G = L.grid, HERO = G.hero, MATE = G.mate;
 const POSES = ["sleep", "yawn", "phone", "study", "bored"];
 const HAIR = [C.ink, "#5a3a22", C.ink, "#2b2b2b", "#7a4a2a"];
 const SKIN = ["#f2c9a0", "#c98d5e", "#e8b48a", "#8d5a3b", "#f6d3b3"];
 const cells = [];
-for (let i = 0; i < 15; i++) {
-  const c = i % 5, r = Math.floor(i / 5);
+for (let i = 0; i < G.cols * G.rows; i++) {
+  const c = i % G.cols, r = Math.floor(i / G.cols);
   const e = el(world, "card", "", "width:320px;height:200px;");
   const pose = POSES[i % 5];
-  cells.push({ e, x: 240 + c * 360, y: 350 + r * 240, i,
+  cells.push({ e, x: G.x0 + c * G.px, y: G.y0 + r * G.py, i,
     o: { mood: pose === "study" || pose === "phone" ? "neutral" : pose, prop: pose === "phone" ? "phone" : "book",
       hair: HAIR[(i * 3) % 5], skin: SKIN[(i * 2) % 5], night: true, shirt: "#9a9a9a" } });
 }
 Object.assign(cells[HERO].o, { mood: "tired", clock: 0, lamp: .55, cup: true, shirt: C.chat, hair: C.ink, skin: "#c98d5e" });
 Object.assign(cells[MATE].o, { mood: "neutral", lamp: .55, shirt: C.match, hair: "#5a3a22", skin: "#f2c9a0", prop: "book" });
 // pop-in order: nearest to the hero first
+const hx0 = cells[HERO].x, hy0 = cells[HERO].y, mx0 = cells[MATE].x, my0 = cells[MATE].y;
 const order = cells.filter(c => c.i !== HERO)
-  .sort((a, b) => Math.hypot(a.x - 600, a.y - 590) - Math.hypot(b.x - 600, b.y - 590));
+  .sort((a, b) => Math.hypot(a.x - hx0, a.y - hy0) - Math.hypot(b.x - hx0, b.y - hy0));
 order.forEach((c, k) => { c.popAt = 4.75 + k * .15; });
 cells[HERO].popAt = -1;
 
 // match visuals (world space)
-links.innerHTML = `<line id="mlineB" x1="760" y1="590" x2="1160" y2="590" stroke="${C.ink}" stroke-width="16" stroke-linecap="round"/>
-  <line id="mline" x1="760" y1="590" x2="1160" y2="590" stroke="${C.match}" stroke-width="8" stroke-linecap="round"/>`;
+// drawn centre to centre, behind the cards
+const mLen = Math.hypot(mx0 - hx0, my0 - hy0);
+links.innerHTML = `<line id="mlineB" x1="${hx0}" y1="${hy0}" x2="${mx0}" y2="${my0}" stroke="${C.ink}" stroke-width="16" stroke-linecap="round"/>
+  <line id="mline" x1="${hx0}" y1="${hy0}" x2="${mx0}" y2="${my0}" stroke="${C.match}" stroke-width="8" stroke-linecap="round"/>`;
 const mline = document.getElementById("mline"), mlineB = document.getElementById("mlineB");
 const badge = el(world, "", `<svg width="200" height="200" viewBox="0 0 200 200">
   <circle cx="100" cy="100" r="86" fill="#fff" stroke="${C.ink}" stroke-width="6"/>
@@ -225,7 +250,7 @@ const frame = el(ui, "card", `
         k === 0 ? '<rect x="11" y="3" width="12" height="18" rx="6"/><path d="M6 16a11 11 0 0 0 22 0M17 27v4"/>' :
         k === 1 ? '<rect x="3" y="9" width="20" height="16" rx="3"/><path d="M23 15l8-5v14l-8-5"/>' :
         '<path d="M4 20c8-8 18-8 26 0l-4 4-5-3v-4c-3-1-5-1-8 0v4l-5 3z" fill="#fff"/>'}</svg></div>`).join("")}
-  </div>`, `width:1560px;height:820px;background:${C.quiet};border-width:6px;box-shadow:14px 14px 0 ${C.ink};`);
+  </div>`, `width:${L.frame[2]}px;height:${L.frame[3]}px;background:${C.quiet};border-width:6px;box-shadow:14px 14px 0 ${C.ink};`);
 const tileA = el(ui, "card", "", "border-width:5px;");
 const tileB = el(ui, "card", "", "border-width:5px;");
 const nameA = el(ui, "chip", "You", "font-size:22px;padding:6px 14px;");
@@ -257,21 +282,22 @@ const flame = streak.querySelector("#flame"), snum = streak.querySelector("#snum
 // lounge: 6x4 happy, connected desks
 const LCOL = [C.match, C.chat, C.focus, C.live, C.career];
 const lounge = [];
-for (let i = 0; i < 24; i++) {
-  const c = i % 6, r = Math.floor(i / 6);
+const LG = L.lounge, LN = LG.cols * LG.rows;
+for (let i = 0; i < LN; i++) {
+  const c = i % LG.cols, r = Math.floor(i / LG.cols);
   const e = el(ui, "card", "", `width:240px;height:150px;border-radius:12px;box-shadow:6px 6px 0 ${C.ink};`);
   e.innerHTML = person({ mood: i % 4 === 1 ? "neutral" : "happy", shirt: LCOL[i % 5], hair: HAIR[(i * 7) % 5], skin: SKIN[(i * 3) % 5], prop: i % 7 === 3 ? "phone" : "book", lamp: i % 3 === 0 ? .5 : 0 }, 0) +
     `<span class="dot a" style="left:12px;top:12px;background:${C.live}"></span>`;
-  const x = 300 + c * 264, y = 300 + r * 186;
-  lounge.push({ e, x, y, i, d: Math.hypot(x - 960, y - 580) });
+  const x = LG.x0 + c * LG.px, y = LG.y0 + r * LG.py;
+  lounge.push({ e, x, y, i, d: Math.hypot(x - LG.c[0], y - LG.c[1]) });
 }
 const lsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-lsvg.setAttribute("width", 1920); lsvg.setAttribute("height", 1080); lsvg.setAttribute("class", "a");
+lsvg.setAttribute("width", W); lsvg.setAttribute("height", H); lsvg.setAttribute("class", "a");
 ui.insertBefore(lsvg, lounge[0].e);
 const lpairs = [];
-for (let i = 0; i < 24; i++) {
-  if (i % 6 < 5 && rnd(i) > .35) lpairs.push([i, i + 1]);
-  if (i < 18 && rnd(i + 50) > .45) lpairs.push([i, i + 6]);
+for (let i = 0; i < LN; i++) {
+  if (i % LG.cols < LG.cols - 1 && rnd(i) > .35) lpairs.push([i, i + 1]);
+  if (i < LN - LG.cols && rnd(i + 50) > .45) lpairs.push([i, i + LG.cols]);
 }
 lsvg.innerHTML = lpairs.map(([a, b], k) => {
   const A = lounge[a], B = lounge[b], col = LCOL[k % 5];
@@ -301,6 +327,7 @@ marker.style.cssText = `position:absolute;left:2px;right:-8px;top:22%;bottom:4%;
 const hiWrap = document.createElement("span");
 hiWrap.style.cssText = "position:relative;display:inline-block;z-index:0";
 words[2].before(hiWrap); hiWrap.append(marker, words[2], words[3]);
+if (V) { hiWrap.before(document.createElement("br")); tagline.style.textAlign = "center"; tagline.style.lineHeight = "1.25"; }
 const cta = el(ui, "", `Join free <span style="font-family:JetBrains Mono">→</span>`,
   `font-size:58px;font-weight:700;padding:22px 52px;background:${C.match};border:6px solid ${C.ink};border-radius:20px;white-space:nowrap;`);
 const ripple = el(ui, "", "", `width:120px;height:120px;border-radius:50%;border:6px solid ${C.ink};`);
@@ -329,11 +356,12 @@ window.CUES = CUES.sort((a, b) => a[0] - b[0]);
 function camera(t) {
   // S1 slow push-in on the hero, S2 pull back to reveal the grid, S3 gentle drift
   let s, cx, cy;
-  if (t < 4.41) { s = lerp(5.0, 5.45, eIO(p(t, 0, 4.41))); cx = 600; cy = 590; }
+  const [z0, z1] = L.zoom;
+  if (t < 4.41) { s = lerp(z0, z1, eIO(p(t, 0, 4.41))); cx = hx0; cy = hy0; }
   else {
     const k = eIO(p(t, 4.41, 5.35));
-    s = Math.exp(lerp(Math.log(5.45), Math.log(1), k));
-    cx = lerp(600, 960, k); cy = lerp(590, 590, k);
+    s = Math.exp(lerp(Math.log(z1), Math.log(1), k));
+    cx = lerp(hx0, L.gridC[0], k); cy = lerp(hy0, L.gridC[1], k);
     s *= lerp(1, 1.04, eIO(p(t, 8.98, 12.1)));
   }
   // camera bump on "Same desk"
@@ -344,7 +372,7 @@ function camera(t) {
 /* ---------- seek: draw the frame at time t ---------- */
 function seek(t) {
   const cam = camera(t);
-  world.style.transform = `translate(${960 - cam.cx * cam.s}px,${540 - cam.cy * cam.s}px) scale(${cam.s})`;
+  world.style.transform = `translate(${CX - cam.cx * cam.s}px,${CY - cam.cy * cam.s}px) scale(${cam.s})`;
   world.style.opacity = t < 12.6 ? 1 : 0; // opacity, not visibility: children set their own visibility
 
   /* ----- S1-S3 grid ----- */
@@ -374,7 +402,7 @@ function seek(t) {
       c.e.style.boxShadow = colorK > .5 ? `8px 8px 0 ${C.ink}, 0 0 0 ${8 * colorK}px ${C.match}55` : `8px 8px 0 ${C.ink}`;
     } else {
       op = lerp(1, .32, colorK);
-      if (fallK > 0) { y += 1400 * eIn(fallK); r += (rnd(c.i) - .5) * 70 * fallK; }
+      if (fallK > 0) { y += (H + 300) * eIn(fallK); r += (rnd(c.i) - .5) * 70 * fallK; }
     }
     c.e.style.filter = `saturate(${sat})`;
     T(c.e, c.x, y, s, r, s <= 0.01 ? 0 : op);
@@ -382,27 +410,29 @@ function seek(t) {
 
   // match line + badge + tags
   const lineK = eOut(p(t, 9.3, 10.0));
-  const lineOff = 400 * (1 - lineK);
-  [mline, mlineB].forEach(l => { l.setAttribute("stroke-dasharray", 400); l.setAttribute("stroke-dashoffset", lineOff); l.style.opacity = 1 - p(t, 12.0, 12.3); });
+  const lineOff = mLen * (1 - lineK);
+  [mline, mlineB].forEach(l => { l.setAttribute("stroke-dasharray", mLen); l.setAttribute("stroke-dashoffset", lineOff); l.style.opacity = 1 - p(t, 12.0, 12.3); });
   const bk = p(t, 9.55, 11.25);
   const pct = Math.round(92 * eOut(bk));
   bring.setAttribute("stroke-dashoffset", 440 * (1 - pct / 100));
   bnum.textContent = pct + "%";
   const bPulse = 1 + .14 * Math.sin(Math.PI * p(t, 11.25, 11.55));
-  T(badge, 960, 590, pop(t, 9.5) * bPulse * (1 - eIn(p(t, 12.0, 12.3))), 0, t < 9.5 ? 0 : 1);
-  T(matchLbl, 960, 715, pop(t, 11.3) * (1 - eIn(p(t, 12.0, 12.3))), -4, t < 11.3 ? 0 : 1);
+  const bx0 = (hx0 + mx0) / 2, by0 = (hy0 + my0) / 2;
+  T(badge, bx0, by0, pop(t, 9.5) * bPulse * (1 - eIn(p(t, 12.0, 12.3))), 0, t < 9.5 ? 0 : 1);
+  T(matchLbl, bx0, by0 + 125, pop(t, 11.3) * (1 - eIn(p(t, 12.0, 12.3))), -4, t < 11.3 ? 0 : 1);
   tags.forEach(g => {
     const at = 10.0 + g.j * .12 + g.side * .06;
     const k = pop(t, at) * (1 - eIn(p(t, 12.0, 12.3)));
     const lit = g.shared && t > 10.8 + g.j * .1;
     g.e.style.background = lit ? C.match : "#fff";
-    T(g.e, g.side ? 1320 : 600, 735 + g.j * 58, k * (lit ? 1.06 : 1), 0, t < at ? 0 : 1);
+    const [cx0, cy0] = g.side ? [mx0, my0] : [hx0, hy0], dir = L.tagDir[g.side];
+    T(g.e, cx0, cy0 + dir * (145 + g.j * 58), k * (lit ? 1.06 : 1), 0, t < at ? 0 : 1);
   });
 
   /* ----- screen chips ----- */
   const mins = 47 + Math.floor(t * 3.2);
   timeChip.textContent = `02:${String(Math.min(mins, 59)).padStart(2, "0")} AM`;
-  T(timeChip, 200, 80, pop(t, .15) * (1 - eIn(p(t, 4.3, 4.6))), 0, t < .15 || t > 4.6 ? 0 : 1);
+  T(timeChip, L.timeChip[0], L.timeChip[1], pop(t, .15) * (1 - eIn(p(t, 4.3, 4.6))), 0, t < .15 || t > 4.6 ? 0 : 1);
 
   const chipStates = [
     [8.98, 12.0, `<span class="dot" style="background:${C.match}"></span>Smart matching`],
@@ -413,18 +443,18 @@ function seek(t) {
   const cs = chipStates.find(([a, b]) => t >= a && t < b);
   if (cs) {
     topChip.innerHTML = cs[2];
-    T(topChip, 960, 90, pop(t, cs[0], .3) * (1 - eIn(p(t, cs[1] - .2, cs[1]))), 0, 1);
+    T(topChip, CX, L.chipY, pop(t, cs[0], .3) * (1 - eIn(p(t, cs[1] - .2, cs[1]))), 0, 1);
   } else hide(topChip);
 
   // "Studying alone?" typed on the third phrase
   const txt = "Studying alone?", n = Math.round(txt.length * p(t, 3.08, 3.55));
   alone.innerHTML = txt.slice(0, n).replace("alone", `<span style="background:linear-gradient(transparent 58%, ${C.focus} 58%)">alone</span>`) +
     `<span style="opacity:${Math.floor(t * 4) % 2 ? 1 : 0}">|</span>`;
-  T(alone, 960, 905, pop(t, 3.0, .3) * (1 - eIn(p(t, 4.35, 4.6))), -1.5, t < 3.0 || t > 4.6 ? 0 : 1);
+  T(alone, L.alone[0], L.alone[1], pop(t, 3.0, .3) * (1 - eIn(p(t, 4.35, 4.6))), -1.5, t < 3.0 || t > 4.6 ? 0 : 1);
 
   // "ALONE." stamp
   const stK = p(t, 7.67, 7.82);
-  T(stamp, 960, 590, t < 8.85 ? lerp(2.4, 1, eOut(stK)) : 1 - eIn(p(t, 8.85, 9.0)), -7, t < 7.67 || t > 9.0 ? 0 : clamp(stK * 3));
+  T(stamp, L.gridC[0], L.gridC[1], t < 8.85 ? lerp(2.4, 1, eOut(stK)) : 1 - eIn(p(t, 8.85, 9.0)), -7, t < 7.67 || t > 9.0 ? 0 : clamp(stK * 3));
 
   /* ----- S4 chat -> call ----- */
   const s4 = t >= 12.4 && t < 16.2;
@@ -432,40 +462,42 @@ function seek(t) {
   if (s4) {
     // tiles take over from the grid cells at exactly their screen spot
     const cs0 = camera(12.4);
-    const g = (wx, wy) => [960 + (wx - cs0.cx) * cs0.s, 540 + (wy - cs0.cy) * cs0.s];
-    const [ax0, ay0] = g(600, 590), [bx0, by0] = g(1320, 590);
+    const g = (wx, wy) => [CX + (wx - cs0.cx) * cs0.s, CY + (wy - cs0.cy) * cs0.s];
+    const A0 = g(hx0, hy0), B0 = g(mx0, my0);
     const w0 = 320 * cs0.s * 1.08, h0 = 200 * cs0.s * 1.08;
-    let ax = lerp(ax0, 560, moveK), bx = lerp(bx0, 1360, moveK), y = lerp(ay0, 470, moveK);
-    let w = lerp(w0, 600, moveK), h = lerp(h0, 375, moveK);
-    const cK = clamp(p(t, 13.26, 13.75));
-    ax = lerp(ax, 590, eIO(cK)); bx = lerp(bx, 1330, eIO(cK)); y = lerp(y, 545, eIO(cK));
-    w = lerp(w, 700, eIO(cK)); h = lerp(h, 438, eIO(cK));
+    const cK = eIO(clamp(p(t, 13.26, 13.75)));
+    const at = (a, b, c) => lerp(lerp(a, b, moveK), c, cK);
+    const ax = at(A0[0], L.chatA[0], L.callA[0]), ay = at(A0[1], L.chatA[1], L.callA[1]);
+    const bx = at(B0[0], L.chatB[0], L.callB[0]), by = at(B0[1], L.chatB[1], L.callB[1]);
+    const w = at(w0, L.chatSize[0], L.callSize[0]), h = at(h0, L.chatSize[1], L.callSize[1]);
     const happy = { mood: "happy", night: true, lamp: .5 };
     tileA.innerHTML = person({ ...cells[HERO].o, ...happy, clock: null, cup: true, wave: t > 13.6 && t < 14.4 ? p(t, 13.6, 14.4) : 0 }, t);
     tileB.innerHTML = person({ ...cells[MATE].o, ...happy, wave: t > 13.7 && t < 14.5 ? p(t, 13.7, 14.5) : 0 }, t + 1);
     [tileA, tileB].forEach(e => { e.style.width = w + "px"; e.style.height = h + "px"; e.style.borderColor = t < 12.9 ? C.match : C.ink; });
     const oy = -700 * outK, os = 1 - .6 * outK;
-    T(tileA, 960 + (ax - 960) * os, y * os + 540 * (1 - os) + oy, 1, 0, 1 - outK);
-    T(tileB, 960 + (bx - 960) * os, y * os + 540 * (1 - os) + oy, 1, 0, 1 - outK);
+    // shrink everything towards the screen centre on the way out
+    const sx = x => CX + (x - CX) * os, sy = y => CY + (y - CY) * os + oy;
+    T(tileA, sx(ax), sy(ay), 1, 0, 1 - outK);
+    T(tileB, sx(bx), sy(by), 1, 0, 1 - outK);
     tileA.style.transform += ` scale(${os})`; tileB.style.transform += ` scale(${os})`;
-    T(nameA, 960 + (ax - w / 2 + 70 - 960) * os, (y + h / 2 - 34) * os + 540 * (1 - os) + oy, pop(t, 13.7) * os, 0, t < 13.7 ? 0 : 1 - outK);
-    T(nameB, 960 + (bx - w / 2 + 80 - 960) * os, (y + h / 2 - 34) * os + 540 * (1 - os) + oy, pop(t, 13.8) * os, 0, t < 13.8 ? 0 : 1 - outK);
-    T(frame, 960, 560 + oy, (t < 13.26 ? 0 : lerp(.5, 1, callK)) * os, 0, t < 13.26 ? 0 : 1 - outK);
+    T(nameA, sx(ax - w / 2 + 70), sy(ay + h / 2 - 34), pop(t, 13.7) * os, 0, t < 13.7 ? 0 : 1 - outK);
+    T(nameB, sx(bx - w / 2 + 80), sy(by + h / 2 - 34), pop(t, 13.8) * os, 0, t < 13.8 ? 0 : 1 - outK);
+    T(frame, L.frame[0], L.frame[1] + oy, (t < 13.26 ? 0 : lerp(.5, 1, callK)) * os, 0, t < 13.26 ? 0 : 1 - outK);
     frame.style.borderColor = t > 15.05 && t < 15.4 ? C.live : C.ink;
   } else [tileA, tileB, nameA, nameB, frame].forEach(hide);
 
   const bOut = eIn(p(t, 13.26, 13.45));
-  T(bub1, 560, 790, pop(t, 12.5) * (1 - bOut), 0, t < 12.5 || t > 13.45 ? 0 : 1);
-  T(typing, 1360, 870, pop(t, 12.72, .2) * (1 - eIn(p(t, 12.95, 13.0))), 0, t < 12.72 || t > 13.0 ? 0 : 1);
-  T(bub2, 1360, 870, pop(t, 13.0) * (1 - bOut), 0, t < 13.0 || t > 13.45 ? 0 : 1);
+  T(bub1, L.bub1[0], L.bub1[1], pop(t, 12.5) * (1 - bOut), 0, t < 12.5 || t > 13.45 ? 0 : 1);
+  T(typing, L.bub2[0], L.bub2[1], pop(t, 12.72, .2) * (1 - eIn(p(t, 12.95, 13.0))), 0, t < 12.72 || t > 13.0 ? 0 : 1);
+  T(bub2, L.bub2[0], L.bub2[1], pop(t, 13.0) * (1 - bOut), 0, t < 13.0 || t > 13.45 ? 0 : 1);
   sparks.forEach((e, i) => {
     const at = 14.08 + i * .07, k = p(t, at, at + .7);
-    const x = 960 + (i % 2 ? 1 : -1) * (120 + i * 40), y = 300 + (i % 3) * 180;
+    const x = CX + (i % 2 ? 1 : -1) * (120 + i * 40), y = L.sparkY[0] + (i % 3) * L.sparkY[1];
     T(e, x, y - 40 * k, eBack(p(t, at, at + .25)) * (1 - eIn(p(t, at + .5, at + .75))), k * 120, t < at || k >= 1 ? 0 : 1);
   });
   const lk = p(t, 15.05, 15.2), lp = p(t, 15.05, 15.9);
-  T(live, 1590, 186 - 700 * outK, t < 15.05 ? 0 : lerp(2.2, 1, eOut(lk)) * (1 + .06 * Math.sin(t * 18) * (1 - lp)), 0, t < 15.05 ? 0 : 1 - outK);
-  T(liveRing, 1590, 186, 1 + lp * 1.6, 0, t < 15.05 ? 0 : (1 - lp) * .9);
+  T(live, L.live[0], L.live[1] - 700 * outK, t < 15.05 ? 0 : lerp(2.2, 1, eOut(lk)) * (1 + .06 * Math.sin(t * 18) * (1 - lp)), 0, t < 15.05 ? 0 : 1 - outK);
+  T(liveRing, L.live[0], L.live[1], 1 + lp * 1.6, 0, t < 15.05 ? 0 : (1 - lp) * .9);
 
   /* ----- S5 focus + streak ----- */
   const s5out = eIn(p(t, 18.15, 18.45));
@@ -473,14 +505,14 @@ function seek(t) {
   tring.setAttribute("stroke-dashoffset", 1257 * (1 - tk));
   const rem = Math.round(25 * 60 * (1 - tk));
   ttxt.textContent = `${String(Math.floor(rem / 60)).padStart(2, "0")}:${String(rem % 60).padStart(2, "0")}`;
-  T(timer, lerp(620, 960, s5out), 560, pop(t, 16.0, .45) * (1 - s5out), -20 * s5out, t < 16.0 || t > 18.45 ? 0 : 1);
-  T(focusChip, lerp(620, 960, s5out), 230, pop(t, 16.1) * (1 - s5out), -3, t < 16.1 || t > 18.45 ? 0 : 1);
+  T(timer, lerp(L.timer[0], CX, s5out), L.timer[1], L.timer[2] * pop(t, 16.0, .45) * (1 - s5out), -20 * s5out, t < 16.0 || t > 18.45 ? 0 : 1);
+  T(focusChip, lerp(L.focusChip[0], CX, s5out), L.focusChip[1], pop(t, 16.1) * (1 - s5out), -3, t < 16.1 || t > 18.45 ? 0 : 1);
   const n3 = t < 17.45 ? 3 : t < 17.75 ? 7 : 30;
   const lastStamp = t < 17.45 ? 17.17 : t < 17.75 ? 17.45 : 17.75;
   snum.textContent = n3;
   snum.style.transform = `scale(${lerp(1.5, 1, eOut(p(t, lastStamp, lastStamp + .14)))})`;
   flame.style.transform = `scale(${({ 3: 1, 7: 1.12, 30: 1.28 })[n3] * (1 + .05 * Math.sin(t * 20))})`;
-  T(streak, lerp(1960 + 300, 1340, eBack(p(t, 16.95, 17.3))), 560, 1 - s5out, 3 - 20 * s5out, t < 16.95 || t > 18.45 ? 0 : 1);
+  T(streak, lerp(W + 400, L.streak[0], eBack(p(t, 16.95, 17.3))), L.streak[1], L.streak[2] * (1 - s5out), 3 - 20 * s5out, t < 16.95 || t > 18.45 ? 0 : 1);
 
   /* ----- S5b lounge ----- */
   const suck = p(t, 20.15, 20.6);
@@ -488,12 +520,12 @@ function seek(t) {
   lounge.forEach(c => {
     const k = pop(t, c.popAt, .35);
     const sk = eIn(clamp((suck * 1.6) - (1 - c.d / 900) * .6));
-    const x = lerp(960 + (c.x - 960) * lz, 960, sk), y = lerp(580 + (c.y - 580) * lz, 560, sk);
+    const x = lerp(LG.c[0] + (c.x - LG.c[0]) * lz, L.logo[0], sk), y = lerp(LG.c[1] + (c.y - LG.c[1]) * lz, L.logo[1], sk);
     T(c.e, x, y, k * lz * (1 - sk), sk * (rnd(c.i) - .5) * 400, t < c.popAt || sk >= 1 ? 0 : 1);
   });
   const dk = eOut(p(t, 19.0, 19.8));
   lLines.forEach(l => { const len = +l.getAttribute("stroke-dasharray"); l.setAttribute("stroke-dashoffset", len * (1 - dk)); });
-  lsvg.style.transformOrigin = "960px 580px";
+  lsvg.style.transformOrigin = `${LG.c[0]}px ${LG.c[1]}px`;
   lsvg.style.transform = `scale(${lz})`;
   lsvg.style.opacity = 1 - p(t, 20.1, 20.3);
   lsvg.style.visibility = t > 18.9 && t < 20.4 ? "visible" : "hidden";
@@ -502,8 +534,9 @@ function seek(t) {
   const slam = p(t, 21.12, 21.4);
   const up = eIO(p(t, 21.9, 22.4));
   const shake = t > 21.12 && t < 21.45 ? Math.sin(t * 90) * 14 * (1 - p(t, 21.12, 21.45)) : 0;
-  const logoS = (t < 21.12 ? 1.06 : lerp(1.12, 1, eOut(slam))) * lerp(1, .74, up);
-  T(logo, 960 + shake, lerp(440, 300, up) + shake * .5, logoS, 0, t < 20.4 ? 0 : 1);
+  const [lgx, lgy, lgs, lgy2, lgs2] = L.logo;
+  const logoS = (t < 21.12 ? 1.06 : lerp(1.12, 1, eOut(slam))) * lerp(lgs, lgs2, up);
+  T(logo, lgx + shake, lerp(lgy, lgy2, up) + shake * .5, logoS, 0, t < 20.4 ? 0 : 1);
   letters.forEach((e, i) => {
     const at = 20.42 + i * .1, k = p(t, at, at + .22);
     const y = lerp(-900, 0, eIn(k)) + (k >= 1 && t < 21.12 ? -18 * Math.sin(Math.PI * p(t, at + .22, at + .36)) : 0);
@@ -513,7 +546,7 @@ function seek(t) {
     e.style.transform = `translate(0px,${y}px) rotate(${(1 - k) * (i % 2 ? 14 : -14)}deg)`;
     e.style.visibility = t < at ? "hidden" : "visible";
   });
-  T(burst, 960, 440, lerp(.8, 1.25, eOut(p(t, 21.12, 21.5))), 0, t < 21.12 ? 0 : 1 - p(t, 21.2, 21.55));
+  T(burst, lgx, lgy, lgs * lerp(.8, 1.25, eOut(p(t, 21.12, 21.5))), 0, t < 21.12 ? 0 : 1 - p(t, 21.2, 21.55));
 
   /* ----- S7 tagline + CTA ----- */
   const wAt = [22.0, 22.25, 22.55, 22.95];
@@ -523,19 +556,20 @@ function seek(t) {
     w.style.opacity = t < wAt[i] ? 0 : 1;
   });
   marker.style.transform = `scaleX(${eOut(p(t, 23.1, 23.4))})`;
-  T(tagline, 960, 640, 1, 0, t < 21.95 ? 0 : 1);
+  T(tagline, L.tagline[0], L.tagline[1], 1, 0, t < 21.95 ? 0 : 1);
   const press = t > 24.3 && t < 24.48;
   cta.style.boxShadow = press ? `2px 2px 0 ${C.ink}` : `10px 10px 0 ${C.ink}`;
-  T(cta, 960 + (press ? 8 : 0), 830 + (press ? 8 : 0), pop(t, 23.8, .4) * (1 + .03 * Math.sin(Math.max(0, t - 24.6) * 5)), 0, t < 23.8 ? 0 : 1);
+  const [ctx, cty] = L.cta;
+  T(cta, ctx + (press ? 8 : 0), cty + (press ? 8 : 0), pop(t, 23.8, .4) * (1 + .03 * Math.sin(Math.max(0, t - 24.6) * 5)), 0, t < 23.8 ? 0 : 1);
   const ck = eOut(p(t, 23.85, 24.28));
-  T(cursor, lerp(1640, 1060, ck) + 28, lerp(1160, 846, ck) + 36, press ? .88 : 1, 0, t < 23.85 ? 0 : 1);
+  T(cursor, lerp(L.cursorFrom[0], ctx + 100, ck) + 28, lerp(L.cursorFrom[1], cty + 16, ck) + 36, press ? .88 : 1, 0, t < 23.85 ? 0 : 1);
   const rk = p(t, 24.3, 24.9);
-  T(ripple, 1060, 846, .3 + rk * 3, 0, t < 24.3 ? 0 : (1 - rk) * .8);
+  T(ripple, ctx + 100, cty + 16, .3 + rk * 3, 0, t < 24.3 ? 0 : (1 - rk) * .8);
   confetti.forEach((e, i) => {
     const dt = t - 24.35; if (dt < 0) { hide(e); return; }
     const a = -Math.PI / 2 + (rnd(i + 3) - .5) * 2.6, v = 900 + rnd(i + 7) * 900;
-    const x = 960 + Math.cos(a) * v * dt, y = 830 + Math.sin(a) * v * dt + 1500 * dt * dt;
-    T(e, x, y, 1, dt * (rnd(i) - .5) * 1600, y > 1200 ? 0 : 1);
+    const x = ctx + Math.cos(a) * v * dt, y = cty + Math.sin(a) * v * dt + 1500 * dt * dt;
+    T(e, x, y, 1, dt * (rnd(i) - .5) * 1600, y > H + 120 ? 0 : 1);
   });
 }
 window.seek = seek; window.DUR = DUR; window.FPS = FPS;
@@ -546,7 +580,7 @@ if (!location.search.includes("render")) {
   let t0 = null;
   const loop = now => { if (t0 === null) t0 = now; const t = (now - t0) / 1000; seek(Math.min(t, DUR)); if (t < DUR) requestAnimationFrame(loop); };
   document.fonts.ready.then(() => { seek(0); document.body.addEventListener("click", () => { t0 = null; audio.currentTime = 0; audio.play(); requestAnimationFrame(loop); }); });
-  const fit = () => { document.getElementById("stage").style.zoom = Math.min(innerWidth / 1920, innerHeight / 1080); };
+  const fit = () => { document.getElementById("stage").style.zoom = Math.min(innerWidth / W, innerHeight / H); };
   addEventListener("resize", fit); fit();
 }
 </script>

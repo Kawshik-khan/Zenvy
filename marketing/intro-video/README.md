@@ -1,22 +1,25 @@
 # Zenvy intro video
 
-A 26-second, 1920×1080 intro, "From alone to together", built from code so it
+A 26-second intro in two cuts, 1920×1080 (website, YouTube) and 1080×1920
+(Reels, Shorts, TikTok), "From alone to together", built from code so it
 stays on brand (colors and fonts mirror `app/globals.css` / `app/layout.tsx`).
 
 - `scene.html`: the animation. Every frame is a pure function of time
   (`window.seek(t)`), timed to the voiceover. Open it in a browser and click
-  to preview with sound.
+  to preview with sound; add `?vertical` for the 9:16 layout.
 - `assets/voiceover.mp3`: ElevenLabs voiceover the scenes are synced to.
 - `make_audio.py`: synthesizes the lo-fi music bed and sound effects (at the
   cue times exported from `scene.html`) and mixes them under the voice.
 - `render.mjs`: renders the final MP4.
-- `zenvy-intro.mp4`: the rendered video.
+- `zenvy-intro.mp4`: the rendered 16:9 video.
+- `zenvy-intro-reels.mp4`: the rendered 9:16 video.
 
 ## Re-render
 
 ```sh
 pip install numpy scipy
-node marketing/intro-video/render.mjs            # -> marketing/intro-video/out/zenvy-intro.mp4
+node marketing/intro-video/render.mjs              # 16:9 -> marketing/intro-video/out/zenvy-intro.mp4
+node marketing/intro-video/render.mjs --vertical   # 9:16 -> marketing/intro-video/out/zenvy-intro-reels.mp4
 ```
 
 Needs Playwright with Chromium and ffmpeg (libx264). Rendering takes ~1.5 min.

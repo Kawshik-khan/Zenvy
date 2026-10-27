@@ -1,7 +1,9 @@
 // Renders scene.html to an MP4: screenshots every frame with Playwright,
 // builds the soundtrack with make_audio.py and muxes both with ffmpeg.
 //
-//   node marketing/intro-video/render.mjs [out.mp4]
+//   node marketing/intro-video/render.mjs [--vertical] [out.mp4]
+//
+// --vertical renders the 1080x1920 (9:16) cut for Reels / Shorts / TikTok.
 //
 // Needs: playwright (with Chromium), ffmpeg, python3 with numpy + scipy.
 import { spawn, execFileSync } from "node:child_process";
@@ -15,13 +17,16 @@ const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 
 const here = dirname(fileURLToPath(import.meta.url));
-const out = resolve(process.argv[2] || join(here, "out", "zenvy-intro.mp4"));
+const args = process.argv.slice(2);
+const vertical = args.includes("--vertical");
+const [width, height] = vertical ? [1080, 1920] : [1920, 1080];
+const out = resolve(args.find((a) => !a.startsWith("--")) || join(here, "out", vertical ? "zenvy-intro-reels.mp4" : "zenvy-intro.mp4"));
 const work = mkdtempSync(join(tmpdir(), "zenvy-intro-"));
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+const page = await browser.newPage({ viewport: { width, height } });
 page.on("pageerror", (e) => { throw e; });
-await page.goto("file://" + join(here, "scene.html") + "?render");
+await page.goto("file://" + join(here, "scene.html") + "?render" + (vertical ? "&vertical" : ""));
 await page.evaluate(() => document.fonts.ready);
 const { dur, fps, cues } = await page.evaluate(() => ({ dur: window.DUR, fps: window.FPS, cues: window.CUES }));
 
