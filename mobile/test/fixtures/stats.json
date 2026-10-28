@@ -1,0 +1,204 @@
+{
+ "stats": {
+  "today": {
+   "focusMinutes": 0,
+   "sessions": 0
+  },
+  "level": 1,
+  "levelTitle": "Level 1 Scholar",
+  "levelProgress": 0.33,
+  "xpToNextLevel": 337,
+  "totalXp": 163,
+  "streakDays": 4,
+  "activeDaysLast28": 11,
+  "attendanceRate": 0,
+  "studyHours": 8.8,
+  "periods": {
+   "week": {
+    "focusMinutes": 275,
+    "sessions": 11
+   },
+   "month": {
+    "focusMinutes": 525,
+    "sessions": 21
+   },
+   "all": {
+    "focusMinutes": 525,
+    "sessions": 21
+   }
+  },
+  "lastSevenDays": [
+   {
+    "date": "2026-10-20T00:00:00.000Z",
+    "minutes": 50
+   },
+   {
+    "date": "2026-10-21T00:00:00.000Z",
+    "minutes": 75
+   },
+   {
+    "date": "2026-10-22T00:00:00.000Z",
+    "minutes": 0
+   },
+   {
+    "date": "2026-10-23T00:00:00.000Z",
+    "minutes": 25
+   },
+   {
+    "date": "2026-10-24T00:00:00.000Z",
+    "minutes": 50
+   },
+   {
+    "date": "2026-10-25T00:00:00.000Z",
+    "minutes": 75
+   },
+   {
+    "date": "2026-10-26T00:00:00.000Z",
+    "minutes": 0
+   }
+  ],
+  "heatmap": [
+   {
+    "date": "2026-09-29T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-09-30T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-01T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-02T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-03T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-04T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-05T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-06T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-07T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-08T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-09T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-10T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-11T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-12T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-13T00:00:00.000Z",
+    "minutes": 75,
+    "level": 3
+   },
+   {
+    "date": "2026-10-14T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-15T00:00:00.000Z",
+    "minutes": 25,
+    "level": 1
+   },
+   {
+    "date": "2026-10-16T00:00:00.000Z",
+    "minutes": 50,
+    "level": 2
+   },
+   {
+    "date": "2026-10-17T00:00:00.000Z",
+    "minutes": 75,
+    "level": 3
+   },
+   {
+    "date": "2026-10-18T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-19T00:00:00.000Z",
+    "minutes": 25,
+    "level": 1
+   },
+   {
+    "date": "2026-10-20T00:00:00.000Z",
+    "minutes": 50,
+    "level": 2
+   },
+   {
+    "date": "2026-10-21T00:00:00.000Z",
+    "minutes": 75,
+    "level": 3
+   },
+   {
+    "date": "2026-10-22T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   },
+   {
+    "date": "2026-10-23T00:00:00.000Z",
+    "minutes": 25,
+    "level": 1
+   },
+   {
+    "date": "2026-10-24T00:00:00.000Z",
+    "minutes": 50,
+    "level": 2
+   },
+   {
+    "date": "2026-10-25T00:00:00.000Z",
+    "minutes": 75,
+    "level": 3
+   },
+   {
+    "date": "2026-10-26T00:00:00.000Z",
+    "minutes": 0,
+    "level": 0
+   }
+  ],
+  "groupsJoined": 2
+ }
+}

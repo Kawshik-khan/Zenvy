@@ -1,0 +1,170 @@
+{
+ "partners": [
+  {
+   "id": "cmvpey1wn000290ehxb7q6b3a",
+   "name": "Tanvir Ahmed",
+   "uniqueId": "tanvir_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 5,
+   "bio": "Grinding CSE221 and LeetCode before internship season.",
+   "studyStyle": "Pair programming",
+   "interests": [
+    "Algorithms",
+    "Data structures",
+    "React",
+    "C++"
+   ],
+   "availability": "Evenings",
+   "score": 99,
+   "reasons": [
+    "Same major",
+    "3 shared interests",
+    "Availability set",
+    "Same college"
+   ],
+   "connection": {
+    "status": "ACCEPTED",
+    "direction": "incoming"
+   }
+  },
+  {
+   "id": "cmvpey1x4000890eha3c4m9ao",
+   "name": "Farhan Jamil",
+   "uniqueId": "farhan_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 6,
+   "bio": "Codeforces most nights. Ask me about DP.",
+   "studyStyle": "Focused solo work",
+   "interests": [
+    "Algorithms",
+    "Competitive programming"
+   ],
+   "availability": "Evenings",
+   "score": 83,
+   "reasons": [
+    "Same major",
+    "1 shared interest",
+    "Availability set",
+    "Same college"
+   ],
+   "connection": {
+    "status": "ACCEPTED",
+    "direction": "outgoing"
+   }
+  },
+  {
+   "id": "cmvpey1x8000a90ehnes44reh",
+   "name": "Rafia Islam",
+   "uniqueId": "rafia_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 5,
+   "bio": "Design-minded CS student. I take good notes.",
+   "studyStyle": "Group discussion",
+   "interests": [
+    "Calculus",
+    "UI design",
+    "React"
+   ],
+   "availability": "Morning",
+   "score": 81,
+   "reasons": [
+    "Same major",
+    "2 shared interests",
+    "Availability set",
+    "Same college"
+   ],
+   "connection": {
+    "status": "PENDING",
+    "direction": "outgoing"
+   }
+  },
+  {
+   "id": "cmvpey1wt000490ehp3tfonhq",
+   "name": "Sadia Hossain",
+   "uniqueId": "sadia_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 6,
+   "bio": "Databases TA-in-training. Happy to trade ER diagram reviews for ML help.",
+   "studyStyle": "Exam prep",
+   "interests": [
+    "Databases",
+    "Python",
+    "Machine learning"
+   ],
+   "availability": "Afternoons",
+   "score": 60,
+   "reasons": [
+    "Same major",
+    "Availability set",
+    "Same college",
+    "Similar semester"
+   ],
+   "connection": {
+    "status": "PENDING",
+    "direction": "incoming"
+   }
+  },
+  {
+   "id": "cmvpey1wy000690ehtoqmevuy",
+   "name": "Mahin Karim",
+   "uniqueId": "mahin_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Electrical Engineering",
+   "semester": 5,
+   "bio": "Night owl. Calculus II and circuits, mostly.",
+   "studyStyle": "Group discussion",
+   "interests": [
+    "Calculus",
+    "Physics",
+    "Circuits"
+   ],
+   "availability": "Late",
+   "score": 35,
+   "reasons": [
+    "Availability set",
+    "Same college",
+    "Similar semester",
+    "Shared spaces"
+   ],
+   "connection": null
+  }
+ ],
+ "studyAds": [
+  {
+   "id": "cmvpey21i003t90eh764wpc7r",
+   "title": "Need 2 people for CSE221 timed sets",
+   "description": "Timed problem sets, then we review each other's solutions.",
+   "subjects": "CSE221 \u00b7 Algorithms",
+   "availability": "Tue & Thu evenings",
+   "mode": "HYBRID",
+   "createdAt": "2026-10-26T15:30:20.502Z",
+   "author": {
+    "id": "cmvpey1wn000290ehxb7q6b3a",
+    "name": "Tanvir Ahmed",
+    "uniqueId": "tanvir_dev",
+    "image": null,
+    "college": "BRAC University",
+    "major": "Computer Science",
+    "semester": 5,
+    "bio": "Grinding CSE221 and LeetCode before internship season.",
+    "studyStyle": "Pair programming",
+    "interests": [
+     "Algorithms",
+     "Data structures",
+     "React",
+     "C++"
+    ],
+    "availability": "Evenings"
+   }
+  }
+ ]
+}

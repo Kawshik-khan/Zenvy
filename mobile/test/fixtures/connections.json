@@ -1,0 +1,38 @@
+{
+ "partners": [
+  {
+   "id": "cmvpey1x4000890eha3c4m9ao",
+   "name": "Farhan Jamil",
+   "uniqueId": "farhan_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 6,
+   "bio": "Codeforces most nights. Ask me about DP.",
+   "studyStyle": "Focused solo work",
+   "interests": [
+    "Algorithms",
+    "Competitive programming"
+   ],
+   "availability": "Evenings"
+  },
+  {
+   "id": "cmvpey1wn000290ehxb7q6b3a",
+   "name": "Tanvir Ahmed",
+   "uniqueId": "tanvir_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 5,
+   "bio": "Grinding CSE221 and LeetCode before internship season.",
+   "studyStyle": "Pair programming",
+   "interests": [
+    "Algorithms",
+    "Data structures",
+    "React",
+    "C++"
+   ],
+   "availability": "Evenings"
+  }
+ ]
+}

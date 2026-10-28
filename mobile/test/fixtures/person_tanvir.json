@@ -1,0 +1,40 @@
+{
+ "person": {
+  "id": "cmvpey1wn000290ehxb7q6b3a",
+  "name": "Tanvir Ahmed",
+  "uniqueId": "tanvir_dev",
+  "image": null,
+  "college": "BRAC University",
+  "major": "Computer Science",
+  "semester": 5,
+  "bio": "Grinding CSE221 and LeetCode before internship season.",
+  "studyStyle": "Pair programming",
+  "interests": [
+   "Algorithms",
+   "Data structures",
+   "React",
+   "C++"
+  ],
+  "availability": "Evenings",
+  "score": 99,
+  "reasons": [
+   "Same major",
+   "3 shared interests",
+   "Availability set",
+   "Same college"
+  ],
+  "connection": {
+   "status": "ACCEPTED",
+   "direction": "incoming"
+  },
+  "requestNotificationId": null,
+  "requestNote": null,
+  "sharedGroups": [
+   {
+    "id": "cmvpey1yg000z90eh4twgxgkd",
+    "name": "Algorithms Circle"
+   }
+  ],
+  "blockedByMe": false
+ }
+}

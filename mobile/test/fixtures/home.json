@@ -1,0 +1,168 @@
+{
+ "name": "Nadia Rahman",
+ "image": null,
+ "focus": {
+  "todayMinutes": 0,
+  "sessionsToday": 0,
+  "streakDays": 4
+ },
+ "nextEvent": {
+  "id": "cmvpey1zt002690ehj0bgghzy",
+  "title": "DP problem set review",
+  "description": null,
+  "startTime": "2026-10-27T13:00:00.000Z",
+  "endTime": "2026-10-27T14:30:00.000Z",
+  "location": "Online",
+  "type": "VIRTUAL",
+  "group": {
+   "id": "cmvpey1yg000z90eh4twgxgkd",
+   "name": "Algorithms Circle"
+  },
+  "creator": {
+   "id": "cmvpey1x4000890eha3c4m9ao",
+   "name": "Farhan Jamil"
+  },
+  "goingCount": 4,
+  "going": [
+   {
+    "id": "cmvpey1x4000890eha3c4m9ao",
+    "name": "Farhan Jamil",
+    "image": null
+   },
+   {
+    "id": "cmvpey1wn000290ehxb7q6b3a",
+    "name": "Tanvir Ahmed",
+    "image": null
+   },
+   {
+    "id": "cmvpey1x8000a90ehnes44reh",
+    "name": "Rafia Islam",
+    "image": null
+   },
+   {
+    "id": "cmvpey1wa000090ehtuciyd49",
+    "name": "Nadia Rahman",
+    "image": null
+   }
+  ],
+  "myStatus": "GOING",
+  "canCancel": false
+ },
+ "partners": [
+  {
+   "id": "cmvpey1x8000a90ehnes44reh",
+   "name": "Rafia Islam",
+   "uniqueId": "rafia_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 5,
+   "bio": "Design-minded CS student. I take good notes.",
+   "studyStyle": "Group discussion",
+   "interests": [
+    "Calculus",
+    "UI design",
+    "React"
+   ],
+   "availability": "Morning",
+   "score": 81,
+   "reasons": [
+    "Same major",
+    "2 shared interests",
+    "Availability set",
+    "Same college"
+   ],
+   "connection": {
+    "status": "PENDING",
+    "direction": "outgoing"
+   }
+  },
+  {
+   "id": "cmvpey1wt000490ehp3tfonhq",
+   "name": "Sadia Hossain",
+   "uniqueId": "sadia_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Computer Science",
+   "semester": 6,
+   "bio": "Databases TA-in-training. Happy to trade ER diagram reviews for ML help.",
+   "studyStyle": "Exam prep",
+   "interests": [
+    "Databases",
+    "Python",
+    "Machine learning"
+   ],
+   "availability": "Afternoons",
+   "score": 60,
+   "reasons": [
+    "Same major",
+    "Availability set",
+    "Same college",
+    "Similar semester"
+   ],
+   "connection": {
+    "status": "PENDING",
+    "direction": "incoming"
+   }
+  },
+  {
+   "id": "cmvpey1wy000690ehtoqmevuy",
+   "name": "Mahin Karim",
+   "uniqueId": "mahin_dev",
+   "image": null,
+   "college": "BRAC University",
+   "major": "Electrical Engineering",
+   "semester": 5,
+   "bio": "Night owl. Calculus II and circuits, mostly.",
+   "studyStyle": "Group discussion",
+   "interests": [
+    "Calculus",
+    "Physics",
+    "Circuits"
+   ],
+   "availability": "Late",
+   "score": 35,
+   "reasons": [
+    "Availability set",
+    "Same college",
+    "Similar semester",
+    "Shared spaces"
+   ],
+   "connection": null
+  }
+ ],
+ "groups": [
+  {
+   "id": "cmvpey1yg000z90eh4twgxgkd",
+   "name": "Algorithms Circle",
+   "subject": "Algorithms",
+   "description": "Timed problem sets every Tue & Thu. Bring one problem you're stuck on.",
+   "memberCount": 5,
+   "myRole": "MEMBER",
+   "lastMessage": {
+    "content": "So each item is used once. Forward lets you reuse it, that's the unbounded version.",
+    "senderName": "Nadia Rahman",
+    "createdAt": "2026-10-26T15:23:20.242Z"
+   },
+   "reasons": []
+  },
+  {
+   "id": "cmvpey1yz001h90ehh47hbi9m",
+   "name": "DB Design Lab",
+   "subject": "Databases",
+   "description": "ER diagrams, normalization and SQL drills.",
+   "memberCount": 3,
+   "myRole": "MEMBER",
+   "lastMessage": {
+    "content": "Normalization quiz Thursday. 3NF and BCNF only.",
+    "senderName": "Sadia Hossain",
+    "createdAt": "2026-10-26T12:30:20.242Z"
+   },
+   "reasons": []
+  }
+ ],
+ "unread": {
+  "notifications": 1,
+  "messages": 2
+ }
+}

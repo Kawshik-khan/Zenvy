@@ -11,7 +11,7 @@ export default defineConfig({
     // Node by default; component tests opt into the DOM with `// @vitest-environment jsdom`.
     environment: "node",
     include: ["**/*.test.{ts,tsx}"],
-    exclude: ["node_modules/**", ".next/**", "e2e/**"],
+    exclude: ["node_modules/**", ".next/**", "e2e/**", "mobile/**"],
     setupFiles: ["./vitest.setup.ts"],
   },
 });

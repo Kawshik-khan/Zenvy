@@ -1,0 +1,79 @@
+{
+ "direct": [
+  {
+   "id": "cmvpey1xr000m90eh8tf0ur2i",
+   "type": "DM",
+   "title": "Tanvir Ahmed",
+   "avatar": null,
+   "dmPeerId": "cmvpey1wn000290ehxb7q6b3a",
+   "lastMessageAt": "2026-10-26T15:10:20.242Z",
+   "lastMessage": {
+    "id": "cmvpey1yb000x90eh8md4pw7a",
+    "content": "Library room 3 at 7? Bringing the DP notes.",
+    "senderName": "Tanvir Ahmed",
+    "timestamp": "2026-10-26T15:10:20.242Z",
+    "status": "SENT"
+   },
+   "unreadCount": 2,
+   "muted": false,
+   "archived": false,
+   "participants": [
+    {
+     "id": "cmvpey1wa000090ehtuciyd49",
+     "name": "Nadia Rahman",
+     "image": null
+    },
+    {
+     "id": "cmvpey1wn000290ehxb7q6b3a",
+     "name": "Tanvir Ahmed",
+     "image": null
+    }
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "id": "cmvpey1yg000z90eh4twgxgkd",
+   "name": "Algorithms Circle",
+   "subject": "Algorithms",
+   "description": "Timed problem sets every Tue & Thu. Bring one problem you're stuck on.",
+   "memberCount": 5,
+   "myRole": "MEMBER",
+   "lastMessage": {
+    "content": "So each item is used once. Forward lets you reuse it, that's the unbounded version.",
+    "senderName": "Nadia Rahman",
+    "createdAt": "2026-10-26T15:23:20.242Z"
+   },
+   "reasons": []
+  },
+  {
+   "id": "cmvpey1yz001h90ehh47hbi9m",
+   "name": "DB Design Lab",
+   "subject": "Databases",
+   "description": "ER diagrams, normalization and SQL drills.",
+   "memberCount": 3,
+   "myRole": "MEMBER",
+   "lastMessage": {
+    "content": "Normalization quiz Thursday. 3NF and BCNF only.",
+    "senderName": "Sadia Hossain",
+    "createdAt": "2026-10-26T12:30:20.242Z"
+   },
+   "reasons": []
+  }
+ ],
+ "channels": [
+  {
+   "id": "cmvpey1zj001y90ehca6vb3qq",
+   "name": "CSE at BRACU",
+   "tag": "cse-bracu",
+   "description": "Exam schedules, course tips and internship leads.",
+   "memberCount": 3,
+   "lastMessage": {
+    "content": "Exam schedule for Fall 26 is up on the portal.",
+    "senderName": "Farhan Jamil",
+    "createdAt": "2026-10-26T10:30:20.242Z"
+   }
+  }
+ ],
+ "suggestedChannels": []
+}

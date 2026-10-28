@@ -1,0 +1,35 @@
+{
+ "job": {
+  "id": "cmvpey21l003v90ehy5v93lz7",
+  "type": "INTERNSHIP",
+  "title": "Frontend Intern (React)",
+  "company": "Kothay Labs",
+  "location": "Dhaka",
+  "workMode": "HYBRID",
+  "pay": "BDT 25k / month",
+  "tags": [
+   "react",
+   "internship",
+   "typescript"
+  ],
+  "deadline": "2026-10-28T15:30:20.242Z",
+  "deadlineLabel": "Closes in 2 days",
+  "closingSoon": true,
+  "status": "LIVE",
+  "postedAt": "2026-10-26T15:30:20.506Z",
+  "saved": false,
+  "imageUrl": null,
+  "author": {
+   "id": "cmvpey1x4000890eha3c4m9ao",
+   "name": "Farhan Jamil",
+   "posterTrust": "STUDENT"
+  },
+  "description": "Build screens for our partner dashboard. You'll pair with a senior engineer, ship to production weekly, and present a demo at the end.",
+  "applyMethod": "LINK",
+  "applyTarget": "https://example.com/jobs/frontend-intern",
+  "images": [],
+  "isAuthor": false,
+  "reviewNote": null,
+  "partnerSaves": 0
+ }
+}

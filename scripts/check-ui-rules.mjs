@@ -25,7 +25,7 @@ export function findViolations(source) {
 // Avatar.tsx names the service on purpose: it recognises those URLs and shows initials instead.
 const ALLOWED = new Set(["components/ui/Avatar.tsx"]);
 
-const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "e2e", "test-results", "designs", "docs", "public", "prisma"]);
+const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "e2e", "test-results", "designs", "docs", "public", "prisma", "mobile"]);
 
 function* walk(dir) {
   for (const entry of readdirSync(dir)) {
