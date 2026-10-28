@@ -115,6 +115,7 @@ class ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final offline = error is ApiException && (error as ApiException).offline;
+    final timedOut = error is ApiException && (error as ApiException).timedOut;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -127,7 +128,15 @@ class ErrorView extends StatelessWidget {
             spacing: 10,
             children: [
               Icon(offline ? LucideIcons.wifiOff : LucideIcons.triangleAlert, size: 28, color: VolumeScope.of(context).fg),
-              ZText(offline ? "You're offline" : "Couldn't load this", variant: TextVariant.h3, align: TextAlign.center),
+              ZText(
+                offline
+                    ? "You're offline"
+                    : timedOut
+                    ? 'Taking too long'
+                    : "Couldn't load this",
+                variant: TextVariant.h3,
+                align: TextAlign.center,
+              ),
               ZText(errorMessage(error), variant: TextVariant.small, muted: true, align: TextAlign.center),
               ZButton(label: 'Try again', variant: ButtonVariant.secondary, size: ButtonSize.sm, icon: LucideIcons.rotateCcw, onTap: onRetry),
             ],

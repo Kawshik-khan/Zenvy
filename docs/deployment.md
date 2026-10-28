@@ -21,7 +21,8 @@ Required environment variables are listed in `.env.example`. Set them in Vercel 
 
 This project uses Prisma with Supabase Postgres.
 
-- Use `DATABASE_URL` with the Supabase transaction pooler URL for app runtime: port `6543` with `pgbouncer=true&connection_limit=1&pool_timeout=20`.
+- Use `DATABASE_URL` with the Supabase transaction pooler URL for app runtime: port `6543` with `pgbouncer=true&connection_limit=5&pool_timeout=20`. Routes run their queries with `Promise.all`; a limit of 1 makes them queue one at a time.
+- Functions run in `hnd1` (Tokyo, set in `vercel.json`) to sit next to the Supabase database in `ap-northeast-1`. Move both together if the database region changes.
 - Use `DIRECT_URL` for direct database access.
 - Schema changes go through **Prisma Migrate** (`prisma/migrations/`). Do not use `prisma db push` against shared databases.
 
