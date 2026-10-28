@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@700&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #fff8ec; --ink: #111111; --focus: #ffd23f; --muted: #4a4a4a;
+    --match: #ff6b9d; --chat: #4d96ff; --live: #3ddc97; --career: #b794f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 540px; height: 960px; overflow: hidden; background: var(--paper); }
+  #stage { position: relative; width: 540px; height: 960px; overflow: hidden; background: var(--paper); font-family: "Space Grotesk", sans-serif; color: var(--ink); }
+  .layer { position: absolute; inset: 0; }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(17,17,17,.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17,17,17,.08) 1px, transparent 1px);
+    background-size: 42px 42px; background-position: center center;
+  }
+
+  /* ---------- Splash (shoved off by the last domino) ---------- */
+  #splash { background: var(--paper); box-shadow: -5px 0 0 var(--ink); }
+  .brick {
+    position: absolute; left: 0; top: 0; width: 84px; height: 84px;
+    display: flex; align-items: center; justify-content: center;
+    border: 3.5px solid var(--ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--ink);
+    font: 700 56px/1 "Space Grotesk", sans-serif; transform-origin: 50% 50%;
+  }
+  .brick span { display: block; margin-top: -6px; }
+  .dust { position: absolute; width: 10px; height: 10px; border: 2.5px solid var(--ink); border-radius: 50%; background: var(--paper); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- Bottom: the app's home screen -->
+  <div class="layer" id="home"></div>
+
+  <!-- Top: splash with the bricks -->
+  <div class="layer" id="splash">
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+<script src="home.js"></script>
+<script>
+  window.DURATION = 2;
+  const S = 84;          // brick size
+  const GAP = 10;        // gap between bricks in the word
+  const FLOOR = 690;     // stack floor (bottom edge of the bottom brick)
+  const ROW_Y = 480;     // word centre line
+
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, s, e) => clamp((t - s) / (e - s));
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  const easeIn = (x) => x * x;
+  const easeInOut = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+  // Decaying hops after an impact: returns height (px) and squash (0..1) at time since impact.
+  function bounce(dt, h0 = 22, period = 0.13) {
+    if (dt < 0) return { h: 0, sq: 0 };
+    let h = h0, p = period, start = 0;
+    for (let n = 0; n < 3; n++) {
+      if (dt < start + p) {
+        const x = (dt - start) / p;
+        return { h: 4 * h * x * (1 - x), sq: x < 0.35 ? Math.sin((x / 0.35) * Math.PI) * (n === 0 ? 0.22 : 0.1) : 0 };
+      }
+      start += p; h *= 0.35; p *= 0.6;
+    }
+    return { h: 0, sq: 0 };
+  }
+
+  const splash = document.getElementById("splash"), grid = document.getElementById("grid");
+  const BRICKS = [
+    { ch: "z", bg: "var(--focus)" },
+    { ch: "e", bg: "var(--match)" },
+    { ch: "n", bg: "var(--chat)" },
+    { ch: "v", bg: "var(--live)" },
+    { ch: "y", bg: "var(--career)" },
+  ].map((b, i) => {
+    const el = document.createElement("div");
+    el.className = "brick";
+    el.style.background = b.bg;
+    el.innerHTML = `<span>${b.ch}</span>`;
+    splash.appendChild(el);
+    return { el, i };
+  });
+  // Dust puffs on the first landing
+  const dust = [-1, 1, -1, 1].map((dir, k) => {
+    const el = document.createElement("div");
+    el.className = "dust";
+    splash.appendChild(el);
+    return { el, dir, k };
+  });
+
+  // Draw a brick by its centre, rotation (deg) and squash (+ = flatter), pinned to its bottom edge.
+  function place(b, cx, cy, rot = 0, sq = 0, opacity = 1) {
+    const sx = 1 + sq * 0.8, sy = 1 - sq;
+    const yFix = (S / 2) * (1 - sy); // keep the bottom edge on the ground while squashing
+    b.el.style.transform = `translate(${cx - S / 2}px, ${cy - S / 2 + yFix}px) rotate(${rot}deg) scale(${sx}, ${sy})`;
+    b.el.style.opacity = opacity;
+  }
+
+  const DROP = 0.1;                // gap between drops
+  const FALL = 0.18;               // fall time
+  const rowX = (i) => 270 + (i - 2) * (S + GAP);
+
+  function render(t) {
+    grid.style.opacity = easeOut(seg(t, 0, 0.25));
+
+    // --- Intro 1 (0 → 0.7s): bricks drop one by one and stack, bottom = z
+    const stackCy = (i) => FLOOR - S / 2 - i * S;
+    // Whole-tower sway before it tumbles (0.6 → 0.76s)
+    const sway = Math.sin(seg(t, 0.6, 0.76) * Math.PI * 2) * 4 * (1 - seg(t, 0.6, 0.76));
+
+    // --- Intro 2 (0.74 → 1.3s): top brick first, each tumbles into its slot in the word; word holds until 1.45s
+    const tumbleStart = (i) => 0.74 + (4 - i) * 0.05;
+    const TUMBLE = 0.3;
+
+    // --- Outro (1.45s →): dominoes tip left to right, the last one shoves the splash away
+    const tipStart = (i) => 1.45 + i * 0.04;
+    const TIP = 0.12;
+
+    BRICKS.forEach((b) => {
+      const i = b.i;
+      const t0 = i * DROP;
+      const tLand = t0 + FALL;
+      let cx = 270, cy, rot = 0, sq = 0, op = t >= t0 ? 1 : 0;
+
+      if (t < tumbleStart(i)) {
+        // falling + bouncing in the stack
+        const pf = seg(t, t0, tLand);
+        cy = lerp(-120 - i * 30, stackCy(i), easeIn(pf));
+        const bo = bounce(t - tLand, 26 - i * 2);
+        cy -= bo.h;
+        sq = bo.sq;
+        // bricks below get a small jolt when one lands on top
+        BRICKS.forEach((o) => {
+          if (o.i > i) {
+            const jolt = bounce(t - (o.i * DROP + FALL), 0, 0.12).sq * 0.35;
+            sq = Math.max(sq, jolt);
+          }
+        });
+        // sway around the tower's base
+        const r = (sway * Math.PI) / 180, dy = cy - FLOOR;
+        cx = 270 - dy * Math.sin(r);
+        cy = FLOOR + dy * Math.cos(r);
+        rot = sway;
+      } else {
+        // tumble along an arc into the word, one full spin, land with a bounce
+        const ts = tumbleStart(i);
+        const p = seg(t, ts, ts + TUMBLE);
+        const fromY = stackCy(i), toY = ROW_Y;
+        cx = lerp(270, rowX(i), easeOut(p));
+        const arc = 150 + (4 - i) * 10;
+        cy = lerp(fromY, toY, p) - Math.sin(p * Math.PI) * arc * (fromY < toY ? 0.4 : 1);
+        rot = (rowX(i) >= 270 ? 360 : -360) * easeInOut(p);
+        const bo = bounce(t - (ts + TUMBLE), 18, 0.12);
+        cy -= bo.h;
+        sq = Math.max(sq, bo.sq);
+      }
+
+      // --- Outro: tip over like a domino around the bottom-right corner, then drop away
+      const pt = seg(t, tipStart(i), tipStart(i) + TIP);
+      if (pt > 0) {
+        const a = 90 * easeIn(pt) + 40 * seg(t, tipStart(i) + TIP, tipStart(i) + TIP + 0.25);
+        const px = rowX(i) + S / 2, py = ROW_Y + S / 2;
+        const r = (a * Math.PI) / 180, dx = -S / 2, dy = -S / 2;
+        cx = px + dx * Math.cos(r) - dy * Math.sin(r);
+        cy = py + dx * Math.sin(r) + dy * Math.cos(r);
+        cy += 900 * Math.pow(seg(t, tipStart(i) + TIP, tipStart(i) + TIP + 0.4), 2);
+        rot = a;
+        sq = 0;
+      }
+      place(b, cx, cy, rot, sq, op);
+    });
+
+    // dust puffs when z hits the floor
+    const pd = seg(t, FALL, FALL + 0.3);
+    dust.forEach((d) => {
+      const x = 270 + d.dir * (S / 2 + 6 + easeOut(pd) * (40 + d.k * 14));
+      const y = FLOOR - 8 - Math.sin(pd * Math.PI) * (12 + d.k * 8);
+      d.el.style.transform = `translate(${x - 5}px, ${y - 5}px) scale(${(1 - pd) * (1.2 - d.k * 0.15)})`;
+      d.el.style.opacity = pd > 0 && pd < 1 ? 1 : 0;
+    });
+
+    // last domino shoves the splash off to the right, revealing home
+    const pPush = easeInOut(seg(t, tipStart(4) + 0.06, 1.96));
+    splash.style.transform = `translateX(${pPush * 560}px)`;
+  }
+
+  window.ready = document.fonts.ready.then(() => render(0));
+  window.render = render;
+
+  // Live preview when opened directly in a browser (?play)
+  if (location.search.includes("play")) {
+    window.ready.then(() => {
+      const start = performance.now();
+      const loop = (now) => { const t = ((now - start) / 1000) % (window.DURATION + 0.8); render(Math.min(t, window.DURATION)); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    });
+  }
+</script>
+</body>
+</html>

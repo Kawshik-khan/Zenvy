@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #fff8ec; --ink: #111111; --focus: #ffd23f;
+    --match: #ff6b9d; --chat: #4d96ff; --live: #3ddc97; --career: #b794f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 540px; height: 960px; overflow: hidden; background: var(--paper); }
+  #stage { position: relative; width: 540px; height: 960px; overflow: hidden; background: var(--paper); }
+  #grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(17,17,17,.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17,17,17,.08) 1px, transparent 1px);
+    background-size: 42px 42px; background-position: center center;
+  }
+  .chip { position: absolute; width: 46px; height: 46px; border: 3px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink); }
+  #logo { position: absolute; left: 50%; top: 50%; display: flex; align-items: center; gap: 16px; transform: translate(-50%, -50%); }
+  #tile {
+    width: 96px; height: 96px; flex: none; display: flex; align-items: center; justify-content: center;
+    background: var(--focus); border: 3px solid var(--ink); border-radius: 14px;
+    font: 700 54px/1 "Space Grotesk", sans-serif; color: var(--ink);
+  }
+  #word { display: flex; font: 700 66px/1 "Space Grotesk", sans-serif; letter-spacing: -1.5px; color: var(--ink); overflow: hidden; padding: 6px 4px 10px; }
+  #word span { display: inline-block; }
+  #bar { position: absolute; left: 0; bottom: -14px; height: 8px; background: var(--match); border: 3px solid var(--ink); border-radius: 4px; transform-origin: left center; }
+  #wordwrap { position: relative; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+  <div class="chip" id="c1" style="background:var(--match)"></div>
+  <div class="chip" id="c2" style="background:var(--chat)"></div>
+  <div class="chip" id="c3" style="background:var(--live)"></div>
+  <div class="chip" id="c4" style="background:var(--career)"></div>
+  <div id="logo">
+    <div id="tile">Z</div>
+    <div id="wordwrap">
+      <div id="word"><span>z</span><span>e</span><span>n</span><span>v</span><span>y</span></div>
+      <div id="bar"></div>
+    </div>
+  </div>
+</div>
+<script>
+  // Deterministic timeline: render(t) draws the frame at t seconds (0..2).
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, s, e) => clamp((t - s) / (e - s));
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const backOut = (x, s = 2.2) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+  const lerp = (a, b, x) => a + (b - a) * x;
+
+  const $ = (id) => document.getElementById(id);
+  const tile = $("tile"), logo = $("logo"), bar = $("bar"), grid = $("grid");
+  const letters = [...document.querySelectorAll("#word span")];
+  // Chips burst out from the tile and park around the logo.
+  const chips = [
+    { el: $("c1"), x: -150, y: -190, r: -14, d: 0.42 },
+    { el: $("c2"), x: 170,  y: -150, r: 12,  d: 0.48 },
+    { el: $("c3"), x: -175, y: 165,  r: 10,  d: 0.54 },
+    { el: $("c4"), x: 150,  y: 200,  r: -10, d: 0.60 },
+  ];
+
+  // Logo is centred as a whole; the tile starts alone at screen centre, then slides left as the wordmark opens.
+  let tileHome = 0;
+  function measure() {
+    logo.style.transform = "translate(-50%, -50%)";
+    const lr = logo.getBoundingClientRect(), tr = tile.getBoundingClientRect();
+    tileHome = 270 - (tr.left + tr.width / 2); // offset that puts the tile at stage centre
+  }
+
+  function render(t) {
+    grid.style.opacity = easeOut(seg(t, 0, 0.35));
+
+    // 1) Tile drops in with overshoot + spin (0 → 0.45s)
+    const pIn = seg(t, 0.0, 0.45);
+    const s = pIn === 0 ? 0 : backOut(pIn);
+    const rot = lerp(-24, 0, easeOut(pIn));
+    // 2) Stamp: squash on impact (0.38 → 0.58s), shadow grows out
+    const pSq = seg(t, 0.36, 0.58);
+    const squash = Math.sin(pSq * Math.PI) * 0.12;
+    const shadow = lerp(0, 6, easeOut(seg(t, 0.38, 0.62)));
+    // 3) Tile slides from centre to its spot as the word opens (0.62 → 1.05s)
+    const pSlide = easeInOut(seg(t, 0.62, 1.05));
+    const tx = lerp(tileHome, 0, pSlide);
+    tile.style.transform = `translateX(${tx}px) rotate(${rot}deg) scale(${s * (1 + squash)}, ${s * (1 - squash)})`;
+    tile.style.boxShadow = `${shadow}px ${shadow}px 0 var(--ink)`;
+
+    // 4) Letters rise in, staggered (0.72 → 1.3s)
+    letters.forEach((el, i) => {
+      const p = seg(t, 0.72 + i * 0.06, 1.02 + i * 0.06);
+      const y = p === 0 ? 90 : lerp(90, 0, backOut(p, 1.6));
+      el.style.transform = `translateY(${y}px)`;
+      el.style.opacity = p > 0 ? 1 : 0;
+    });
+
+    // 5) Underline bar sweeps (1.1 → 1.45s)
+    const pBar = easeOut(seg(t, 1.1, 1.45));
+    bar.style.width = "100%";
+    bar.style.transform = `scaleX(${pBar})`;
+    bar.style.opacity = pBar > 0 ? 1 : 0;
+
+    // Chips pop out of the stamp
+    chips.forEach((c) => {
+      const p = seg(t, c.d, c.d + 0.45);
+      const k = p === 0 ? 0 : backOut(p, 1.8);
+      const float = Math.sin((t - c.d) * 3 + c.r) * 4 * seg(t, c.d + 0.45, c.d + 0.8);
+      c.el.style.left = `${270 - 23 + c.x * k}px`;
+      c.el.style.top = `${480 - 23 + c.y * k + float}px`;
+      c.el.style.transform = `rotate(${c.r * k}deg) scale(${k})`;
+      c.el.style.opacity = p > 0 ? 1 : 0;
+    });
+
+    // 6) Subtle settle / breathe at the end (1.5 → 2.0s)
+    const pEnd = seg(t, 1.5, 2.0);
+    logo.style.transform = `translate(-50%, -50%) scale(${1 + Math.sin(pEnd * Math.PI) * 0.025})`;
+  }
+
+  window.ready = document.fonts.ready.then(() => { measure(); render(0); });
+  window.render = render;
+
+  // Live preview when opened directly in a browser (?play)
+  if (location.search.includes("play")) {
+    window.ready.then(() => {
+      let start = performance.now();
+      const loop = (now) => { const t = ((now - start) / 1000) % 2.6; render(Math.min(t, 2)); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    });
+  }
+</script>
+</body>
+</html>

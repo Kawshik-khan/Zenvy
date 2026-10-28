@@ -1,0 +1,226 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@700&display=block" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 540px; height: 960px; overflow: hidden; background: #ffc81a; }
+  #stage { position: relative; width: 540px; height: 960px; overflow: hidden; background: #ffc81a; }
+  :root {
+    --paper: #fff8ec; --ink: #111111; --focus: #ffd23f; --muted: #4a4a4a;
+    --match: #ff6b9d; --chat: #4d96ff; --live: #3ddc97; --career: #b794f6;
+  }
+  #stage > svg { position: absolute; inset: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg width="540" height="960" viewBox="0 0 540 960">
+    <g id="doodles"></g>
+    <g id="logo"></g>
+    <text id="tagline" x="270" y="572" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="500" font-size="21" letter-spacing=".5">Study together. Focus better.</text>
+    <g id="spinner" transform="translate(270 868)">
+      <circle r="11" fill="none" stroke="#111" stroke-opacity=".18" stroke-width="3.5" />
+      <path id="spinArc" d="M 0 -11 A 11 11 0 0 1 11 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+  </svg>
+</div>
+<script>
+  // Flat, single-colour splash: the wordmark draws itself stroke by stroke. Every stroke is drawn
+  // three times in deepening shades, so the leading edge leaves a colour trail before it settles to ink.
+  window.DURATION = 2;
+  const NS = "http://www.w3.org/2000/svg";
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, s, e) => clamp((t - s) / (e - s));
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const backOut = (x, s = 1.9) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+
+  // Palettes, picked with ?palette=<name>. `pace` stretches the stroke drawing (calm palettes draw slower).
+  const PALETTES = {
+    yellow: {
+      bgFrom: "#ffc81a", bg: "#ffd23f", ink: "#111111", pace: 1,
+      word: ["#f0a800", "#8a6500", "#111111"],   // on the background
+      tile: ["#6b5200", "#e0a800", "#ffd23f"],   // on the ink tile
+      doodle: "#f3b800", tagline: "#6b5200",
+    },
+    // The app's quiet theme (Palette.quiet* in mobile/lib/theme/tokens.dart)
+    sand: {
+      bgFrom: "#ebe3d3", bg: "#f4eee2", ink: "#2b2b2b", pace: 1.2,
+      word: ["#e8dfcc", "#4f4a42", "#2b2b2b"],
+      tile: ["#4f4a42", "#e8dfcc", "#f4eee2"],
+      doodle: "#e6dccb", tagline: "#4f4a42",
+    },
+  };
+  const PAL = PALETTES[new URLSearchParams(location.search).get("palette")] || PALETTES.yellow;
+  const BG_FROM = PAL.bgFrom, BG = PAL.bg;
+  const STROKE = 18;
+  const WORD_TRAIL = PAL.word;
+  const TILE_TRAIL = PAL.tile;
+
+  // Monoline lowercase letters, x-height 64, baseline y = 0. Each letter is one or more strokes.
+  const LETTERS = [
+    { x: 143, strokes: ["M0 -64 H48 L0 0 H50"] },                                   // z
+    { x: 215, strokes: ["M2 -32 H62 A30 32 0 1 0 53.2 -9.4"] },                    // e
+    { x: 303, strokes: ["M0 -64 V0", "M0 -34 A28 28 0 0 1 56 -34 V0"] },            // n
+    { x: 383, strokes: ["M0 -64 L30 0 L60 -64"] },                                  // v
+    { x: 467, strokes: ["M0 -64 L30 -2", "M60 -64 L22 20 Q14 36 -6 34"] },          // y
+  ];
+  const WIDTH = 536;   // tile left edge → y right edge
+  const TILE = { cx: 52, cy: -32, size: 104 };
+  const Z_IN_TILE = "M-22 -24 H22 L-22 24 H24";
+
+  // Faint outline doodles of what Zenvy is for, filling the space around the logo.
+  // Drawn in one tone just darker than the background so the logo stays the hero.
+  const SHAPES = {
+    chat: ["M-46 -34 H46 Q56 -34 56 -24 V18 Q56 28 46 28 H-10 L-30 46 V28 H-46 Q-56 28 -56 18 V-24 Q-56 -34 -46 -34 Z", "M-26 -4 H26"],
+    clock: ["M0 -48 A48 48 0 1 1 -0.1 -48", "M0 -26 V0 L18 12"],
+    book: ["M0 -30 Q-28 -44 -56 -34 V34 Q-28 24 0 38 Q28 24 56 34 V-34 Q28 -44 0 -30 V38"],
+    heart: ["M0 40 C-60 0 -50 -48 -16 -44 C-6 -42 0 -34 0 -26 C0 -34 6 -42 16 -44 C50 -48 60 0 0 40 Z"],
+    case: ["M-44 -22 H44 Q52 -22 52 -14 V30 Q52 38 44 38 H-44 Q-52 38 -52 30 V-14 Q-52 -22 -44 -22 Z", "M-16 -22 V-34 H16 V-22", "M-52 4 H52"],
+    spark: ["M0 -24 Q4 -4 24 0 Q4 4 0 24 Q-4 4 -24 0 Q-4 -4 0 -24 Z"],
+    wave: ["M-60 0 Q-45 -18 -30 0 T0 0 T30 0 T60 0"],
+  };
+  const DOODLES = [
+    { s: "chat",  x: 104, y: 178, r: -8,  k: 1.05 },
+    { s: "spark", x: 268, y: 212, r: 0,   k: 0.9 },
+    { s: "clock", x: 430, y: 160, r: 6,   k: 1 },
+    { s: "case",  x: 448, y: 322, r: 8,   k: 0.78 },
+    { s: "spark", x: 70,  y: 352, r: 15,  k: 0.7 },
+    { s: "wave",  x: 276, y: 690, r: -4,  k: 1 },
+    { s: "book",  x: 112, y: 770, r: -6,  k: 1 },
+    { s: "heart", x: 434, y: 760, r: 10,  k: 0.95 },
+    { s: "spark", x: 472, y: 612, r: -10, k: 0.6 },
+  ];
+
+  const logo = document.getElementById("logo");
+  const SCALE = 0.8, LOGO_X = (540 - WIDTH * SCALE) / 2, LOGO_Y = 480 + 32 * SCALE;
+  logo.setAttribute("transform", `translate(${LOGO_X} ${LOGO_Y}) scale(${SCALE})`);
+
+  function strokeLayers(parent, d, colors, width) {
+    return colors.map((c) => {
+      const p = document.createElementNS(NS, "path");
+      p.setAttribute("d", d);
+      p.setAttribute("fill", "none");
+      p.setAttribute("stroke", c);
+      p.setAttribute("stroke-width", width);
+      p.setAttribute("stroke-linecap", "round");
+      p.setAttribute("stroke-linejoin", "round");
+      parent.appendChild(p);
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = `${len} ${len + 40}`;
+      return { p, len };
+    });
+  }
+
+  // Tile (ink square that grows out of a dot), with the Z drawn inside it
+  const tileG = document.createElementNS(NS, "g");
+  logo.appendChild(tileG);
+  const tile = document.createElementNS(NS, "rect");
+  tile.setAttribute("fill", PAL.ink);
+  tileG.appendChild(tile);
+  const zLayers = strokeLayers(tileG, Z_IN_TILE, TILE_TRAIL, 13);
+
+  const doodleRoot = document.getElementById("doodles");
+  const doodles = DOODLES.map((d) => {
+    const g = document.createElementNS(NS, "g");
+    doodleRoot.appendChild(g);
+    return { ...d, g, paths: SHAPES[d.s].map((p) => strokeLayers(g, p, [PAL.doodle], 7 / d.k)) };
+  });
+  const tagline = document.getElementById("tagline");
+  tagline.setAttribute("fill", PAL.tagline);
+
+  // Word strokes, in reading order
+  const strokes = [];
+  LETTERS.forEach((L) => {
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("transform", `translate(${L.x} 0)`);
+    logo.appendChild(g);
+    L.strokes.forEach((d) => strokes.push(strokeLayers(g, d, WORD_TRAIL, STROKE)));
+  });
+
+  const LAYER_LAG = 0.055;   // how far each darker shade trails the one before it
+  // Draws the layers in from `start`; from `outStart` they retract tail-first, darkest shade leading,
+  // so the colour trail shows again on the way out.
+  function drawLayers(layers, t, start, dur, outStart = Infinity, outDur = dur) {
+    const last = layers.length - 1;
+    layers.forEach((l, k) => {
+      const p = easeInOut(seg(t, start + k * LAYER_LAG, start + k * LAYER_LAG + dur));
+      const o0 = outStart + (last - k) * LAYER_LAG;
+      const q = easeInOut(seg(t, o0, o0 + outDur));
+      l.p.style.strokeDashoffset = l.len * (1 - p) - l.len * q;
+      l.p.style.opacity = p > 0 && q < 1 ? 1 : 0;
+    });
+  }
+
+  const stage = document.getElementById("stage"), spinner = document.getElementById("spinner");
+  const n = strokes.length;
+  function render(t) {
+    // Launch colour shifts to the app colour, like a native launch screen handing over
+    const bg = t < 0.14 ? BG_FROM : BG;
+    stage.style.background = bg;
+    document.body.style.background = bg;
+
+    // 0) Doodles sketch themselves in around the edges and drift gently (0.08 → ~0.8s);
+    //    they retract with the word in the outro
+    doodles.forEach((d, i) => {
+      const fy = Math.sin(t * 2.2 + i * 1.3) * 5, fr = Math.sin(t * 1.6 + i) * 3;
+      d.g.setAttribute("transform", `translate(${d.x} ${d.y + fy}) rotate(${d.r + fr}) scale(${d.k})`);
+      d.paths.forEach((layers, j) => drawLayers(layers, t, 0.08 + i * 0.05 + j * 0.08, 0.42 * PAL.pace, 1.3 + i * 0.025, 0.22));
+    });
+
+    // Tagline rises in under the logo (0.95 → 1.2s), fades before the outro
+    const pTag = easeOut(seg(t, 0.95, 1.2)) * (1 - seg(t, 1.32, 1.44));
+    tagline.style.opacity = pTag;
+    tagline.setAttribute("transform", `translate(0 ${(1 - easeOut(seg(t, 0.95, 1.2))) * 14})`);
+
+    // 1) Word strokes sweep in left to right (0.2 → ~0.95s)
+    //    Outro: they retract right to left, towards the tile (1.36 → ~1.7s)
+    strokes.forEach((layers, i) => drawLayers(layers, t, 0.2 + i * 0.06 * PAL.pace, 0.24 * PAL.pace, 1.36 + (n - 1 - i) * 0.03, 0.15));
+
+    // 2) Dot grows into the tile with a soft overshoot (0.3 → 0.7s)
+    //    Outro: tile shrinks back to the dot (1.6 → 1.76s), the dot pops and is gone (1.78 → 1.92s)
+    const pt = seg(t, 0.3, 0.7);
+    const pShrink = easeInOut(seg(t, 1.6, 1.76));
+    const pGone = seg(t, 1.78, 1.92);
+    const pop = 1 + Math.sin(Math.min(pGone / 0.35, 1) * Math.PI) * 0.5;
+    const s = pt === 0 ? 0 : lerp(backOut(pt), 0.16, pShrink) * pop * (1 - easeInOut(clamp((pGone - 0.35) / 0.65)));
+    const size = Math.max(0, TILE.size * s);
+    const round = lerp(lerp(size / 2, size * 0.26, easeOut(seg(t, 0.38, 0.66))), size / 2, pShrink);  // circle ↔ rounded square
+    const wob = Math.sin(pt * Math.PI) * 10 + Math.sin(pShrink * Math.PI) * 8;
+    tile.setAttribute("x", TILE.cx - size / 2);
+    tile.setAttribute("y", TILE.cy - size / 2);
+    tile.setAttribute("width", size);
+    tile.setAttribute("height", size);
+    tile.setAttribute("rx", round);
+    tileG.setAttribute("transform", `rotate(${-wob} ${TILE.cx} ${TILE.cy})`);
+    tileG.style.opacity = pt > 0 ? 1 : 0;
+
+    // 3) Z draws inside the tile (0.55 → 0.95s), retracts before the tile shrinks (1.46s →)
+    zLayers.forEach((l) => l.p.setAttribute("transform", `translate(${TILE.cx} ${TILE.cy})`));
+    drawLayers(zLayers, t, 0.55, 0.26 * PAL.pace, 1.46, 0.14);
+
+    // 4) Brief hold with a small loading spinner (1.0 → 1.45s)
+    const ps = easeOut(seg(t, 1.0, 1.15)) * (1 - seg(t, 1.36, 1.48));
+    spinner.style.opacity = ps;
+    spinner.setAttribute("transform", `translate(270 868) rotate(${(t - 1.0) * 420})`);
+
+    spinner.querySelectorAll("circle, path").forEach((el) => el.setAttribute("stroke", PAL.ink));
+  }
+
+  window.ready = document.fonts.ready.then(() => render(0));
+  window.render = render;
+
+  // Live preview when opened directly in a browser (?play)
+  if (location.search.includes("play")) {
+    window.ready.then(() => {
+      const start = performance.now();
+      const loop = (now) => { const t = ((now - start) / 1000) % (window.DURATION + 0.8); render(Math.min(t, window.DURATION)); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    });
+  }
+</script>
+</body>
+</html>
