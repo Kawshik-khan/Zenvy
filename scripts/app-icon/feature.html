@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  /* Play Store feature graphic (1024x500): the splash logo lockup on the notebook grid. */
+  @font-face { font-family: "Space Grotesk"; font-weight: 700; src: url("../../mobile/google_fonts/SpaceGrotesk-Bold.ttf"); }
+  @font-face { font-family: "Space Grotesk"; font-weight: 500; src: url("../../mobile/google_fonts/SpaceGrotesk-Medium.ttf"); }
+  :root {
+    --paper: #fff8ec; --ink: #111111; --focus: #ffd23f;
+    --match: #ff6b9d; --chat: #4d96ff; --live: #3ddc97; --career: #b794f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+  #stage {
+    position: relative; width: 1024px; height: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(rgba(17,17,17,.08) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(17,17,17,.08) 2px, transparent 2px);
+    background-size: 50px 50px; background-position: center center;
+  }
+  .chip { position: absolute; width: 64px; height: 64px; border: 4px solid var(--ink); border-radius: 14px; box-shadow: 5px 5px 0 var(--ink); }
+  #logo { display: flex; align-items: center; gap: 26px; }
+  #tile {
+    width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;
+    background: var(--focus); border: 6px solid var(--ink); border-radius: 22px; box-shadow: 10px 10px 0 var(--ink);
+    font: 700 104px/1 "Space Grotesk", sans-serif; color: var(--ink);
+  }
+  #wordwrap { position: relative; padding-bottom: 18px; }
+  #word { font: 700 128px/1 "Space Grotesk", sans-serif; letter-spacing: -3px; color: var(--ink); }
+  #bar { position: absolute; left: 4px; right: 4px; bottom: 0; height: 14px; background: var(--match); border: 4px solid var(--ink); border-radius: 6px; }
+  #tag {
+    font: 500 30px/1 "Space Grotesk", sans-serif; color: var(--ink);
+    background: #fff; border: 4px solid var(--ink); border-radius: 999px; padding: 14px 30px; box-shadow: 5px 5px 0 var(--ink);
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="chip" style="left:70px;top:58px;background:var(--match);transform:rotate(-14deg)"></div>
+  <div class="chip" style="right:80px;top:70px;background:var(--chat);transform:rotate(12deg)"></div>
+  <div class="chip" style="left:56px;bottom:40px;background:var(--live);transform:rotate(10deg)"></div>
+  <div class="chip" style="right:64px;bottom:44px;background:var(--career);transform:rotate(-10deg)"></div>
+  <div id="logo">
+    <div id="tile">Z</div>
+    <div id="wordwrap"><div id="word">zenvy</div><div id="bar"></div></div>
+  </div>
+  <div id="tag">Find study partners. Focus together. Talk it through.</div>
+</div>
+<script>window.ready = document.fonts.ready;</script>
+</body>
+</html>
