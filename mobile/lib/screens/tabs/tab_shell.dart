@@ -7,12 +7,12 @@ import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../widgets/widgets.dart';
 
-// Mirrors components/shell/nav.ts on the web: Home, Partners, Messages and Focus, with the rest under More.
+// Home, Partners, Messages and Jobs, with the rest under More. Focus opens from Home and More.
 const _items = [
   (label: 'Home', icon: LucideIcons.house, tone: Tone.focus),
   (label: 'Partners', icon: LucideIcons.users, tone: Tone.match),
   (label: 'Messages', icon: LucideIcons.messageSquare, tone: Tone.chat),
-  (label: 'Focus', icon: LucideIcons.timer, tone: Tone.focus),
+  (label: 'Jobs', icon: LucideIcons.briefcase, tone: Tone.career),
   (label: 'More', icon: LucideIcons.menu, tone: Tone.live),
 ];
 
@@ -41,17 +41,17 @@ class TabShell extends StatelessWidget {
                 right: -4,
                 bottom: -4,
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: Palette.ink, borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(color: Palette.ink, borderRadius: BorderRadius.circular(22)),
                 ),
               ),
               Material(
                 type: MaterialType.transparency,
                 child: Container(
                   height: 72,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: Palette.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(22),
                     border: Border.all(color: Palette.ink, width: 3),
                   ),
                   child: Row(
@@ -96,33 +96,39 @@ class _TabButton extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Stack(
-          clipBehavior: Clip.none,
+        // Only the icon sits in the tab's colour pill; the label stays on white below it.
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 4,
           children: [
-            Container(
-              constraints: const BoxConstraints(maxWidth: 64),
-              height: 56,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: focused ? toneColor(item.tone) : null,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: focused ? Palette.ink : const Color(0x00000000), width: 2),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 3,
-                children: [
-                  Icon(item.icon, size: 20, color: Palette.ink),
-                  Text(item.label, style: grotesk(FontWeight.w600, 11, 13).copyWith(color: Palette.ink)),
-                ],
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: 52,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: focused ? toneColor(item.tone) : null,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: focused ? Palette.ink : const Color(0x00000000), width: 2),
+                  ),
+                  child: Icon(item.icon, size: 20, color: Palette.ink),
+                ),
+                if (badge != null)
+                  Positioned(
+                    top: -8,
+                    right: -6,
+                    child: CountBadge(value: badge!, tone: Tone.alert),
+                  ),
+              ],
             ),
-            if (badge != null)
-              Positioned(
-                top: -2,
-                right: 4,
-                child: CountBadge(value: badge!, tone: Tone.chat),
-              ),
+            Text(
+              item.label,
+              maxLines: 1,
+              style: grotesk(focused ? FontWeight.w700 : FontWeight.w500, 11, 13).copyWith(color: Palette.ink),
+            ),
           ],
         ),
       ),

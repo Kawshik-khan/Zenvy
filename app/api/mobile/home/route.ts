@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { handle, ok, requireUserId } from "@/lib/mobile/http";
-import { listEvents, parseTzOffset, studyStats, unreadMessageCount } from "@/lib/mobile/activity";
+import { listEvents, parseTzOffset, startOfLocalDay, studyStats, unreadMessageCount } from "@/lib/mobile/activity";
 import { listGroups } from "@/lib/mobile/groups";
 import { listPartners } from "@/lib/mobile/people";
+import { homePulse } from "@/lib/mobile/pulse";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,10 @@ export async function GET(request: Request) {
       prisma.notification.count({ where: { userId, read: false } }),
       unreadMessageCount(userId),
     ]);
+    const now = new Date();
+    const dayStart = startOfLocalDay(now, tz);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    const pulse = await homePulse(userId, groups.mine.map((group) => group.id), dayStart, now);
 
     return ok({
       name: user?.name ?? null,
@@ -30,6 +35,18 @@ export async function GET(request: Request) {
       partners: partners.filter((partner) => partner.connection?.status !== "ACCEPTED").slice(0, 3),
       groups: groups.mine.slice(0, 3),
       unread: { notifications: unreadNotifications, messages: unreadMessages },
+      progress: {
+        level: stats.level,
+        levelTitle: stats.levelTitle,
+        levelProgress: stats.levelProgress,
+        xpToNextLevel: stats.xpToNextLevel,
+        totalXp: stats.totalXp,
+        week: stats.periods.week,
+        all: stats.periods.all,
+        lastSevenDays: stats.lastSevenDays,
+      },
+      todayEvents: events.filter((event) => new Date(event.startTime) < dayEnd),
+      ...pulse,
     });
   });
 }

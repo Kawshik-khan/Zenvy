@@ -24,6 +24,8 @@ List<String> signedInRoutes() {
     '/onboarding-style',
     '/focus-done?minutes=25',
     '/stats',
+    '/today',
+    '/recap',
     '/notifications',
     '/partner/$tanvir',
     '/partner/$sadia',

@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../theme/tokens.dart';
 import '../theme/volume.dart';
 
-const _tabRoots = {'/home', '/partners', '/messages', '/focus', '/more'};
+const _tabRoots = {'/home', '/partners', '/messages', '/jobs', '/more'};
 
 /// Switches tab for the five tab roots, pushes everything else.
 void openRoute(BuildContext context, String location) {

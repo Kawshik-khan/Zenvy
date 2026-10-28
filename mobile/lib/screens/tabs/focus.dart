@@ -76,15 +76,15 @@ class _FocusScreenState extends State<FocusScreen> {
 
         return Screen(
           volume: Volume.quiet,
-          tabBar: true,
           gap: 20,
           children: [
             ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 44),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                spacing: 12,
                 children: [
-                  const ZText('Focus', variant: TextVariant.title, header: true, style: TextStyle(fontSize: 22)),
+                  ZIconButton(icon: LucideIcons.chevronLeft, label: 'Back', onTap: () => goBack(context)),
+                  const Expanded(child: ZText('Focus', variant: TextVariant.title, header: true, style: TextStyle(fontSize: 22))),
                   ZText('Round $_round of 4', variant: TextVariant.label),
                 ],
               ),

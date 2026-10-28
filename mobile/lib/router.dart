@@ -28,6 +28,8 @@ import 'screens/partners/partner_profile.dart';
 import 'screens/partners/post_ad.dart';
 import 'screens/profile.dart';
 import 'screens/stats.dart';
+import 'screens/home/day_plan.dart';
+import 'screens/home/recap.dart';
 import 'screens/tabs/focus.dart';
 import 'screens/tabs/home.dart';
 import 'screens/tabs/messages.dart';
@@ -54,8 +56,8 @@ GoRoute _fade(String path, Widget Function(GoRouterState s) build) => GoRoute(
   ),
 );
 
-StatefulShellBranch _tab(String path, Widget screen) => StatefulShellBranch(
-  routes: [GoRoute(path: path, builder: (_, _) => screen)],
+StatefulShellBranch _tab(String path, Widget Function(GoRouterState) build) => StatefulShellBranch(
+  routes: [GoRoute(path: path, builder: (_, s) => build(s))],
 );
 
 const _signedOutRoutes = {'/welcome', '/sign-up', '/log-in', '/forgot-password'};
@@ -88,15 +90,18 @@ GoRouter buildRouter(AppState app) => GoRouter(
     StatefulShellRoute.indexedStack(
       builder: (_, _, shell) => TabShell(shell: shell),
       branches: [
-        _tab('/home', const HomeScreen()),
-        _tab('/partners', const PartnersScreen()),
-        _tab('/messages', const MessagesScreen()),
-        _tab('/focus', const FocusScreen()),
-        _tab('/more', const MoreScreen()),
+        _tab('/home', (_) => const HomeScreen()),
+        _tab('/partners', (_) => const PartnersScreen()),
+        _tab('/messages', (_) => const MessagesScreen()),
+        _tab('/jobs', (s) => JobsScreen(initialTab: s.uri.queryParameters['tab'])),
+        _tab('/more', (_) => const MoreScreen()),
       ],
     ),
+    _page('/focus', (_) => const FocusScreen()),
     _modal('/focus-done', (s) => FocusDoneScreen(minutes: int.tryParse(s.uri.queryParameters['minutes'] ?? ''), saved: s.uri.queryParameters['saved'] != '0')),
     _page('/stats', (_) => const StatsScreen()),
+    _page('/today', (_) => const TodayScreen()),
+    _modal('/recap', (_) => const RecapScreen()),
     _page('/notifications', (_) => const NotificationsScreen()),
     _page('/partner/:id', (s) => PartnerProfileScreen(id: s.pathParameters['id']!)),
     _fade('/matched/:id', (s) => MatchedScreen(id: s.pathParameters['id']!)),
@@ -129,7 +134,6 @@ GoRouter buildRouter(AppState app) => GoRouter(
     _page('/groups/:id', (s) => GroupDetailScreen(id: s.pathParameters['id']!)),
     _page('/events', (_) => const EventsScreen()),
     _modal('/events/new', (s) => NewEventScreen(groupId: s.uri.queryParameters['groupId'])),
-    _page('/jobs', (s) => JobsScreen(initialTab: s.uri.queryParameters['tab'])),
     _page('/jobs/:id', (s) => JobDetailScreen(id: s.pathParameters['id']!)),
     _page('/profile', (_) => const ProfileScreen()),
   ],
