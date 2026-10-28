@@ -7,14 +7,17 @@ import 'session.dart';
 
 /// An error the server (or the network) reported, with a message safe to show.
 class ApiException implements Exception {
-  ApiException(this.message, {this.status = 0, this.fieldErrors = const {}});
+  ApiException(this.message, {this.status = 0, this.fieldErrors = const {}, this.timedOut = false});
 
   final String message;
   final int status;
   final Map<String, String> fieldErrors;
 
+  /// The server was reachable but slow, which isn't the device being offline.
+  final bool timedOut;
+
   bool get unauthorized => status == 401;
-  bool get offline => status == 0;
+  bool get offline => status == 0 && !timedOut;
 
   @override
   String toString() => message;
@@ -72,7 +75,7 @@ class ApiClient {
     try {
       res = await run().timeout(_timeout);
     } on TimeoutException {
-      throw ApiException('Zenvy is taking too long to answer. Check your connection and try again.');
+      throw ApiException('Zenvy is taking too long to answer. Try again in a moment.', timedOut: true);
     } catch (_) {
       throw ApiException("Can't reach Zenvy. Check your connection and try again.");
     }
