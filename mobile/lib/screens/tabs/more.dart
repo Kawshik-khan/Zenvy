@@ -9,7 +9,7 @@ import '../../util/dialogs.dart';
 import '../../widgets/widgets.dart';
 
 const _links = [
-  (label: 'Jobs', href: '/jobs', icon: LucideIcons.briefcase, fill: Palette.career),
+  (label: 'Focus timer', href: '/focus', icon: LucideIcons.timer, fill: Palette.focus),
   (label: 'Study groups', href: '/groups', icon: LucideIcons.users, fill: Palette.chat),
   (label: 'Sessions & events', href: '/events', icon: LucideIcons.calendar, fill: Palette.live),
   (label: 'Study stats', href: '/stats', icon: LucideIcons.chartColumn, fill: Palette.focus),

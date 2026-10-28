@@ -630,6 +630,11 @@ class HomeData {
     required this.groups,
     required this.unreadNotifications,
     required this.unreadMessages,
+    this.progress = const HomeProgress(),
+    this.todayEvents = const [],
+    this.studyingNow = const [],
+    this.groupActivity = const {},
+    this.todayFocus = const [],
   });
 
   final String? name;
@@ -641,6 +646,11 @@ class HomeData {
   final List<GroupCard> groups;
   final int unreadNotifications;
   final int unreadMessages;
+  final HomeProgress progress;
+  final List<EventItem> todayEvents;
+  final List<LivePerson> studyingNow;
+  final Map<String, GroupActivity> groupActivity;
+  final List<FocusBlock> todayFocus;
 
   factory HomeData.fromJson(Json j) {
     final focus = (j['focus'] as Map?)?.cast<String, dynamic>() ?? const {};
@@ -655,8 +665,88 @@ class HomeData {
       groups: _list(j['groups'], GroupCard.fromJson),
       unreadNotifications: _int(unread['notifications']),
       unreadMessages: _int(unread['messages']),
+      progress: j['progress'] is Map ? HomeProgress.fromJson((j['progress'] as Map).cast()) : const HomeProgress(),
+      todayEvents: _list(j['todayEvents'], EventItem.fromJson),
+      studyingNow: _list(j['studyingNow'], LivePerson.fromJson),
+      groupActivity: {for (final a in _list(j['groupActivity'], GroupActivity.fromJson)) a.groupId: a},
+      todayFocus: _list(j['todayFocus'], FocusBlock.fromJson),
     );
   }
+}
+
+/// Level, XP and the last seven days, for the Home constellation and quests card.
+class HomeProgress {
+  const HomeProgress({
+    this.level = 1,
+    this.levelTitle = '',
+    this.levelProgress = 0,
+    this.xpToNextLevel = 0,
+    this.totalXp = 0,
+    this.week = const Period(0, 0),
+    this.all = const Period(0, 0),
+    this.lastSevenDays = const [],
+  });
+
+  final int level;
+  final String levelTitle;
+  final double levelProgress;
+  final int xpToNextLevel;
+  final int totalXp;
+  final Period week;
+  final Period all;
+  final List<DayMinutes> lastSevenDays;
+
+  factory HomeProgress.fromJson(Json j) => HomeProgress(
+    level: _int(j['level']).clamp(1, 1 << 20),
+    levelTitle: _str(j['levelTitle']) ?? '',
+    levelProgress: _num(j['levelProgress']).clamp(0, 1),
+    xpToNextLevel: _int(j['xpToNextLevel']),
+    totalXp: _int(j['totalXp']),
+    week: Period.fromJson(j['week']),
+    all: Period.fromJson(j['all']),
+    lastSevenDays: _list(j['lastSevenDays'], DayMinutes.fromJson),
+  );
+}
+
+/// Someone in the viewer's circle who is in a group call now, or just finished a focus session.
+class LivePerson {
+  const LivePerson({required this.user, required this.inCall, this.groupId, this.groupName, required this.minutes, this.at});
+  final UserRef user;
+  final bool inCall;
+  final String? groupId;
+  final String? groupName;
+  final int minutes;
+  final DateTime? at;
+
+  factory LivePerson.fromJson(Json j) => LivePerson(
+    user: UserRef.fromJson((j['user'] as Map).cast()),
+    inCall: j['kind'] == 'CALL',
+    groupId: _str(j['groupId']),
+    groupName: _str(j['groupName']),
+    minutes: _int(j['minutes']),
+    at: _date(j['at']),
+  );
+}
+
+class GroupActivity {
+  const GroupActivity({required this.groupId, required this.messagesThisWeek, required this.live});
+  final String groupId;
+  final int messagesThisWeek;
+  final bool live;
+
+  factory GroupActivity.fromJson(Json j) =>
+      GroupActivity(groupId: j['groupId'] as String, messagesThisWeek: _int(j['messagesThisWeek']), live: _bool(j['live']));
+}
+
+/// One of the viewer's own focus sessions today.
+class FocusBlock {
+  const FocusBlock({required this.start, required this.end, required this.minutes});
+  final DateTime start;
+  final DateTime end;
+  final int minutes;
+
+  factory FocusBlock.fromJson(Json j) =>
+      FocusBlock(start: _date(j['startedAt']) ?? DateTime.now(), end: _date(j['endedAt']) ?? DateTime.now(), minutes: _int(j['minutes']));
 }
 
 const jobTypeLabels = {'JOB': 'Job', 'INTERNSHIP': 'Internship', 'PART_TIME': 'Part-time', 'REFERRAL': 'Referral'};

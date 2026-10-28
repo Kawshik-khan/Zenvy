@@ -135,7 +135,7 @@ class MatchedScreen extends StatelessWidget {
                           fill: Palette.focus,
                           title: 'Focus together',
                           detail: 'Start a 25 min timer',
-                          onTap: () => context.go('/focus'),
+                          onTap: () => context.push('/focus'),
                         ),
                       ],
                     ),

@@ -30,6 +30,14 @@ class _JobsScreenState extends State<JobsScreen> {
   Timer? _debounce;
   final _loader = GlobalKey<LoaderState<JobFeed>>();
 
+  // Jobs is a tab now, so its state survives a `/jobs?tab=saved` link; follow the new query.
+  @override
+  void didUpdateWidget(JobsScreen old) {
+    super.didUpdateWidget(old);
+    final t = widget.initialTab;
+    if (t != old.initialTab && const {'browse', 'saved', 'forYou'}.contains(t)) _tab = t!;
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -40,9 +48,10 @@ class _JobsScreenState extends State<JobsScreen> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     return Screen(
+      tabBar: true,
       header: TopBar(
         title: 'Jobs',
-        fallback: '/more',
+        back: false,
         right: ZButton(
           label: 'Post',
           variant: ButtonVariant.career,

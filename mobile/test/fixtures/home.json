@@ -164,5 +164,156 @@
  "unread": {
   "notifications": 1,
   "messages": 2
- }
+ },
+ "progress": {
+  "level": 2,
+  "levelTitle": "Level 2 Scholar",
+  "levelProgress": 0.62,
+  "xpToNextLevel": 140,
+  "totalXp": 660,
+  "week": {
+   "focusMinutes": 275,
+   "sessions": 11
+  },
+  "all": {
+   "focusMinutes": 525,
+   "sessions": 21
+  },
+  "lastSevenDays": [
+   {
+    "date": "2026-10-20T00:00:00.000Z",
+    "minutes": 50
+   },
+   {
+    "date": "2026-10-21T00:00:00.000Z",
+    "minutes": 75
+   },
+   {
+    "date": "2026-10-22T00:00:00.000Z",
+    "minutes": 0
+   },
+   {
+    "date": "2026-10-23T00:00:00.000Z",
+    "minutes": 25
+   },
+   {
+    "date": "2026-10-24T00:00:00.000Z",
+    "minutes": 50
+   },
+   {
+    "date": "2026-10-25T00:00:00.000Z",
+    "minutes": 30
+   },
+   {
+    "date": "2026-10-26T00:00:00.000Z",
+    "minutes": 45
+   }
+  ]
+ },
+ "todayEvents": [
+  {
+   "id": "cmvpey1zt002690ehj0bgghzy",
+   "title": "DP problem set review",
+   "description": null,
+   "startTime": "2026-10-27T13:00:00.000Z",
+   "endTime": "2026-10-27T14:30:00.000Z",
+   "location": "Online",
+   "type": "VIRTUAL",
+   "group": {
+    "id": "cmvpey1yg000z90eh4twgxgkd",
+    "name": "Algorithms Circle"
+   },
+   "creator": {
+    "id": "cmvpey1x4000890eha3c4m9ao",
+    "name": "Farhan Jamil"
+   },
+   "goingCount": 4,
+   "going": [
+    {
+     "id": "cmvpey1x4000890eha3c4m9ao",
+     "name": "Farhan Jamil",
+     "image": null
+    },
+    {
+     "id": "cmvpey1wn000290ehxb7q6b3a",
+     "name": "Tanvir Ahmed",
+     "image": null
+    },
+    {
+     "id": "cmvpey1x8000a90ehnes44reh",
+     "name": "Rafia Islam",
+     "image": null
+    },
+    {
+     "id": "cmvpey1wa000090ehtuciyd49",
+     "name": "Nadia Rahman",
+     "image": null
+    }
+   ],
+   "myStatus": "GOING",
+   "canCancel": false
+  }
+ ],
+ "studyingNow": [
+  {
+   "user": {
+    "id": "cmvpey1x4000890eha3c4m9ao",
+    "name": "Farhan Jamil",
+    "image": null
+   },
+   "kind": "CALL",
+   "groupId": "cmvpey1yg000z90eh4twgxgkd",
+   "groupName": "Algorithms Circle",
+   "minutes": 18,
+   "at": "2026-10-27T12:40:00.000Z"
+  },
+  {
+   "user": {
+    "id": "cmvpey1wn000290ehxb7q6b3a",
+    "name": "Tanvir Ahmed",
+    "image": null
+   },
+   "kind": "FOCUS",
+   "groupId": null,
+   "groupName": null,
+   "minutes": 25,
+   "at": "2026-10-27T12:50:00.000Z"
+  },
+  {
+   "user": {
+    "id": "cmvpey1x8000a90ehnes44reh",
+    "name": "Rafia Islam",
+    "image": null
+   },
+   "kind": "FOCUS",
+   "groupId": null,
+   "groupName": null,
+   "minutes": 50,
+   "at": "2026-10-27T12:55:00.000Z"
+  }
+ ],
+ "groupActivity": [
+  {
+   "groupId": "cmvpey1yg000z90eh4twgxgkd",
+   "messagesThisWeek": 34,
+   "live": true
+  },
+  {
+   "groupId": "cmvpey1yz001h90ehh47hbi9m",
+   "messagesThisWeek": 8,
+   "live": false
+  }
+ ],
+ "todayFocus": [
+  {
+   "startedAt": "2026-10-27T03:30:00.000Z",
+   "endedAt": "2026-10-27T03:55:00.000Z",
+   "minutes": 25
+  },
+  {
+   "startedAt": "2026-10-27T08:10:00.000Z",
+   "endedAt": "2026-10-27T08:32:00.000Z",
+   "minutes": 22
+  }
+ ]
 }
