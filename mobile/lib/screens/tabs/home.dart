@@ -7,6 +7,7 @@ import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../widgets/widgets.dart';
 import '../home/campfires.dart';
+import '../home/celebrate.dart';
 import '../home/constellation.dart';
 import '../home/day_plan.dart';
 import '../home/hero.dart';
@@ -37,7 +38,7 @@ class HomeScreen extends StatelessWidget {
     final app = AppScope.of(context);
     return Loader<HomeData>(
       load: app.api.home,
-      frame: (context, body) => Screen(tabBar: true, body: body),
+      frame: (context, body) => Screen(tabBar: true, body: body is LoadingView ? const HomeSkeleton() : body),
       builder: (context, home, reload) => _HomeBody(home: home, reload: reload),
     );
   }
@@ -56,6 +57,10 @@ class _HomeBody extends StatelessWidget {
     final now = DateTime.now();
     var i = 0;
     Widget enter(Widget child) => Enter(index: i++, child: child);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Enter.played = true;
+      if (context.mounted && home.progress.totalXp > 0) LevelWatch.check(context, home.progress.level);
+    });
 
     return Screen(
       tabBar: true,

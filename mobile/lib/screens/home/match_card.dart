@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/models.dart';
@@ -19,9 +20,19 @@ class MatchOfTheDay extends StatefulWidget {
   State<MatchOfTheDay> createState() => _MatchOfTheDayState();
 }
 
-class _MatchOfTheDayState extends State<MatchOfTheDay> {
+class _MatchOfTheDayState extends State<MatchOfTheDay> with SingleTickerProviderStateMixin {
   late List<Person> _people = [...widget.partners];
   int _index = 0;
+
+  /// Horizontal drag of the card; past [_throw] a release skips it.
+  double _dx = 0;
+  double _from = 0;
+  static const _throw = 110.0;
+  late final AnimationController _spring = AnimationController(vsync: this, duration: const Duration(milliseconds: 380))
+    ..addListener(() => setState(() => _dx = _from * (1 - Curves.elasticOut.transform(_spring.value))));
+
+  /// The card flips to say "request sent" right after Connect.
+  bool _flipped = false;
 
   @override
   void didUpdateWidget(MatchOfTheDay old) {
@@ -29,6 +40,29 @@ class _MatchOfTheDayState extends State<MatchOfTheDay> {
     if (old.partners != widget.partners) {
       _people = [...widget.partners];
       _index = 0;
+      _flipped = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _spring.dispose();
+    super.dispose();
+  }
+
+  void _skip() => setState(() {
+    _index++;
+    _dx = 0;
+    _flipped = false;
+  });
+
+  void _dragEnd(DragEndDetails d) {
+    if (_dx.abs() > _throw || d.primaryVelocity!.abs() > 900) {
+      HapticFeedback.lightImpact();
+      _skip();
+    } else {
+      _from = _dx;
+      motionOn(context) ? _spring.forward(from: 0) : setState(() => _dx = 0);
     }
   }
 
@@ -43,17 +77,89 @@ class _MatchOfTheDayState extends State<MatchOfTheDay> {
           opacity: a,
           child: SlideTransition(
             position: Tween(begin: leaving ? const Offset(-0.25, 0) : const Offset(0.25, 0), end: Offset.zero).animate(a),
-            child: RotationTransition(turns: Tween(begin: leaving ? -0.02 : 0.02, end: 0.0).animate(a), child: child),
+            child: RotationTransition(
+              turns: Tween(begin: leaving ? -0.02 : 0.02, end: 0.0).animate(a),
+              child: child,
+            ),
           ),
         );
       },
-      child: done ? KeyedSubtree(key: ValueKey(_index), child: _AllCaughtUp(onRestart: _people.isEmpty ? null : () => setState(() => _index = 0))) : _card(_people[_index]),
+      child: done
+          ? KeyedSubtree(
+              key: ValueKey(_index),
+              child: _AllCaughtUp(onRestart: _people.isEmpty ? null : () => setState(() => _index = 0)),
+            )
+          : KeyedSubtree(
+              key: ValueKey(_index),
+              child: GestureDetector(
+                onHorizontalDragUpdate: _flipped ? null : (d) => setState(() => _dx += d.delta.dx),
+                onHorizontalDragEnd: _flipped ? null : _dragEnd,
+                child: Transform.translate(
+                  offset: Offset(_dx, 0),
+                  child: Transform.rotate(
+                    angle: _dx / 900,
+                    child: Opacity(opacity: (1 - _dx.abs() / 400).clamp(0.4, 1), child: _flipCard(_people[_index])),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _flipCard(Person p) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: _flipped ? 1 : 0),
+      duration: motionOn(context) ? const Duration(milliseconds: 520) : Duration.zero,
+      curve: Curves.easeInOutBack,
+      builder: (_, t, _) {
+        final back = t >= 0.5;
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0012)
+            ..rotateY(math.pi * t),
+          child: Stack(
+            children: [
+              // The front always lays out, so both faces are the same size.
+              Opacity(
+                opacity: back ? 0 : 1,
+                child: IgnorePointer(ignoring: back, child: _card(p)),
+              ),
+              if (back)
+                Positioned.fill(
+                  child: Transform(alignment: Alignment.center, transform: Matrix4.rotationY(math.pi), child: _sent(p)),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _sent(Person p) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Palette.match,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Palette.ink, width: 3),
+        boxShadow: const [BoxShadow(color: Palette.ink, offset: Offset(5, 5))],
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 12,
+        children: [
+          Avatar.of(p, size: 64),
+          ZText('Request sent to ${p.firstName}', variant: TextVariant.h2, align: TextAlign.center),
+          const ZText("You'll get a notification when they answer.", variant: TextVariant.body, align: TextAlign.center),
+          ZButton(label: 'Next match', variant: ButtonVariant.primary, onTap: _skip),
+        ],
+      ),
     );
   }
 
   Widget _card(Person p) {
     return Container(
-      key: ValueKey(_index),
       decoration: BoxDecoration(
         color: Palette.match,
         borderRadius: BorderRadius.circular(18),
@@ -67,7 +173,9 @@ class _MatchOfTheDayState extends State<MatchOfTheDay> {
         children: [
           Row(
             children: [
-              Expanded(child: Text('MATCH OF THE DAY', style: mono(FontWeight.w700, 11, 14, letterSpacing: 0.8).copyWith(color: Palette.ink))),
+              Expanded(
+                child: Text('MATCH OF THE DAY', style: mono(FontWeight.w700, 11, 14, letterSpacing: 0.8).copyWith(color: Palette.ink)),
+              ),
               if (_people.length > 1) Text('${_index + 1} of ${_people.length}', style: mono(FontWeight.w500, 11, 14).copyWith(color: Palette.ink)),
             ],
           ),
@@ -113,10 +221,13 @@ class _MatchOfTheDayState extends State<MatchOfTheDay> {
                 child: ConnectButton(
                   person: p,
                   size: ButtonSize.md,
-                  onChanged: (updated) => setState(() => _people[_index] = updated),
+                  onChanged: (updated) => setState(() {
+                    _flipped = updated.connection?.pendingOutgoing == true && p.connection?.pendingOutgoing != true;
+                    _people[_index] = updated;
+                  }),
                 ),
               ),
-              ZButton(label: 'Skip', variant: ButtonVariant.secondary, onTap: () => setState(() => _index++)),
+              ZButton(label: 'Skip', variant: ButtonVariant.secondary, onTap: _skip),
             ],
           ),
         ],
@@ -160,7 +271,9 @@ class _ScoreRing extends StatelessWidget {
         height: 72,
         child: CustomPaint(
           painter: _RingPainter(v),
-          child: Center(child: Text('${(v * 100).round()}%', style: mono(FontWeight.w700, 17, 20).copyWith(color: Palette.ink))),
+          child: Center(
+            child: Text('${(v * 100).round()}%', style: mono(FontWeight.w700, 17, 20).copyWith(color: Palette.ink)),
+          ),
         ),
       ),
     );

@@ -125,7 +125,13 @@ class DayBarCard extends StatelessWidget {
                           ),
                         ),
                       if (now.isAfter(plan.dayStart) && now.isBefore(plan.dayEnd))
-                        Positioned(left: plan.fraction(now) * w - 1.5, width: 3, top: 0, bottom: 0, child: const ColoredBox(color: Palette.alert)),
+                        Positioned(
+                          left: plan.fraction(now) * w - 1.5,
+                          width: 3,
+                          top: 0,
+                          bottom: 0,
+                          child: const ColoredBox(color: Palette.alert),
+                        ),
                     ],
                   ),
                 );
@@ -158,7 +164,10 @@ class TodayScreen extends StatelessWidget {
     final app = AppScope.of(context);
     return Loader<HomeData>(
       load: app.api.home,
-      frame: (context, body) => Screen(header: const TopBar(title: 'Your day'), body: body),
+      frame: (context, body) => Screen(
+        header: const TopBar(title: 'Your day'),
+        body: body,
+      ),
       builder: (context, home, reload) {
         final now = DateTime.now();
         final plan = DayPlan.of(home, now);
@@ -171,7 +180,9 @@ class TodayScreen extends StatelessWidget {
             Row(
               spacing: 8,
               children: [
-                Expanded(child: _Stat(value: formatMinutes(home.todayMinutes), label: 'focused', fill: Palette.focus)),
+                Expanded(
+                  child: _Stat(value: formatMinutes(home.todayMinutes), label: 'focused', fill: Palette.focus),
+                ),
                 Expanded(
                   child: _Stat(
                     value: '${plan.slots.where((s) => s.kind == SlotKind.session && s.end.isAfter(now)).length}',
@@ -179,7 +190,9 @@ class TodayScreen extends StatelessWidget {
                     fill: Palette.live,
                   ),
                 ),
-                Expanded(child: _Stat(value: formatMinutes(plan.freeLeft.inMinutes), label: 'free left', fill: Palette.white)),
+                Expanded(
+                  child: _Stat(value: formatMinutes(plan.freeLeft.inMinutes), label: 'free left', fill: Palette.white),
+                ),
               ],
             ),
             SizedBox(
@@ -220,7 +233,9 @@ class TodayScreen extends StatelessWidget {
                             ),
                             child: Text(clockTime(now).replaceAll(' ', ''), style: mono(FontWeight.w700, 10, 12).copyWith(color: Palette.ink)),
                           ),
-                          const Expanded(child: SizedBox(height: 3, child: ColoredBox(color: Palette.alert))),
+                          const Expanded(
+                            child: SizedBox(height: 3, child: ColoredBox(color: Palette.alert)),
+                          ),
                         ],
                       ),
                     ),
@@ -243,7 +258,11 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-    decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(12), border: Border.all(color: Palette.ink, width: 2)),
+    decoration: BoxDecoration(
+      color: fill,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Palette.ink, width: 2),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

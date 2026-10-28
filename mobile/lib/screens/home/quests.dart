@@ -8,6 +8,7 @@ import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
 import '../../widgets/widgets.dart';
+import 'celebrate.dart';
 import 'motion.dart';
 
 /// XP per focused hour, as lib/study-metrics.ts awards it.
@@ -36,6 +37,9 @@ class _Badge {
 /// Level, today's quests and badges. Everything here is earned by studying; XP is awarded by the
 /// server as it happens, so there is nothing to claim.
 class QuestsCard extends StatelessWidget {
+  /// What each quest looked like on the last build, so finishing one is celebrated once.
+  static final _lastDone = <String, bool>{};
+
   const QuestsCard({super.key, required this.home, required this.goalMinutes, required this.now});
   final HomeData home;
   final int goalMinutes;
@@ -69,6 +73,13 @@ class QuestsCard extends StatelessWidget {
       ),
       _Quest('Light tonight\'s star', home.todayMinutes > 0 ? 1 : 0, home.todayMinutes > 0 ? 'Lit' : '0/1', 'Streak +1', href: '/focus'),
     ];
+  }
+
+  bool _justDone(_Quest q) {
+    final key = '${now.year}-${now.month}-${now.day}|${q.title}';
+    final was = _lastDone[key];
+    _lastDone[key] = q.done;
+    return was == false && q.done;
   }
 
   List<_Badge> get _badges {
@@ -111,7 +122,11 @@ class QuestsCard extends StatelessWidget {
                 Row(
                   spacing: 14,
                   children: [
-                    _Hex(fill: Palette.focus, size: 60, child: _LevelMark(level: p.level)),
+                    _Hex(
+                      fill: Palette.focus,
+                      size: 60,
+                      child: _LevelMark(level: p.level),
+                    ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,13 +157,10 @@ class QuestsCard extends StatelessWidget {
                 Row(
                   children: [
                     const Expanded(child: ZText("Today's quests", variant: TextVariant.h3)),
-                    Text(
-                      '${quests.where((q) => q.done).length}/${quests.length} done',
-                      style: mono(FontWeight.w500, 11, 14).copyWith(color: Palette.muted),
-                    ),
+                    Text('${quests.where((q) => q.done).length}/${quests.length} done', style: mono(FontWeight.w500, 11, 14).copyWith(color: Palette.muted)),
                   ],
                 ),
-                for (final q in quests) _QuestRow(quest: q),
+                for (final q in quests) _QuestRow(quest: q, justDone: _justDone(q)),
                 const SizedBox(height: 2),
                 const Row(
                   children: [
@@ -184,8 +196,9 @@ class _LevelMark extends StatelessWidget {
 }
 
 class _QuestRow extends StatelessWidget {
-  const _QuestRow({required this.quest});
+  const _QuestRow({required this.quest, required this.justDone});
   final _Quest quest;
+  final bool justDone;
 
   @override
   Widget build(BuildContext context) {
@@ -225,22 +238,34 @@ class _QuestRow extends StatelessWidget {
             ),
           ),
           if (q.done)
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: motionOn(context) ? const Duration(milliseconds: 500) : Duration.zero,
-              curve: Curves.elasticOut,
-              builder: (_, v, child) => Transform.scale(scale: v, child: child),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(color: Palette.live, shape: BoxShape.circle, border: Border.all(color: Palette.ink, width: 2)),
-                child: const Icon(LucideIcons.check, size: 18, color: Palette.ink),
+            Burst(
+              play: justDone,
+              label: q.reward,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: motionOn(context) ? const Duration(milliseconds: 500) : Duration.zero,
+                curve: Curves.elasticOut,
+                builder: (_, v, child) => Transform.scale(scale: v, child: child),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Palette.live,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Palette.ink, width: 2),
+                  ),
+                  child: const Icon(LucideIcons.check, size: 18, color: Palette.ink),
+                ),
               ),
             )
           else
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(color: Palette.white, borderRadius: BorderRadius.circular(999), border: Border.all(color: Palette.ink, width: 2)),
+              decoration: BoxDecoration(
+                color: Palette.white,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: Palette.ink, width: 2),
+              ),
               child: Text(q.reward, style: mono(FontWeight.w700, 10, 12).copyWith(color: Palette.ink)),
             ),
         ],
@@ -269,11 +294,13 @@ class _BadgeTile extends StatelessWidget {
               size: 46,
               child: Text(b.mark, style: mono(FontWeight.w700, 11, 12).copyWith(color: Palette.ink)),
             ),
-            Text(b.name, textAlign: TextAlign.center, maxLines: 2, style: grotesk(FontWeight.w700, 11, 13).copyWith(color: Palette.ink)),
             Text(
-              b.earned ? 'Earned' : '${(b.progress.clamp(0, 1) * 100).round()}%',
-              style: mono(FontWeight.w500, 9, 11).copyWith(color: Palette.muted),
+              b.name,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: grotesk(FontWeight.w700, 11, 13).copyWith(color: Palette.ink),
             ),
+            Text(b.earned ? 'Earned' : '${(b.progress.clamp(0, 1) * 100).round()}%', style: mono(FontWeight.w500, 9, 11).copyWith(color: Palette.muted)),
           ],
         ),
       ),

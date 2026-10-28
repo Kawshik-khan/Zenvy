@@ -49,7 +49,11 @@ class StudyingNowStrip extends StatelessWidget {
                 child: Container(
                   width: 58,
                   height: 58,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: Palette.white, border: Border.all(color: Palette.ink, width: 3)),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Palette.white,
+                    border: Border.all(color: Palette.ink, width: 3),
+                  ),
                   child: const Icon(LucideIcons.plus, color: Palette.ink, size: 22),
                 ),
               ),
@@ -61,14 +65,20 @@ class StudyingNowStrip extends StatelessWidget {
                     child: ZText('Nobody from your circle is studying yet. Start a session and be the first.', variant: TextVariant.small, muted: true),
                   ),
                 ),
-              for (final p in people)
-                _Slot(
-                  label: p.user.firstName,
-                  status: p.inCall ? 'In call' : 'Focused ${p.minutes}m',
-                  semanticLabel: p.inCall ? '${p.user.name} is in a call in ${p.groupName ?? 'a group'}' : '${p.user.name} just focused for ${p.minutes} minutes',
-                  onTap: () => _open(context, p),
-                  onLongPress: () => _shortcuts(context, p),
-                  child: _LiveAvatar(person: p),
+              for (final (i, p) in people.indexed)
+                PopIn(
+                  key: ValueKey(p.user.id),
+                  delay: i * 60,
+                  child: _Slot(
+                    label: p.user.firstName,
+                    status: p.inCall ? 'In call' : 'Focused ${p.minutes}m',
+                    semanticLabel: p.inCall
+                        ? '${p.user.name} is in a call in ${p.groupName ?? 'a group'}'
+                        : '${p.user.name} just focused for ${p.minutes} minutes',
+                    onTap: () => _open(context, p),
+                    onLongPress: () => _shortcuts(context, p),
+                    child: _LiveAvatar(person: p),
+                  ),
                 ),
             ],
           ),
@@ -110,7 +120,11 @@ class StudyingNowStrip extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ZText(p.user.name, variant: TextVariant.h3, maxLines: 1),
-                        ZText(p.inCall ? 'In a call · ${p.groupName ?? 'group'}' : 'Just focused for ${p.minutes} min', variant: TextVariant.small, muted: true),
+                        ZText(
+                          p.inCall ? 'In a call · ${p.groupName ?? 'group'}' : 'Just focused for ${p.minutes} min',
+                          variant: TextVariant.small,
+                          muted: true,
+                        ),
                       ],
                     ),
                   ),
@@ -186,8 +200,18 @@ class _Slot extends StatelessWidget {
             spacing: 5,
             children: [
               child,
-              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: grotesk(FontWeight.w700, 11, 13).copyWith(color: Palette.ink)),
-              Text(status, maxLines: 1, overflow: TextOverflow.ellipsis, style: mono(FontWeight.w500, 9, 11).copyWith(color: Palette.muted)),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: grotesk(FontWeight.w700, 11, 13).copyWith(color: Palette.ink),
+              ),
+              Text(
+                status,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: mono(FontWeight.w500, 9, 11).copyWith(color: Palette.muted),
+              ),
             ],
           ),
         ),
@@ -221,7 +245,10 @@ class _LiveAvatarState extends State<_LiveAvatar> with SingleTickerProviderState
             animation: loop,
             builder: (_, _) => Transform.rotate(
               angle: widget.person.inCall ? loop.value * 2 * math.pi : 0,
-              child: CustomPaint(size: const Size.square(58), painter: _RingPainter(dashed: widget.person.inCall)),
+              child: CustomPaint(
+                size: const Size.square(58),
+                painter: _RingPainter(dashed: widget.person.inCall),
+              ),
             ),
           ),
           Avatar.of(widget.person.user, size: 46),
@@ -283,7 +310,13 @@ class _LiveDotState extends State<_LiveDot> with SingleTickerProviderStateMixin,
             shape: BoxShape.circle,
             color: widget.on ? Palette.live : Palette.quietShade,
             border: Border.all(color: Palette.ink, width: 2),
-            boxShadow: [BoxShadow(color: Palette.live.withValues(alpha: 0.5 * pulse), blurRadius: 0, spreadRadius: 4 * pulse)],
+            boxShadow: [
+              BoxShadow(
+                color: Palette.live.withValues(alpha: 0.5 * pulse),
+                blurRadius: 0,
+                spreadRadius: 4 * pulse,
+              ),
+            ],
           ),
         );
       },

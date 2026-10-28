@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -21,10 +24,16 @@ class TabShell extends StatelessWidget {
 
   final StatefulNavigationShell shell;
 
+  static const _pill = Size(52, 34);
+  static const _labelH = 13.0;
+  static const _gap = 4.0;
+
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final unread = formatBadge(AppScope.of(context).unreadMessages);
+    final index = shell.currentIndex;
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Stack(
       children: [
         Positioned.fill(child: shell),
@@ -54,19 +63,47 @@ class TabShell extends StatelessWidget {
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(color: Palette.ink, width: 3),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      for (var i = 0; i < _items.length; i++)
-                        Flexible(
-                          child: _TabButton(
-                            item: _items[i],
-                            focused: shell.currentIndex == i,
-                            badge: i == 2 ? unread : null,
-                            onTap: () => shell.goBranch(i, initialLocation: i == shell.currentIndex),
+                  child: LayoutBuilder(
+                    builder: (context, box) {
+                      final slot = box.maxWidth / _items.length;
+                      return Stack(
+                        children: [
+                          // One pill slides between tabs and takes on each tab's colour.
+                          AnimatedPositioned(
+                            duration: reduce ? Duration.zero : const Duration(milliseconds: 320),
+                            curve: Curves.easeOutBack,
+                            left: index * slot + (slot - _pill.width) / 2,
+                            top: (box.maxHeight - _pill.height - _gap - _labelH) / 2,
+                            width: _pill.width,
+                            height: _pill.height,
+                            child: AnimatedContainer(
+                              duration: reduce ? Duration.zero : const Duration(milliseconds: 240),
+                              decoration: BoxDecoration(
+                                color: toneColor(_items[index].tone),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Palette.ink, width: 2),
+                              ),
+                            ),
                           ),
-                        ),
-                    ],
+                          Row(
+                            children: [
+                              for (var i = 0; i < _items.length; i++)
+                                Expanded(
+                                  child: _TabButton(
+                                    item: _items[i],
+                                    focused: index == i,
+                                    badge: i == 2 ? unread : null,
+                                    onTap: () {
+                                      if (i != index) HapticFeedback.selectionClick();
+                                      shell.goBranch(i, initialLocation: i == index);
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -88,6 +125,7 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     return Semantics(
       selected: focused,
       button: true,
@@ -96,25 +134,25 @@ class _TabButton extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        // Only the icon sits in the tab's colour pill; the label stays on white below it.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 4,
+          spacing: TabShell._gap,
           children: [
             Stack(
               clipBehavior: Clip.none,
               children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  width: 52,
-                  height: 34,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: focused ? toneColor(item.tone) : null,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: focused ? Palette.ink : const Color(0x00000000), width: 2),
+                SizedBox.fromSize(
+                  size: TabShell._pill,
+                  child: Center(
+                    // The icon hops once as its tab becomes active.
+                    child: TweenAnimationBuilder<double>(
+                      key: ValueKey(focused),
+                      tween: Tween(begin: 0, end: focused ? 1 : 0),
+                      duration: reduce ? Duration.zero : const Duration(milliseconds: 360),
+                      builder: (_, t, child) => Transform.scale(scale: 1 + 0.18 * math.sin(math.pi * t), child: child),
+                      child: Icon(item.icon, size: 20, color: Palette.ink),
+                    ),
                   ),
-                  child: Icon(item.icon, size: 20, color: Palette.ink),
                 ),
                 if (badge != null)
                   Positioned(
@@ -124,11 +162,7 @@ class _TabButton extends StatelessWidget {
                   ),
               ],
             ),
-            Text(
-              item.label,
-              maxLines: 1,
-              style: grotesk(focused ? FontWeight.w700 : FontWeight.w500, 11, 13).copyWith(color: Palette.ink),
-            ),
+            Text(item.label, maxLines: 1, style: grotesk(focused ? FontWeight.w700 : FontWeight.w500, 11, TabShell._labelH).copyWith(color: Palette.ink)),
           ],
         ),
       ),

@@ -30,7 +30,11 @@ class RecapTeaser extends StatelessWidget {
           Container(
             width: 52,
             height: 52,
-            decoration: BoxDecoration(color: Palette.white, shape: BoxShape.circle, border: Border.all(color: Palette.ink, width: 3)),
+            decoration: BoxDecoration(
+              color: Palette.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Palette.ink, width: 3),
+            ),
             child: const Icon(LucideIcons.play, color: Palette.ink, size: 22),
           ),
           Expanded(
@@ -65,7 +69,10 @@ class _RecapScreenState extends State<RecapScreen> {
     final app = AppScope.of(context);
     return Loader<StudyStats>(
       load: app.api.stats,
-      frame: (context, body) => Screen(header: const TopBar(title: 'Your week', close: true), body: body),
+      frame: (context, body) => Screen(
+        header: const TopBar(title: 'Your week', close: true),
+        body: body,
+      ),
       builder: (context, stats, _) {
         final slides = _slides(stats);
         final dark = _fills[_i] == Palette.ink;
@@ -73,91 +80,100 @@ class _RecapScreenState extends State<RecapScreen> {
         return Material(
           type: MaterialType.transparency,
           child: AnimatedContainer(
-          duration: motionOn(context) ? const Duration(milliseconds: 300) : Duration.zero,
-          color: _fills[_i],
-          child: SafeArea(
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 14,
-                    children: [
-                      Row(
-                        spacing: 6,
-                        children: [
-                          for (var k = 0; k < slides.length; k++)
-                            Expanded(
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: k <= _i ? (dark ? Palette.focus : Palette.ink) : const Color(0x00000000),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: dark ? Palette.focus : Palette.ink, width: 2),
+            duration: motionOn(context) ? const Duration(milliseconds: 300) : Duration.zero,
+            color: _fills[_i],
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 14,
+                      children: [
+                        Row(
+                          spacing: 6,
+                          children: [
+                            for (var k = 0; k < slides.length; k++)
+                              Expanded(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: k <= _i ? (dark ? Palette.focus : Palette.ink) : const Color(0x00000000),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: dark ? Palette.focus : Palette.ink, width: 2),
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(child: Text('LAST 7 DAYS', style: mono(FontWeight.w700, 11, 14, letterSpacing: 0.8).copyWith(color: fg))),
-                          ZIconButton(icon: LucideIcons.x, label: 'Close recap', round: true, onTap: () => goBack(context)),
-                        ],
-                      ),
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: motionOn(context) ? const Duration(milliseconds: 280) : Duration.zero,
-                          transitionBuilder: (child, a) => FadeTransition(
-                            opacity: a,
-                            child: SlideTransition(position: Tween(begin: const Offset(0.08, 0), end: Offset.zero).animate(a), child: child),
-                          ),
-                          child: KeyedSubtree(
-                            key: ValueKey(_i),
-                            child: DefaultTextStyle.merge(
-                              style: TextStyle(color: fg),
-                              child: Align(alignment: Alignment.centerLeft, child: slides[_i]),
-                            ),
-                          ),
+                          ],
                         ),
-                      ),
-                      if (_i == slides.length - 1)
-                        ZButton(label: 'Back to Home', variant: ButtonVariant.primary, size: ButtonSize.lg, onTap: () => goBack(context))
-                      else
-                        Text('Tap to continue', textAlign: TextAlign.center, style: mono(FontWeight.w500, 11, 14).copyWith(color: fg)),
-                    ],
-                  ),
-                ),
-                if (_i < slides.length - 1)
-                  Positioned.fill(
-                    top: 120,
-                    bottom: 60,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 35,
-                          child: Semantics(
-                            button: true,
-                            label: 'Previous',
-                            child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => setState(() => _i = math.max(0, _i - 1))),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text('LAST 7 DAYS', style: mono(FontWeight.w700, 11, 14, letterSpacing: 0.8).copyWith(color: fg)),
+                            ),
+                            ZIconButton(icon: LucideIcons.x, label: 'Close recap', round: true, onTap: () => goBack(context)),
+                          ],
                         ),
                         Expanded(
-                          flex: 65,
-                          child: Semantics(
-                            button: true,
-                            label: 'Next',
-                            child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => setState(() => _i++)),
+                          child: AnimatedSwitcher(
+                            duration: motionOn(context) ? const Duration(milliseconds: 280) : Duration.zero,
+                            transitionBuilder: (child, a) => FadeTransition(
+                              opacity: a,
+                              child: SlideTransition(
+                                position: Tween(begin: const Offset(0.08, 0), end: Offset.zero).animate(a),
+                                child: child,
+                              ),
+                            ),
+                            child: KeyedSubtree(
+                              key: ValueKey(_i),
+                              child: DefaultTextStyle.merge(
+                                style: TextStyle(color: fg),
+                                child: Align(alignment: Alignment.centerLeft, child: slides[_i]),
+                              ),
+                            ),
                           ),
                         ),
+                        if (_i == slides.length - 1)
+                          ZButton(label: 'Back to Home', variant: ButtonVariant.primary, size: ButtonSize.lg, onTap: () => goBack(context))
+                        else
+                          Text(
+                            'Tap to continue',
+                            textAlign: TextAlign.center,
+                            style: mono(FontWeight.w500, 11, 14).copyWith(color: fg),
+                          ),
                       ],
                     ),
                   ),
-              ],
+                  if (_i < slides.length - 1)
+                    Positioned.fill(
+                      top: 120,
+                      bottom: 60,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 35,
+                            child: Semantics(
+                              button: true,
+                              label: 'Previous',
+                              child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => setState(() => _i = math.max(0, _i - 1))),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 65,
+                            child: Semantics(
+                              button: true,
+                              label: 'Next',
+                              child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: () => setState(() => _i++)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
           ),
         );
       },
@@ -284,7 +300,11 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(12), border: Border.all(color: Palette.ink, width: 2)),
+    decoration: BoxDecoration(
+      color: fill,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Palette.ink, width: 2),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

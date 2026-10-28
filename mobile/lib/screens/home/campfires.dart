@@ -38,7 +38,10 @@ class GroupCampfires extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 10,
               children: [
-                for (final g in groups.take(3)) Expanded(child: _Campfire(group: g, activity: activity[g.id])),
+                for (final g in groups.take(3))
+                  Expanded(
+                    child: _Campfire(group: g, activity: activity[g.id]),
+                  ),
                 for (var i = groups.length; i < 3; i++) const Expanded(child: SizedBox()),
               ],
             ),
@@ -81,8 +84,20 @@ class _Campfire extends StatelessWidget {
       child: Column(
         spacing: 6,
         children: [
-          SizedBox(height: 58, child: Align(alignment: Alignment.bottomCenter, child: _Flame(heat: heat, live: live))),
-          ZText(group.name, variant: TextVariant.strong, align: TextAlign.center, maxLines: 2, style: const TextStyle(fontSize: 13, height: 15 / 13)),
+          SizedBox(
+            height: 58,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: _Flame(heat: heat, live: live),
+            ),
+          ),
+          ZText(
+            group.name,
+            variant: TextVariant.strong,
+            align: TextAlign.center,
+            maxLines: 2,
+            style: const TextStyle(fontSize: 13, height: 15 / 13),
+          ),
           Text(
             meta,
             textAlign: TextAlign.center,

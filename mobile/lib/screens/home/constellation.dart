@@ -23,9 +23,7 @@ class ConstellationCard extends StatelessWidget {
     final days = home.progress.lastSevenDays;
     if (days.isNotEmpty) return days;
     final now = DateTime.now();
-    return [
-      for (var i = 6; i >= 0; i--) DayMinutes(DateTime(now.year, now.month, now.day - i), i == 0 ? home.todayMinutes : 0, 0),
-    ];
+    return [for (var i = 6; i >= 0; i--) DayMinutes(DateTime(now.year, now.month, now.day - i), i == 0 ? home.todayMinutes : 0, 0)];
   }
 
   @override
@@ -60,7 +58,9 @@ class ConstellationCard extends StatelessWidget {
           ),
           Semantics(
             label: 'Last seven days: ${days.map((d) => '${_weekdays[d.date.weekday - 1]} ${d.minutes} minutes').join(', ')}',
-            child: ExcludeSemantics(child: _Sky(days: days, todayMinutes: home.todayMinutes)),
+            child: ExcludeSemantics(
+              child: _Sky(days: days, todayMinutes: home.todayMinutes),
+            ),
           ),
           const ZText("Today's focus", variant: TextVariant.label, color: Palette.quietShade),
           Row(
@@ -74,7 +74,12 @@ class ConstellationCard extends StatelessWidget {
                   TextSpan(
                     text: '${v.round()}',
                     style: mono(FontWeight.w700, 30, 34).copyWith(color: Palette.paper),
-                    children: [TextSpan(text: ' / $goalMinutes min', style: mono(FontWeight.w500, 14, 18).copyWith(color: Palette.quietShade))],
+                    children: [
+                      TextSpan(
+                        text: ' / $goalMinutes min',
+                        style: mono(FontWeight.w500, 14, 18).copyWith(color: Palette.quietShade),
+                      ),
+                    ],
                   ),
                 ),
               ),

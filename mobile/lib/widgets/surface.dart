@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
@@ -104,25 +105,33 @@ class _SurfaceState extends State<Surface> {
     }
 
     final pressed = interactive && _pressed;
-    Widget body = Stack(
-      // Passthrough so an Expanded or stretched Surface fills the space it is given.
-      fit: StackFit.passthrough,
-      clipBehavior: Clip.none,
-      children: [
-        if (offset > 0 && !pressed)
-          Positioned(
-            left: offset,
-            top: offset,
-            right: -offset,
-            bottom: -offset,
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: v.line, borderRadius: r),
+    final reduce = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    // The face slides down into its shadow over 70ms, then springs back on release.
+    Widget body = TweenAnimationBuilder<double>(
+      tween: Tween(end: pressed ? 1 : 0),
+      duration: reduce ? Duration.zero : Duration(milliseconds: pressed ? 70 : 160),
+      curve: pressed ? Curves.easeOut : Curves.easeOutBack,
+      child: box,
+      builder: (context, t, box) => Stack(
+        // Passthrough so an Expanded or stretched Surface fills the space it is given.
+        fit: StackFit.passthrough,
+        clipBehavior: Clip.none,
+        children: [
+          if (offset > 0 && t < 1)
+            Positioned(
+              left: offset,
+              top: offset,
+              right: -offset,
+              bottom: -offset,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: v.line, borderRadius: r),
+                ),
               ),
             ),
-          ),
-        Transform.translate(offset: pressed ? Offset(offset, offset) : Offset.zero, child: box),
-      ],
+          Transform.translate(offset: Offset(offset, offset) * t.clamp(0.0, 1.0), child: box),
+        ],
+      ),
     );
 
     if (!interactive) {
@@ -140,6 +149,7 @@ class _SurfaceState extends State<Surface> {
         onTapUp: (_) => _setPressed(false),
         onTapCancel: () => _setPressed(false),
         onTap: () {
+          HapticFeedback.lightImpact();
           widget.onTap?.call();
           if (widget.href != null) openRoute(context, widget.href!);
         },

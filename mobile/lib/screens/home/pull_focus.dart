@@ -51,7 +51,7 @@ class _PullToFocusState extends State<PullToFocus> with SingleTickerProviderStat
   void _end([DragEndDetails? _]) {
     if (_armed) {
       HapticFeedback.mediumImpact();
-      context.push('/focus');
+      _wipeToFocus();
     }
     _armed = false;
     _from = _drag;
@@ -60,6 +60,37 @@ class _PullToFocusState extends State<PullToFocus> with SingleTickerProviderStat
     } else {
       setState(() => _drag = 0);
     }
+  }
+
+  /// Floods the screen yellow from the tab, then opens Focus underneath the colour.
+  void _wipeToFocus() {
+    final box = context.findRenderObject() as RenderBox?;
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (box == null || overlay == null || !motionOn(context)) {
+      context.push('/focus');
+      return;
+    }
+    final origin = box.localToGlobal(box.size.center(Offset.zero));
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => IgnorePointer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 520),
+          onEnd: entry.remove,
+          builder: (context, t, _) {
+            final screen = MediaQuery.sizeOf(context);
+            final grow = Curves.easeInCubic.transform((t / 0.55).clamp(0, 1));
+            final fade = 1 - ((t - 0.6) / 0.4).clamp(0.0, 1.0);
+            return CustomPaint(size: screen, painter: _WipePainter(origin, grow * screen.longestSide * 1.3, fade));
+          },
+        ),
+      ),
+    );
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 290), () {
+      if (mounted) context.push('/focus');
+    });
   }
 
   @override
@@ -106,12 +137,7 @@ class _PullToFocusState extends State<PullToFocus> with SingleTickerProviderStat
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              CircularProgressIndicator(
-                                value: p,
-                                strokeWidth: 7,
-                                color: Palette.ink,
-                                backgroundColor: Palette.paper,
-                              ),
+                              CircularProgressIndicator(value: p, strokeWidth: 7, color: Palette.ink, backgroundColor: Palette.paper),
                               Text('25:00', style: mono(FontWeight.w700, 15, 18).copyWith(color: Palette.ink)),
                             ],
                           ),
@@ -128,4 +154,17 @@ class _PullToFocusState extends State<PullToFocus> with SingleTickerProviderStat
       ),
     );
   }
+}
+
+class _WipePainter extends CustomPainter {
+  _WipePainter(this.origin, this.radius, this.opacity);
+  final Offset origin;
+  final double radius;
+  final double opacity;
+
+  @override
+  void paint(Canvas canvas, Size size) => canvas.drawCircle(origin, radius, Paint()..color = Palette.focus.withValues(alpha: opacity));
+
+  @override
+  bool shouldRepaint(_WipePainter old) => old.radius != radius || old.opacity != opacity;
 }

@@ -127,44 +127,48 @@ class _SessionHero extends StatelessWidget {
     final started = !now.isBefore(e.start);
     final joinable = now.isAfter(e.start.subtract(const Duration(minutes: 10))) && e.group != null && !e.inPerson;
     final where = e.location ?? (e.inPerson ? 'In person' : 'Online');
-    return _HeroFrame(
-      fill: Palette.live,
-      tag: started ? 'Live now' : 'Starts in',
-      children: [
-        Semantics(
-          liveRegion: false,
-          label: started ? 'Started ${formatMinutes(now.difference(e.start).inMinutes)} ago' : 'Starts in ${formatMinutes(e.start.difference(now).inMinutes + 1)}',
-          child: ExcludeSemantics(
-            child: Text(
-              started ? _countdown(e.end.difference(now)) : _countdown(e.start.difference(now)),
-              style: mono(FontWeight.w700, 52, 56, letterSpacing: -1).copyWith(color: Palette.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+    final lastMinute = !started && e.start.difference(now) <= const Duration(minutes: 1);
+    return Breathe(
+      on: lastMinute,
+      child: _HeroFrame(
+        fill: Palette.live,
+        tag: started ? 'Live now' : 'Starts in',
+        children: [
+          Semantics(
+            liveRegion: false,
+            label: started
+                ? 'Started ${formatMinutes(now.difference(e.start).inMinutes)} ago'
+                : 'Starts in ${formatMinutes(e.start.difference(now).inMinutes + 1)}',
+            child: ExcludeSemantics(
+              child: RollingText(
+                started ? _countdown(e.end.difference(now)) : _countdown(e.start.difference(now)),
+                style: mono(FontWeight.w700, 52, 56, letterSpacing: -1).copyWith(color: Palette.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+              ),
             ),
           ),
-        ),
-        if (started) const ZText('left in this session', variant: TextVariant.small),
-        ZText(e.title, variant: TextVariant.h2, maxLines: 2),
-        ZText(
-          [clockTime(e.start), e.group?.name, where].whereType<String>().join(' · '),
-          variant: TextVariant.small,
-          maxLines: 2,
-        ),
-        Row(
-          spacing: 10,
-          children: [
-            _Faces(people: e.going),
-            Expanded(child: ZText(e.isGoing ? 'You + ${(e.goingCount - 1).clamp(0, 999)} going' : '${e.goingCount} going', variant: TextVariant.strong, maxLines: 1)),
-            if (joinable)
-              ZButton(
-                label: 'Join',
-                variant: ButtonVariant.primary,
-                icon: LucideIcons.video,
-                onTap: () => context.push(withQuery('/call/active', {'groupId': e.group!.id, 'title': e.group!.name})),
-              )
-            else
-              const ZButton(label: 'Details', variant: ButtonVariant.secondary, size: ButtonSize.sm, href: '/events'),
-          ],
-        ),
-      ],
+          if (started) const ZText('left in this session', variant: TextVariant.small),
+          ZText(e.title, variant: TextVariant.h2, maxLines: 2),
+          ZText([clockTime(e.start), e.group?.name, where].whereType<String>().join(' · '), variant: TextVariant.small, maxLines: 2),
+          Row(
+            spacing: 10,
+            children: [
+              _Faces(people: e.going),
+              Expanded(
+                child: ZText(e.isGoing ? 'You + ${(e.goingCount - 1).clamp(0, 999)} going' : '${e.goingCount} going', variant: TextVariant.strong, maxLines: 1),
+              ),
+              if (joinable)
+                ZButton(
+                  label: 'Join',
+                  variant: ButtonVariant.primary,
+                  icon: LucideIcons.video,
+                  onTap: () => context.push(withQuery('/call/active', {'groupId': e.group!.id, 'title': e.group!.name})),
+                )
+              else
+                const ZButton(label: 'Details', variant: ButtonVariant.secondary, size: ButtonSize.sm, href: '/events'),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -181,9 +185,7 @@ class _Faces extends StatelessWidget {
       width: 34 + (shown.length - 1) * 24,
       height: 34,
       child: Stack(
-        children: [
-          for (var i = 0; i < shown.length; i++) Positioned(left: i * 24.0, child: Avatar.of(shown[i], size: 34)),
-        ],
+        children: [for (var i = 0; i < shown.length; i++) Positioned(left: i * 24.0, child: Avatar.of(shown[i], size: 34))],
       ),
     );
   }
@@ -205,14 +207,23 @@ class _FocusHero extends StatelessWidget {
         : home.todayMinutes == 0
         ? ('Fresh start', 'Light your first star today', 'Every focus session becomes a star. Join up days to draw a constellation.')
         : left > 0
-        ? ('${formatMinutes(left)} to goal', "You're ${(home.todayMinutes * 100 / goalMinutes).round()}% of the way there", 'Another round gets you to ${formatMinutes(goalMinutes)} today.')
+        ? (
+            '${formatMinutes(left)} to goal',
+            "You're ${(home.todayMinutes * 100 / goalMinutes).round()}% of the way there",
+            'Another round gets you to ${formatMinutes(goalMinutes)} today.',
+          )
         : ('Goal done', 'Today\'s star is lit', 'Bonus rounds still count toward your level.');
     final next = home.nextEvent;
     return _HeroFrame(
       fill: Palette.focus,
       tag: tag,
       children: [
-        ZText(title, variant: TextVariant.h2, header: true, style: const TextStyle(fontSize: 24, height: 28 / 24)),
+        ZText(
+          title,
+          variant: TextVariant.h2,
+          header: true,
+          style: const TextStyle(fontSize: 24, height: 28 / 24),
+        ),
         ZText(detail, variant: TextVariant.body),
         if (next != null) ZText('Next up: ${next.title} · ${_dayAndTime(next.start, now)}', variant: TextVariant.small, maxLines: 1),
         const SizedBox(height: 2),
@@ -253,7 +264,12 @@ class _ProfileHero extends StatelessWidget {
       fill: Palette.career,
       tag: '$done of ${steps.length} done',
       children: [
-        const ZText('Finish your profile to unlock matches', variant: TextVariant.h2, header: true, style: TextStyle(fontSize: 24, height: 28 / 24)),
+        const ZText(
+          'Finish your profile to unlock matches',
+          variant: TextVariant.h2,
+          header: true,
+          style: TextStyle(fontSize: 24, height: 28 / 24),
+        ),
         for (final (label, ok) in steps)
           Row(
             spacing: 8,
