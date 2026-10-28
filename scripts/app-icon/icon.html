@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  /* The "Z" stamp from the logo (mobile/lib/widgets/brand.dart), drawn at 1024px.
+     ?variant=full        square store/iOS icon: tile on plain paper
+     ?variant=foreground  Android adaptive foreground: tile only, transparent
+     ?variant=monochrome  Android 13 themed icon: "Z" silhouette only, transparent */
+  @font-face { font-family: "Space Grotesk"; font-weight: 700; src: url("../../mobile/google_fonts/SpaceGrotesk-Bold.ttf"); }
+  :root { --paper: #fff8ec; --ink: #111111; --focus: #ffd23f; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1024px; height: 1024px; overflow: hidden; background: transparent; }
+  #stage { position: relative; width: 1024px; height: 1024px; display: flex; align-items: center; justify-content: center; }
+  .full #stage { background: var(--paper); }
+  #tile {
+    --s: 600px;
+    width: var(--s); height: var(--s); display: flex; align-items: center; justify-content: center;
+    background: var(--focus); border: calc(var(--s) * .042) solid var(--ink); border-radius: calc(var(--s) * .15);
+    box-shadow: calc(var(--s) * .065) calc(var(--s) * .065) 0 var(--ink);
+    /* Shift left/up by half the shadow so tile + shadow sit optically centred. */
+    transform: translate(calc(var(--s) * -.0325), calc(var(--s) * -.0325));
+  }
+  #z { font: 700 calc(var(--s) * .7)/1 "Space Grotesk", sans-serif; color: var(--ink); }
+  /* flutter_launcher_icons insets adaptive layers by 16%, which brings the 600px tile inside the safe zone. */
+  .monochrome #tile { background: none; border: 0; box-shadow: none; transform: none; }
+  .monochrome #z { font-size: calc(var(--s) * .9); }
+</style>
+</head>
+<body>
+<div id="stage"><div id="tile"><div id="z">Z</div></div></div>
+<script>
+  document.body.className = new URLSearchParams(location.search).get("variant") || "full";
+  window.ready = document.fonts.ready;
+</script>
+</body>
+</html>

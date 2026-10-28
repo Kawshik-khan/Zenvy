@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@700&family=Caveat:wght@700&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #fff8ec; --ink: #111111; --focus: #ffd23f; --muted: #4a4a4a;
+    --match: #ff6b9d; --chat: #4d96ff; --live: #3ddc97; --career: #b794f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 540px; height: 960px; overflow: hidden; background: var(--paper); }
+  #stage { position: relative; width: 540px; height: 960px; overflow: hidden; background: var(--paper); font-family: "Space Grotesk", sans-serif; color: var(--ink); }
+  .layer { position: absolute; inset: 0; }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(17,17,17,.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(17,17,17,.08) 1px, transparent 1px);
+    background-size: 42px 42px; background-position: center center;
+  }
+  svg.over { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+
+  /* ---------- Splash (the big sticker that peels away) ---------- */
+  #splash { background: var(--paper); }
+  #logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 16px; }
+  #sticker { position: relative; width: 120px; height: 120px; flex: none; }
+  #stickerBody {
+    position: absolute; inset: 0; padding: 10px; background: #fff;
+    border: 3px solid var(--ink); border-radius: 24px;
+  }
+  #tile {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    background: var(--focus); border: 3px solid var(--ink); border-radius: 14px;
+    font: 700 54px/1 "Space Grotesk", sans-serif;
+  }
+  #word { display: flex; font: 700 68px/1 "Space Grotesk", sans-serif; letter-spacing: -1px; }
+  #word span { display: inline-block; }
+  #note { position: absolute; left: 92px; top: 706px; font: 700 40px/1 "Caveat", cursive; transform: rotate(-8deg); white-space: nowrap; }
+
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- Bottom: the app's home screen -->
+  <div class="layer" id="home"></div>
+
+  <!-- Top: splash, itself a full-screen sticker -->
+  <div class="layer" id="splash">
+    <div class="grid" id="grid"></div>
+    <div id="logo">
+      <div id="sticker">
+        <div id="stickerBody"><div id="tile">Z</div></div>
+        <svg class="over" width="120" height="120"><polygon id="curl" fill="#e9e3d6" stroke="#111" stroke-width="3" stroke-linejoin="round"/></svg>
+      </div>
+      <div id="word"><span>z</span><span>e</span><span>n</span><span>v</span><span>y</span></div>
+    </div>
+    <svg class="over" width="540" height="960">
+      <path id="arrow" d="M 150 690 C 120 640, 170 600, 215 625 S 250 660, 285 610 S 320 560, 352 548"
+            fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+      <path id="head" d="M 330 540 L 354 547 L 346 571" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <div id="note">let's go!</div>
+  </div>
+
+  <!-- Flap of the big peel (drawn above everything) -->
+  <svg class="over" width="540" height="960">
+    <defs>
+      <linearGradient id="backShade" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#fffdf7" />
+        <stop offset="1" stop-color="#e6dcc6" />
+      </linearGradient>
+    </defs>
+    <polygon id="flapShadow" fill="#111" />
+    <polygon id="flap" fill="url(#backShade)" stroke="#111" stroke-width="3" stroke-linejoin="round" />
+  </svg>
+</div>
+<script src="home.js"></script>
+<script>
+  window.DURATION = 2;
+  const W = 540, H = 960;
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, s, e) => clamp((t - s) / (e - s));
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  const easeIn = (x) => x * x * x;
+  const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const backOut = (x, s = 1.70158) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+
+  // Fold a w×h rectangle so its corner C lands on P.
+  // Returns the part that stays flat and the flipped-over flap, as point lists.
+  function fold(w, h, C, P) {
+    const d = [C[0] - P[0], C[1] - P[1]];
+    const len = Math.hypot(d[0], d[1]);
+    const rect = [[0, 0], [w, 0], [w, h], [0, h]];
+    if (len < 0.5) return { kept: rect, flap: [] };
+    const n = [d[0] / len, d[1] / len];
+    const M = [(C[0] + P[0]) / 2, (C[1] + P[1]) / 2];
+    const side = (X) => (X[0] - M[0]) * n[0] + (X[1] - M[1]) * n[1]; // > 0 = lifted
+    const clip = (poly, keepLifted) => {
+      const out = [];
+      for (let i = 0; i < poly.length; i++) {
+        const A = poly[i], B = poly[(i + 1) % poly.length];
+        const sa = keepLifted ? side(A) : -side(A), sb = keepLifted ? side(B) : -side(B);
+        if (sa >= 0) out.push(A);
+        if ((sa >= 0) !== (sb >= 0)) {
+          const k = sa / (sa - sb);
+          out.push([A[0] + (B[0] - A[0]) * k, A[1] + (B[1] - A[1]) * k]);
+        }
+      }
+      return out;
+    };
+    const reflect = (X) => { const s = side(X); return [X[0] - 2 * s * n[0], X[1] - 2 * s * n[1]]; };
+    return { kept: clip(rect, false), flap: clip(rect, true).map(reflect), M, P };
+  }
+  const pts = (poly) => poly.map((p) => p.map((v) => v.toFixed(2)).join(",")).join(" ");
+  const clipPath = (poly) => (poly.length ? `polygon(${poly.map((p) => `${p[0].toFixed(2)}px ${p[1].toFixed(2)}px`).join(",")})` : "polygon(0 0,0 0,0 0)");
+
+  const $ = (id) => document.getElementById(id);
+  const stage = $("stage"), splash = $("splash"), grid = $("grid"), sticker = $("sticker"),
+        stickerBody = $("stickerBody"), curl = $("curl"), arrow = $("arrow"), head = $("head"),
+        note = $("note"), flap = $("flap"), flapShadow = $("flapShadow"), shade = $("backShade");
+  const letters = [...document.querySelectorAll("#word span")];
+  const tilt = [-5, 3, -3, 4, -2];
+  const arrowLen = arrow.getTotalLength(), headLen = head.getTotalLength();
+  arrow.style.strokeDasharray = arrowLen;
+  head.style.strokeDasharray = headLen;
+
+  function render(t) {
+    grid.style.opacity = easeOut(seg(t, 0, 0.25));
+
+    // --- Intro 1: sticker slaps on from top-right (0 → 0.28s), lands slightly crooked
+    const pFly = easeIn(seg(t, 0, 0.28));
+    const pSquash = seg(t, 0.28, 0.42);
+    const sq = Math.sin(pSquash * Math.PI) * 0.14 * (1 - pSquash * 0.4);
+    const sc = lerp(1.6, 1, pFly);
+    sticker.style.transform =
+      `translate(${lerp(300, 0, pFly)}px, ${lerp(-520, 0, pFly)}px) rotate(${lerp(38, -6, pFly)}deg) scale(${sc * (1 + sq)}, ${sc * (1 - sq)})`;
+    sticker.style.opacity = t > 0 ? 1 : 0;
+
+    // Impact shake
+    const pShake = seg(t, 0.28, 0.46);
+    const shake = pShake > 0 && pShake < 1 ? Math.sin(pShake * 38) * 7 * (1 - pShake) : 0;
+    splash.style.transform = `translate(${shake}px, ${shake * -0.6}px)`;
+
+    // --- Intro 2: curled corner presses flat (0.42 → 0.7s)
+    const c = 44 * (1 - easeOut(seg(t, 0.42, 0.7)));
+    const sf = fold(120, 120, [120, 120], [120 - c, 120 - c * 0.85]);
+    stickerBody.style.clipPath = sf.flap.length ? clipPath(sf.kept) : "none";
+    curl.setAttribute("points", pts(sf.flap));
+
+    // --- Intro 3: letters stamped one by one (0.5 → 0.95s)
+    letters.forEach((el, i) => {
+      const s0 = 0.5 + i * 0.075;
+      const pDrop = seg(t, s0, s0 + 0.08);
+      const pHit = seg(t, s0 + 0.08, s0 + 0.18);
+      const hit = Math.sin(pHit * Math.PI) * 0.12;
+      const s = lerp(2.4, 1, easeIn(pDrop));
+      el.style.opacity = pDrop > 0 ? clamp(pDrop * 2) : 0;
+      el.style.transform = `rotate(${tilt[i]}deg) scale(${s * (1 + hit)}, ${s * (1 - hit)})`;
+    });
+
+    // --- Intro 4: hand-drawn arrow + note (0.92 → 1.25s)
+    arrow.style.strokeDashoffset = arrowLen * (1 - easeInOut(seg(t, 0.92, 1.16)));
+    head.style.strokeDashoffset = headLen * (1 - easeOut(seg(t, 1.14, 1.22)));
+    arrow.style.opacity = head.style.opacity = t >= 0.92 ? 1 : 0;
+    const pNote = seg(t, 1.0, 1.25);
+    note.style.clipPath = `inset(-10px ${100 - pNote * 100}% -10px -10px)`;
+
+    // --- Outro: the whole splash peels off from the bottom-right (1.28 → 1.95s); fully lifted at k = 2
+    const pPeel = seg(t, 1.28, 1.95);
+    const k = (pPeel < 0.5 ? 2 * pPeel * pPeel : 1 - Math.pow(-2 * pPeel + 2, 2) / 2) * 2.05;
+    const P = [W - W * k, H - H * k];
+    const f = fold(W, H, [W, H], P);
+    splash.style.clipPath = f.flap.length ? clipPath(f.kept) : "none";
+    flap.setAttribute("points", pts(f.flap));
+    flapShadow.setAttribute("points", pts(f.flap.map(([x, y]) => [x + 9, y + 9])));
+    if (f.M) {
+      shade.setAttribute("x1", f.M[0]); shade.setAttribute("y1", f.M[1]);
+      shade.setAttribute("x2", f.P[0]); shade.setAttribute("y2", f.P[1]);
+    }
+  }
+
+  window.ready = document.fonts.ready.then(() => render(0));
+  window.render = render;
+
+  // Live preview when opened directly in a browser (?play)
+  if (location.search.includes("play")) {
+    window.ready.then(() => {
+      const start = performance.now();
+      const loop = (now) => { const t = ((now - start) / 1000) % (window.DURATION + 0.8); render(Math.min(t, window.DURATION)); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    });
+  }
+</script>
+</body>
+</html>
