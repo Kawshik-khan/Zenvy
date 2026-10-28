@@ -135,6 +135,7 @@ class Me extends Person {
     super.interests,
     super.availability,
     required this.email,
+    required this.hasPassword,
     required this.matchingAvailable,
     required this.onboarded,
     required this.partnerCount,
@@ -142,6 +143,7 @@ class Me extends Person {
   });
 
   final String? email;
+  final bool hasPassword;
   final bool matchingAvailable;
   final bool onboarded;
   final int partnerCount;
@@ -163,6 +165,8 @@ class Me extends Person {
       interests: p.interests,
       availability: p.availability,
       email: _str(j['email']),
+      // Older servers don't send it; asking for a password is the safe default.
+      hasPassword: j['hasPassword'] != false,
       matchingAvailable: j['matchingAvailable'] != false,
       onboarded: _bool(j['onboarded']),
       partnerCount: _int(counts['partners']),

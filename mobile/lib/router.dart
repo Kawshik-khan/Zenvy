@@ -26,6 +26,7 @@ import 'screens/partners/matched.dart';
 import 'screens/partners/new_message.dart';
 import 'screens/partners/partner_profile.dart';
 import 'screens/partners/post_ad.dart';
+import 'screens/delete_account.dart';
 import 'screens/profile.dart';
 import 'screens/stats.dart';
 import 'screens/home/day_plan.dart';
@@ -136,6 +137,7 @@ GoRouter buildRouter(AppState app) => GoRouter(
     _modal('/events/new', (s) => NewEventScreen(groupId: s.uri.queryParameters['groupId'])),
     _page('/jobs/:id', (s) => JobDetailScreen(id: s.pathParameters['id']!)),
     _page('/profile', (_) => const ProfileScreen()),
+    _page('/delete-account', (_) => const DeleteAccountScreen()),
   ],
 );
 

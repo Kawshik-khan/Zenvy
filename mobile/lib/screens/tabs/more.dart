@@ -128,6 +128,8 @@ class MoreScreen extends StatelessWidget {
                     label: 'Privacy & blocked users',
                     onTap: () => notify(context, 'Privacy', 'Block or report someone from their profile. Manage blocked users on the web at $kApiBaseUrl.'),
                   ),
+                  _LinkRow(label: 'Privacy policy', onTap: () => openLink(context, '$kApiBaseUrl/privacy')),
+                  _LinkRow(label: 'Delete account', onTap: () => context.push('/delete-account')),
                 ]),
               ),
             ),

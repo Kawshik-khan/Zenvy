@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ProfileClient from './ProfileClient';
+import DeleteAccountCard from './DeleteAccountCard';
 import { AppHeader } from '@/components/shell/AppHeader';
 import { getStudyMetrics } from '@/lib/study-metrics';
 import { revalidatePath } from 'next/cache';
@@ -85,11 +86,13 @@ export default async function ProfilePage() {
   }
 
   const metrics = await getStudyMetrics(user.id);
+  // Client components serialize their props into the page, so the password hash must stay on the server.
+  const { password, ...clientUser } = user;
 
   return (
     <div className="min-h-dvh bg-canvas font-grotesk text-fg">
       <AppHeader />
-      <ProfileClient user={user} metrics={metrics} updateProfile={updateProfile} />
+      <ProfileClient user={clientUser} metrics={metrics} updateProfile={updateProfile} dangerZone={<DeleteAccountCard hasPassword={Boolean(password)} />} />
     </div>
   );
 }

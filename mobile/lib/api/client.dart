@@ -52,7 +52,11 @@ class ApiClient {
   Future<Map<String, dynamic>> patch(String path, [Object? body]) =>
       _send(() => _http.patch(uri(path), headers: {..._headers, 'content-type': 'application/json'}, body: jsonEncode(body ?? const {})));
 
-  Future<Map<String, dynamic>> delete(String path) => _send(() => _http.delete(uri(path), headers: _headers));
+  Future<Map<String, dynamic>> delete(String path, [Object? body]) => _send(
+    () => body == null
+        ? _http.delete(uri(path), headers: _headers)
+        : _http.delete(uri(path), headers: {..._headers, 'content-type': 'application/json'}, body: jsonEncode(body)),
+  );
 
   Future<Map<String, dynamic>> upload(String path, {required String field, required List<int> bytes, required String filename, required String contentType}) {
     return _send(() async {

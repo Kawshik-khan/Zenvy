@@ -15,9 +15,11 @@ type ProfileClientProps = {
   user: any;
   metrics: StudyMetrics;
   updateProfile: (formData: FormData) => Promise<SaveResult>;
+  /** Rendered full width under the settings, outside the profile form. */
+  dangerZone?: React.ReactNode;
 };
 
-export default function ProfileClient({ user, metrics, updateProfile }: ProfileClientProps) {
+export default function ProfileClient({ user, metrics, updateProfile, dangerZone }: ProfileClientProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saveResult, setSaveResult] = useState<SaveResult | null>(null);
@@ -202,6 +204,8 @@ export default function ProfileClient({ user, metrics, updateProfile }: ProfileC
             </Button>
           </div>
         </form>
+
+        {dangerZone}
       </div>
     </main>
   );
