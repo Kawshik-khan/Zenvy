@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { fail, handle, ok, readJson, requireUserId } from "@/lib/mobile/http";
 import { listConnections, personSummary } from "@/lib/mobile/people";
+import { checkDeletionRequest, deleteAccount, DELETE_CONFIRMATION } from "@/lib/account-deletion";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ async function loadMe(userId: string) {
   return {
     ...summary,
     email: user.email,
+    // Google-only accounts have no password, so deleting the account doesn't ask for one.
+    hasPassword: Boolean(user.password),
     matchingAvailable: user.profile?.matchingAvailable ?? true,
     // The web onboarding asks for major and interests; the app shows its setup screens until both are set.
     onboarded: Boolean(summary.major && summary.interests.length),
@@ -65,5 +68,22 @@ export async function PATCH(request: Request) {
     ]);
 
     return ok({ me: await loadMe(userId) });
+  });
+}
+
+const deleteSchema = z.object({ confirmation: z.string(), password: z.string().nullable().optional() });
+
+/** Permanently deletes the account. Body: { confirmation: "DELETE", password? }. The app then signs out. */
+export async function DELETE(request: Request) {
+  return handle(async () => {
+    const userId = await requireUserId();
+    const parsed = deleteSchema.safeParse(await readJson(request));
+    if (!parsed.success) return fail(`Type ${DELETE_CONFIRMATION} to confirm.`, 400);
+
+    const problem = await checkDeletionRequest(userId, parsed.data.confirmation, parsed.data.password);
+    if (problem) return fail(problem, 400);
+
+    await deleteAccount(userId);
+    return ok({ deleted: true });
   });
 }

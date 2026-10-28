@@ -30,6 +30,10 @@ class ZenvyApi {
 
   Future<Me> updateMe(Map<String, Object?> patch) async => Me.fromJson((await client.patch('/api/mobile/me', patch))['me'] as Json);
 
+  /// Permanently deletes the account. [confirmation] must be "DELETE"; [password] is required for password accounts.
+  Future<void> deleteAccount(String confirmation, String? password) =>
+      client.delete('/api/mobile/me', {'confirmation': confirmation, 'password': password});
+
   Future<String> uploadPhoto(List<int> bytes, String filename, String contentType) async =>
       (await client.upload('/api/mobile/me/photo', field: 'file', bytes: bytes, filename: filename, contentType: contentType))['url'] as String;
 

@@ -2,7 +2,7 @@
 // middleware.ts (via auth.config.ts). API routes are excluded from the middleware
 // and check the session themselves, so they can answer 401 JSON instead of a redirect.
 
-const PUBLIC_EXACT = new Set(["/", "/login", "/register", "/forgot-password", "/reset-password", "/verify", "/zenvy-admin/login"]);
+const PUBLIC_EXACT = new Set(["/", "/login", "/register", "/forgot-password", "/reset-password", "/verify", "/zenvy-admin/login", "/privacy", "/account-deletion"]);
 
 // Dev-only component gallery; the page itself 404s in production unless UI_GALLERY=true.
 const PUBLIC_PREFIXES = ["/ui"];

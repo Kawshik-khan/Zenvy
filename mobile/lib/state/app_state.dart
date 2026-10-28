@@ -75,6 +75,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _setSignedOut();
   }
 
+  Future<void> deleteAccount(String confirmation, String? password) async {
+    await api.deleteAccount(confirmation, password);
+    await signOut();
+  }
+
   Future<void> refreshMe() async {
     me = await api.me();
     notifyListeners();
