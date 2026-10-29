@@ -45,6 +45,22 @@ export async function POST(req: NextRequest) {
       // Ignore if not found
     }
 
+    // A DM call is over as soon as either side hangs up. Counting the other person's
+    // still-INVITED row as "active" kept the call RINGING, so it rang on and the next
+    // start reopened the same session.
+    if (callSession.type === 'DM') {
+      const now = new Date();
+      await prisma.callParticipant.updateMany({
+        where: { callId: callSession.id, leftAt: null },
+        data: { leftAt: now, lastSeenAt: now, audioEnabled: false, videoEnabled: false, screenSharing: false },
+      });
+      await prisma.callSession.update({
+        where: { id: callSession.id },
+        data: { status: 'ENDED', endedAt: now }
+      });
+      return NextResponse.json({ success: true, ended: true }, { status: 200 });
+    }
+
     const activeParticipants = await prisma.callParticipant.count({
       where: {
         callId: callSession.id,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -76,6 +77,35 @@ class IncomingCallScreen extends StatefulWidget {
 
 class _IncomingCallScreenState extends State<IncomingCallScreen> {
   bool _busy = false;
+  Timer? _ringCheck;
+
+  @override
+  void initState() {
+    super.initState();
+    _ringCheck = Timer.periodic(const Duration(seconds: 3), (_) => _checkStillRinging());
+  }
+
+  @override
+  void dispose() {
+    _ringCheck?.cancel();
+    super.dispose();
+  }
+
+  /// Stops ringing once the caller hangs up (or the ring times out) instead of ringing on.
+  Future<void> _checkStillRinging() async {
+    if (_busy) return;
+    final app = AppScope.read(context);
+    try {
+      final ringing = await app.api.incomingCall();
+      if (!mounted || _busy || ringing?.id == widget.callId) return;
+    } catch (_) {
+      return; // A missed check just waits for the next one.
+    }
+    _ringCheck?.cancel();
+    app.dismissIncomingCall();
+    showMessage(context, 'Missed call from ${widget.callerName}');
+    goBack(context, '/home');
+  }
 
   Future<void> _decline({String? reply}) async {
     final app = AppScope.read(context);
@@ -98,6 +128,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   }
 
   void _accept() {
+    _busy = true;
+    _ringCheck?.cancel();
     AppScope.read(context).dismissIncomingCall();
     context.pushReplacement(withQuery('/call/active', {'callId': widget.callId, 'title': widget.callerName, 'video': widget.video ? '1' : null}));
   }

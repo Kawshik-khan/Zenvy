@@ -91,6 +91,10 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   late bool _cam = widget.video;
   int _elapsed = 0;
   Timer? _clock;
+  Timer? _statusPoll;
+  lk.EventsListener<lk.RoomEvent>? _events;
+  // Set for DM calls, which end for both sides as soon as one person hangs up.
+  String? _dmConversationId;
   bool _left = false;
   late final AppState _app;
 
@@ -118,13 +122,24 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
           ? await api.joinCall(widget.callId!)
           : await api.startCall(conversationId: widget.conversationId, groupId: widget.groupId, video: widget.video);
       _callId = session.call.id;
+      _dmConversationId = session.call.type == 'DM' ? session.call.conversationId : null;
       final room = lk.Room(roomOptions: const lk.RoomOptions(adaptiveStream: true, dynacast: true));
       room.addListener(_onRoomChanged);
+      final events = room.createListener();
+      events
+        ..on<lk.ParticipantDisconnectedEvent>((e) {
+          final othersLeft = room.remoteParticipants.values.where((p) => p.identity != e.participant.identity).isEmpty;
+          if (_dmConversationId != null && othersLeft) unawaited(_endedElsewhere());
+        })
+        ..on<lk.RoomDisconnectedEvent>((_) => unawaited(_endedElsewhere()));
+      _events = events;
       await room.connect(session.liveKit.serverUrl, session.liveKit.token);
       _room = room;
       await room.localParticipant?.setMicrophoneEnabled(_mic);
       if (_cam) await room.localParticipant?.setCameraEnabled(true);
       _clock = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
+      // Catches a decline, or a hang-up while still ringing, which never reach the room.
+      if (_dmConversationId != null) _statusPoll = Timer.periodic(const Duration(seconds: 4), (_) => unawaited(_checkStillLive()));
     } catch (error) {
       _error = error;
       // A started call that couldn't connect shouldn't keep ringing for the other person.
@@ -155,10 +170,34 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
   }
 
+  Future<void> _checkStillLive() async {
+    final conversationId = _dmConversationId;
+    final id = _callId;
+    if (_left || conversationId == null || id == null) return;
+    try {
+      if (!await _app.api.dmCallLive(conversationId, id)) await _endedElsewhere();
+    } catch (_) {
+      // A missed check just waits for the next one.
+    }
+  }
+
+  /// The other side hung up, declined, or the room closed: leave too instead of waiting alone.
+  Future<void> _endedElsewhere() async {
+    if (_left || !mounted) return;
+    // Close a "Leave this call?" dialog first, so going back pops this screen and not the dialog.
+    final route = ModalRoute.of(context);
+    Navigator.of(context).popUntil((r) => r == route);
+    showMessage(context, 'Call ended');
+    await _leave();
+  }
+
   Future<void> _leave() async {
     if (_left) return;
     _left = true;
     _clock?.cancel();
+    _statusPoll?.cancel();
+    unawaited(_events?.dispose());
+    _events = null;
     final room = _room;
     _room = null;
     room?.removeListener(_onRoomChanged);
@@ -175,6 +214,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   @override
   void dispose() {
     _clock?.cancel();
+    _statusPoll?.cancel();
+    unawaited(_events?.dispose());
     final room = _room;
     if (room != null && !_left) {
       room.removeListener(_onRoomChanged);

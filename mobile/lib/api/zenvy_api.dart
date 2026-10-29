@@ -205,6 +205,12 @@ class ZenvyApi {
 
   Future<void> declineCall(String callId) => client.post('/api/calls/decline', {'callId': callId});
 
+  /// Whether [callId] is still the live call in this DM, i.e. nobody has hung up or declined.
+  Future<bool> dmCallLive(String conversationId, String callId) async {
+    final j = await client.get('/api/calls/active', {'conversationId': conversationId});
+    return j['call'] is Map && (j['call'] as Map)['id'] == callId;
+  }
+
   Future<CallSession?> incomingCall() async {
     final j = await client.get('/api/mobile/calls/incoming');
     return j['call'] is Map ? CallSession.fromJson((j['call'] as Map).cast()) : null;
