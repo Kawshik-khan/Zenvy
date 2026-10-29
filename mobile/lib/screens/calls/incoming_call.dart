@@ -10,6 +10,7 @@ import '../../router.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
+import '../../util/ringer.dart';
 import '../../widgets/widgets.dart';
 
 class _CallButton extends StatelessWidget {
@@ -83,11 +84,13 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   void initState() {
     super.initState();
     _ringCheck = Timer.periodic(const Duration(seconds: 3), (_) => _checkStillRinging());
+    unawaited(Ringer.start());
   }
 
   @override
   void dispose() {
     _ringCheck?.cancel();
+    unawaited(Ringer.stop());
     super.dispose();
   }
 
@@ -102,6 +105,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
       return; // A missed check just waits for the next one.
     }
     _ringCheck?.cancel();
+    unawaited(Ringer.stop());
     app.dismissIncomingCall();
     showMessage(context, 'Missed call from ${widget.callerName}');
     goBack(context, '/home');
@@ -110,6 +114,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   Future<void> _decline({String? reply}) async {
     final app = AppScope.read(context);
     setState(() => _busy = true);
+    unawaited(Ringer.stop());
     await app.api.declineCall(widget.callId).catchError((_) {});
     app.dismissIncomingCall();
     if (!mounted) return;
@@ -130,6 +135,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   void _accept() {
     _busy = true;
     _ringCheck?.cancel();
+    // Stop before the call screen opens its microphone.
+    unawaited(Ringer.stop());
     AppScope.read(context).dismissIncomingCall();
     context.pushReplacement(withQuery('/call/active', {'callId': widget.callId, 'title': widget.callerName, 'video': widget.video ? '1' : null}));
   }

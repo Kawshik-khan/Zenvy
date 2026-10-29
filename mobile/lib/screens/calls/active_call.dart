@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../api/client.dart';
 import '../../data/models.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
@@ -257,8 +256,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
                     Expanded(
                       child: Center(
                         child: EmptyCard(
-                          // 409: they're in a focus session, so the call was held instead of ringing.
-                          title: _error is ApiException && (_error as ApiException).status == 409 ? 'In a focus session' : "Couldn't join the call",
+                          title: "Couldn't join the call",
                           detail: errorMessage(_error),
                           action: Row(
                             mainAxisSize: MainAxisSize.min,

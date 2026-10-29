@@ -42,6 +42,7 @@ dependencies:
   url_launcher: ^6.3.3
   image_picker: ^1.2.4
   livekit_client: ^2.13.2
+  vibration: ^3.2.1
 
 dev_dependencies:
   flutter_test:

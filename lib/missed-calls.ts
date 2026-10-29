@@ -8,26 +8,16 @@ export { MISSED_CALL_FILE_TYPE };
 /** How long a DM call rings before it counts as missed. */
 export const RING_SECONDS = 60;
 
-/** Most a focus status can claim, so a client that never clears it can't block calls for long. */
-export const MAX_FOCUS_MINUTES = 240;
-
-/**
- * NO_ANSWER: rang out, or the caller hung up first.
- * FOCUS: never rang, because the person was in a focus session. They hear about it when it ends.
- */
-export type MissedReason = "NO_ANSWER" | "FOCUS";
-
-export function missedCallText(mediaType: string, reason: MissedReason) {
-  const kind = mediaType === "VIDEO" ? "video" : "voice";
-  return reason === "FOCUS" ? `Called (${kind}) while you were focusing` : `Missed ${kind} call`;
+export function missedCallText(mediaType: string) {
+  return `Missed ${mediaType === "VIDEO" ? "video" : "voice"} call`;
 }
 
 /**
- * Marks a ringing DM call as missed, then tells the person who missed it: a card in the chat,
- * a notification, and (unless they were focusing) a browser push.
+ * Marks a ringing DM call as missed (it rang out, or the caller hung up first), then tells the
+ * person who missed it: a card in the chat, a notification, and a browser push.
  * Returns false when the call was not ringing, so the same call is never reported twice.
  */
-export async function recordMissedDmCall(callId: string, reason: MissedReason = "NO_ANSWER") {
+export async function recordMissedDmCall(callId: string) {
   const now = new Date();
   // Claim the call first, so the caller's hang-up and the ring timeout can't both report it.
   const claimed = await prisma.callSession.updateMany({
@@ -60,7 +50,7 @@ export async function recordMissedDmCall(callId: string, reason: MissedReason = 
     await createConversationMessage({
       conversationId: call.conversationId,
       senderId: callerId,
-      content: missedCallText(call.mediaType, reason),
+      content: missedCallText(call.mediaType),
       fileType: MISSED_CALL_FILE_TYPE,
       fileName: call.mediaType === "VIDEO" ? "VIDEO" : "AUDIO",
     });
@@ -70,14 +60,13 @@ export async function recordMissedDmCall(callId: string, reason: MissedReason = 
   }
 
   const kind = call.mediaType === "VIDEO" ? "video" : "voice";
-  const content = reason === "FOCUS" ? `${callerName} called while you were focusing` : `Missed ${kind} call from ${callerName}`;
+  const content = `Missed ${kind} call from ${callerName}`;
   const media = call.mediaType === "VIDEO" ? "video" : "audio";
   await Promise.all(
     missedBy.map(async (p) => {
       await prisma.notification.create({
         data: { userId: p.userId, type: "MISSED_CALL", content, relatedId: callerId },
       });
-      if (reason === "FOCUS") return;
       await sendWebPush(p.userId, {
         type: "missed_call",
         title: callerName,
@@ -100,11 +89,4 @@ export async function expireRingingDmCalls(now = new Date()) {
   for (const call of stale) {
     await recordMissedDmCall(call.id).catch((err) => console.error("Could not expire call:", err));
   }
-}
-
-/** Minutes left in the user's focus session, or null when they are free to take a call. */
-export function focusMinutesLeft(focusUntil: Date | null | undefined, now = new Date()) {
-  if (!focusUntil) return null;
-  const ms = focusUntil.getTime() - now.getTime();
-  return ms > 0 ? Math.max(1, Math.ceil(ms / 60000)) : null;
 }

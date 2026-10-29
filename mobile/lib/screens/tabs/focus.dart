@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import '../../router.dart';
 import '../../state/app_state.dart';
 import '../../theme/tokens.dart';
 import '../../theme/type.dart';
-import '../../util/dialogs.dart';
 import '../../util/focus_timer.dart';
 import '../../widgets/widgets.dart';
 
@@ -31,64 +29,10 @@ class _FocusScreenState extends State<FocusScreen> {
     },
   );
 
-  // What the server was last told, so it only hears about real starts and stops.
-  bool _reportedFocusing = false;
-  DateTime? _focusSince;
-  final Set<String> _shownHeldCalls = {};
-  late final AppState _app;
-
-  @override
-  void initState() {
-    super.initState();
-    _app = AppScope.read(context);
-    _timer.addListener(_syncFocusStatus);
-  }
-
   @override
   void dispose() {
-    _timer.removeListener(_syncFocusStatus);
-    // Leaving the screen ends the round, so calls should ring again.
-    if (_reportedFocusing) unawaited(_app.api.setFocusStatus().then((_) {}, onError: (_) {}));
     _timer.dispose();
     super.dispose();
-  }
-
-  /// While a focus round runs, DM calls are held instead of ringing. When it stops, offer to call back.
-  void _syncFocusStatus() {
-    final focusing = _timer.running && _timer.mode == FocusMode.focus;
-    if (focusing == _reportedFocusing) return;
-    _reportedFocusing = focusing;
-    if (focusing) {
-      // A finished round clears roundStartedAt before this runs, so remember it now.
-      _focusSince ??= _timer.roundStartedAt ?? DateTime.now();
-      final until = DateTime.now().add(Duration(milliseconds: (_timer.remaining * 1000).round()));
-      unawaited(_app.api.setFocusStatus(until: until).then((_) {}, onError: (_) {}));
-    } else {
-      final since = _focusSince ?? DateTime.now();
-      if (_timer.roundStartedAt == null) _focusSince = null;
-      unawaited(_reportFocusEnded(since));
-    }
-  }
-
-  Future<void> _reportFocusEnded(DateTime since) async {
-    final List<HeldCall> held;
-    try {
-      held = await _app.api.setFocusStatus(since: since);
-    } catch (_) {
-      return; // The server clears a stale focus status on its own when the round would have ended.
-    }
-    final fresh = held.where((c) => _shownHeldCalls.add(c.callId)).toList();
-    if (fresh.isEmpty || !mounted) return;
-    final first = fresh.first;
-    final names = fresh.map((c) => c.caller.firstName).join(', ');
-    await confirm(
-      context,
-      fresh.length == 1 ? '${first.caller.firstName} called' : 'You missed ${fresh.length} calls',
-      'While you were focusing, $names tried to call. We held it so you could stay in the zone.',
-      'Call ${first.caller.firstName} back',
-      () => context.push(withQuery('/call/active', {'conversationId': first.conversationId, 'title': first.caller.name, 'video': first.video ? '1' : null})),
-      destructive: false,
-    );
   }
 
   /// Saves a finished focus round to the server (it counts toward stats, streaks and XP),

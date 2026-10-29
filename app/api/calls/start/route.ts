@@ -9,7 +9,6 @@ import {
   type CallScope,
 } from "@/lib/calls";
 import { createLiveKitCallCredentials } from "@/lib/livekit";
-import { focusMinutesLeft, recordMissedDmCall } from "@/lib/missed-calls";
 
 function parseScope(body: any): CallScope | null {
   if (body?.conversationId) return { type: "DM", conversationId: String(body.conversationId) };
@@ -96,27 +95,6 @@ export async function POST(req: NextRequest) {
             videoEnabled: mediaType === "VIDEO",
           },
         });
-      }
-    }
-
-    if (scope.type === "DM") {
-      // Don't ring someone mid focus session: log it as missed now, and they hear about it when they finish.
-      const others = await prisma.user.findMany({
-        where: { id: { in: (scopeData?.participants ?? []).map((p: { userId: string }) => p.userId).filter((id: string) => id !== session.user!.id) } },
-        select: { name: true, focusUntil: true },
-      });
-      const focusing = others.find((other) => focusMinutesLeft(other.focusUntil) !== null);
-      if (focusing) {
-        await recordMissedDmCall(call.id, "FOCUS");
-        const minutes = focusMinutesLeft(focusing.focusUntil)!;
-        const name = focusing.name?.split(" ")[0] || "They";
-        return NextResponse.json(
-          {
-            error: `${name} is in a focus session (${minutes} min left). We'll let them know you called when they finish.`,
-            focusing: { name, minutesLeft: minutes },
-          },
-          { status: 409 },
-        );
       }
     }
 
