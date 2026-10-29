@@ -12,6 +12,7 @@ import '../widgets/widgets.dart';
   'MATCH_REQUEST' => (icon: LucideIcons.userPlus, fill: Palette.match),
   'GROUP_INVITE' => (icon: LucideIcons.users, fill: Palette.chat),
   'JOB_REVIEW' => (icon: LucideIcons.briefcase, fill: Palette.career),
+  'MISSED_CALL' => (icon: LucideIcons.phoneMissed, fill: Palette.alert),
   _ => (icon: LucideIcons.bell, fill: Palette.white),
 };
 
@@ -19,6 +20,7 @@ String? _destination(AppNotification n) => switch (n.targetKind) {
   'user' => '/partner/${n.targetId}',
   'group' => '/groups/${n.targetId}',
   'job' => '/jobs/${n.targetId}',
+  'dm' => '/dm/${n.targetId}',
   _ => null,
 };
 

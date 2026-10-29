@@ -2,8 +2,10 @@
 
 import { FileText, Trash2 } from "lucide-react";
 import CallNoteMessage from "@/app/components/call/CallNoteMessage";
+import MissedCallMessage from "@/app/components/call/MissedCallMessage";
 import { Avatar, cx, IconButton } from "@/components/ui";
 import { CALL_NOTE_FILE_TYPE } from "@/lib/call-notes";
+import { MISSED_CALL_FILE_TYPE } from "@/lib/missed-call-type";
 import { attachmentKind, formatClock, isAttachmentPlaceholder } from "./chat-utils";
 
 export type BubbleMessage = {
@@ -25,6 +27,8 @@ type MessageBubbleProps = {
   deleted?: boolean;
   pending?: boolean;
   onDelete?: (messageId: string) => void;
+  /** Where a missed-call card's call-back button goes; only DMs pass it. */
+  callBackHref?: (mediaType: string | null | undefined) => string;
 };
 
 function Attachment({ message }: { message: BubbleMessage }) {
@@ -50,10 +54,11 @@ function Attachment({ message }: { message: BubbleMessage }) {
 }
 
 /** One chat message. Mine sit on the right in blue, everyone else's on the left on white. */
-export function MessageBubble({ message, isSelf, showSender = true, deleted = false, pending = false, onDelete }: MessageBubbleProps) {
+export function MessageBubble({ message, isSelf, showSender = true, deleted = false, pending = false, onDelete, callBackHref }: MessageBubbleProps) {
   const isNote = message.fileType === CALL_NOTE_FILE_TYPE;
+  const isMissedCall = message.fileType === MISSED_CALL_FILE_TYPE;
   const showText = !isAttachmentPlaceholder(message.content, message.fileName) && message.content !== "";
-  const canDelete = isSelf && !pending && !deleted && onDelete;
+  const canDelete = isSelf && !pending && !deleted && !isMissedCall && onDelete;
 
   return (
     <li className={cx("flex items-end gap-2", isSelf && "flex-row-reverse")}>
@@ -73,6 +78,13 @@ export function MessageBubble({ message, isSelf, showSender = true, deleted = fa
           >
             {deleted ? (
               <p className="m-0">This message was deleted.</p>
+            ) : isMissedCall ? (
+              <MissedCallMessage
+                content={message.content}
+                mediaType={message.fileName}
+                isSelf={isSelf}
+                callBackHref={callBackHref?.(message.fileName)}
+              />
             ) : (
               <>
                 {isNote ? <CallNoteMessage content={message.content} /> : <Attachment message={message} />}

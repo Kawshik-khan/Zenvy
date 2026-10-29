@@ -335,6 +335,20 @@ export default function PomodoroWidget({ open, onOpenChange, showLauncher = true
     return () => window.clearInterval(timer);
   }, [completeCurrentTimer, durationSeconds, startedAt, status]);
 
+  // Lets the server hold DM calls while a focus round runs; they show up as missed calls instead of ringing.
+  const reportedFocusUntil = useRef<number | null>(null);
+  useEffect(() => {
+    if (!authorized) return;
+    const until = mode === "FOCUS" && status === "RUNNING" && startedAt ? startedAt + durationSeconds * 1000 : null;
+    if (until === reportedFocusUntil.current) return;
+    reportedFocusUntil.current = until;
+    fetch("/api/focus/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ until: until ? new Date(until).toISOString() : null }),
+    }).catch(() => {});
+  }, [authorized, durationSeconds, mode, startedAt, status]);
+
   const playMusic = async () => {
     const audio = audioRef.current;
     if (!audio || isMusicOn) return;

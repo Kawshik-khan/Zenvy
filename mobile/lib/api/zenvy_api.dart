@@ -211,7 +211,15 @@ class ZenvyApi {
     return j['call'] is Map && (j['call'] as Map)['id'] == callId;
   }
 
-  Future<CallSession?> incomingCall() async {
+  /// Tells the server you're focusing until [until] (DM calls are held, not rung), or that you've
+  /// stopped when it's null. Stopping with [since] returns the calls held during that session.
+  Future<List<HeldCall>> setFocusStatus({DateTime? until, DateTime? since}) async {
+    final j = await client.post('/api/focus/status', {'until': until?.toUtc().toIso8601String(), 'since': ?since?.toUtc().toIso8601String()});
+    final held = j['heldCalls'];
+    return held is List ? held.whereType<Map>().map((e) => HeldCall.fromJson(e.cast())).toList() : const [];
+  }
+
+    Future<CallSession?> incomingCall() async {
     final j = await client.get('/api/mobile/calls/incoming');
     return j['call'] is Map ? CallSession.fromJson((j['call'] as Map).cast()) : null;
   }

@@ -64,6 +64,8 @@ model User {
   role                String    @default("USER")
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
+  // End of the focus session the user is in right now; DM calls don't ring until then.
+  focusUntil          DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   profile             Profile?

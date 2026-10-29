@@ -510,6 +510,22 @@ class ChatMessage {
   );
 }
 
+/// A DM call that came in, and didn't ring, while you were in a focus session.
+class HeldCall {
+  const HeldCall({required this.callId, required this.conversationId, required this.caller, required this.video});
+  final String callId;
+  final String conversationId;
+  final UserRef caller;
+  final bool video;
+
+  factory HeldCall.fromJson(Json j) => HeldCall(
+    callId: j['callId'] as String,
+    conversationId: j['conversationId'] as String,
+    caller: UserRef.fromJson((j['caller'] as Map).cast()),
+    video: _bool(j['video']),
+  );
+}
+
 class AppNotification {
   const AppNotification({
     required this.id,

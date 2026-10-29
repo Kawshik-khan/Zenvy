@@ -56,6 +56,11 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Once the other person picks up, a DM call is no longer ringing (and can't ring out as missed).
+    if (callSession.type === 'DM' && callSession.status === 'RINGING' && callSession.startedById !== userId) {
+      await prisma.callSession.update({ where: { id: callSession.id }, data: { status: 'ACTIVE' } });
+    }
+
     const updated = await getCallWithParticipants(callSession.id);
     const liveKit = await createLiveKitCallCredentials({
       callId: callSession.id,

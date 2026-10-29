@@ -648,6 +648,9 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                         deleted={message.status === 'DELETED'}
                         pending={message.pending}
                         onDelete={deleteMessage}
+                        callBackHref={(mediaType) =>
+                          `/call/active?type=dm&id=${activeConversation.id}&media=${mediaType === 'VIDEO' ? 'video' : 'audio'}`
+                        }
                       />
                     ))}
                   </ul>

@@ -18,11 +18,68 @@ Future<void> openLink(BuildContext context, String url) async {
   if (!opened && context.mounted) showMessage(context, "Couldn't open that link.", error: true);
 }
 
+/// fileType of the card the server posts into a DM when a call goes unanswered; fileName is AUDIO or VIDEO.
+const missedCallFileType = 'missed_call';
+
+/// "Missed voice call" with a call-back button, in place of a bubble's text.
+class _MissedCall extends StatelessWidget {
+  const _MissedCall({required this.message, this.onCallBack});
+  final ChatMessage message;
+  final void Function(bool video)? onCallBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = VolumeScope.of(context);
+    final video = message.fileName == 'VIDEO';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
+      children: [
+        Row(
+          spacing: 10,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Palette.alert,
+                shape: BoxShape.circle,
+                border: Border.all(color: v.line, width: 2),
+              ),
+              child: Icon(video ? LucideIcons.videoOff : LucideIcons.phoneMissed, size: 18, color: Palette.ink),
+            ),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ZText(message.content, variant: TextVariant.h3, style: const TextStyle(fontSize: 15)),
+                  ZText(message.isSelf ? 'No one picked up' : "Call back when you're free", variant: TextVariant.small, muted: true),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (onCallBack != null)
+          ZButton(
+            label: message.isSelf ? 'Call again' : 'Call back',
+            icon: video ? LucideIcons.video : LucideIcons.phone,
+            variant: ButtonVariant.live,
+            size: ButtonSize.sm,
+            onTap: () => onCallBack!(video),
+          ),
+      ],
+    );
+  }
+}
+
 class Bubble extends StatelessWidget {
-  const Bubble({super.key, required this.message, this.showAuthor = false});
+  const Bubble({super.key, required this.message, this.showAuthor = false, this.onCallBack});
 
   final ChatMessage message;
   final bool showAuthor;
+
+  /// Starts a call from a missed-call card; only DMs pass it.
+  final void Function(bool video)? onCallBack;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +117,10 @@ class Bubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 8,
               children: [
-                if (message.content.isNotEmpty) ZText(message.content, style: const TextStyle(fontSize: 15, height: 1.4)),
+                if (message.fileType == missedCallFileType)
+                  _MissedCall(message: message, onCallBack: onCallBack)
+                else if (message.content.isNotEmpty)
+                  ZText(message.content, style: const TextStyle(fontSize: 15, height: 1.4)),
                 if (file != null)
                   Semantics(
                     button: true,
@@ -94,7 +154,8 @@ class Bubble extends StatelessWidget {
     return Semantics(
       label:
           '${mine ? 'You' : author.name}, $time: ${message.deleted ? 'deleted message' : message.content}${file != null ? ', attachment ${message.fileName ?? ''}' : ''}',
-      excludeSemantics: file == null,
+      // Keep the attachment link and the call-back button reachable.
+      excludeSemantics: file == null && message.fileType != missedCallFileType,
       child: Align(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
         child: FractionallySizedBox(
@@ -186,6 +247,7 @@ class ChatThread extends StatefulWidget {
     this.onSeen,
     this.header,
     this.pollEvery = const Duration(seconds: 4),
+    this.onCallBack,
   });
 
   final Future<List<ChatMessage>> Function() load;
@@ -200,6 +262,9 @@ class ChatThread extends StatefulWidget {
   /// Fixed content above the messages (a live call banner).
   final Widget? header;
   final Duration pollEvery;
+
+  /// Calls back from a missed-call card.
+  final void Function(bool video)? onCallBack;
 
   @override
   State<ChatThread> createState() => _ChatThreadState();
@@ -288,7 +353,7 @@ class _ChatThreadState extends State<ChatThread> {
           items.add(DayChip(label: dayLabel(m.at)));
           lastDay = day;
         }
-        items.add(Bubble(message: m, showAuthor: widget.showAuthor));
+        items.add(Bubble(message: m, showAuthor: widget.showAuthor, onCallBack: widget.onCallBack));
       }
       if (all.isEmpty) items.add(ZText(widget.emptyText, variant: TextVariant.small, muted: true, align: TextAlign.center));
       // Bottom-up so the newest message stays in view as the thread grows.

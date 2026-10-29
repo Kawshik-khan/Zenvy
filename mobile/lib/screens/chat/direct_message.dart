@@ -106,6 +106,7 @@ class DirectMessageScreen extends StatelessWidget {
               await app.api.markConversationRead(conversationId);
               await app.refreshBadges();
             },
+            onCallBack: call,
             placeholder: 'Message $first',
             emptyText: 'Say hi to $first. Messages are only visible to the two of you.',
           ),
