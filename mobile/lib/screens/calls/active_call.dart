@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -89,6 +90,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   bool _connecting = true;
   bool _mic = true;
   late bool _cam = widget.video;
+  lk.CameraPosition _cameraPosition = lk.CameraPosition.front;
+  lk.CameraCaptureOptions get _cameraOptions => lk.CameraCaptureOptions(cameraPosition: _cameraPosition);
   int _elapsed = 0;
   Timer? _clock;
   Timer? _statusPoll;
@@ -136,7 +139,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       await room.connect(session.liveKit.serverUrl, session.liveKit.token);
       _room = room;
       await room.localParticipant?.setMicrophoneEnabled(_mic);
-      if (_cam) await room.localParticipant?.setCameraEnabled(true);
+      if (_cam) await room.localParticipant?.setCameraEnabled(true, cameraCaptureOptions: _cameraOptions);
       _clock = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
       // Catches a decline, or a hang-up while still ringing, which never reach the room.
       if (_dmConversationId != null) _statusPoll = Timer.periodic(const Duration(seconds: 4), (_) => unawaited(_checkStillLive()));
@@ -161,12 +164,84 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   Future<void> _toggleCam() async {
     setState(() => _cam = !_cam);
     try {
-      await _room?.localParticipant?.setCameraEnabled(_cam);
+      await _room?.localParticipant?.setCameraEnabled(_cam, cameraCaptureOptions: _cameraOptions);
     } catch (_) {
       if (mounted) {
         setState(() => _cam = false);
         showMessage(context, "Couldn't start your camera. Check Zenvy's camera permission.", error: true);
       }
+    }
+  }
+
+  Future<void> _flipCamera() async {
+    final track = _room?.localParticipant?.videoTrackPublications.map((t) => t.track).whereType<lk.LocalVideoTrack>().firstOrNull;
+    if (track == null) return;
+    final next = _cameraPosition.switched();
+    try {
+      await track.setCameraPosition(next);
+      if (mounted) setState(() => _cameraPosition = next);
+    } catch (_) {
+      if (mounted) showMessage(context, "Couldn't switch camera.", error: true);
+    }
+  }
+
+  Future<void> _toggleSpeaker() async {
+    final audio = lk.AudioManager.instance;
+    await _quietly(() => audio.setSpeakerOutputPreferred(!audio.isSpeakerOutputPreferred));
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _moreOptions() async {
+    final speaker = lk.AudioManager.instance.isSpeakerOutputPreferred;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Palette.paper,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        side: BorderSide(color: Palette.ink, width: 3),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
+            children: [
+              const ZText('More options', variant: TextVariant.h2),
+              if (_cam)
+                ZButton(
+                  label: 'Flip camera',
+                  variant: ButtonVariant.secondary,
+                  icon: LucideIcons.switchCamera,
+                  onTap: () => Navigator.pop(context, 'flip'),
+                ),
+              ZButton(
+                label: speaker ? 'Switch to earpiece' : 'Switch to speaker',
+                variant: ButtonVariant.secondary,
+                icon: speaker ? LucideIcons.ear : LucideIcons.volume2,
+                onTap: () => Navigator.pop(context, 'speaker'),
+              ),
+              ZButton(
+                label: 'Focus timer',
+                variant: ButtonVariant.secondary,
+                icon: LucideIcons.timer,
+                onTap: () => Navigator.pop(context, 'focus'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case 'flip':
+        await _flipCamera();
+      case 'speaker':
+        await _toggleSpeaker();
+      case 'focus':
+        // Pushed on top, so the call keeps going underneath.
+        unawaited(context.push('/focus'));
     }
   }
 
@@ -366,6 +441,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
               active: !_cam,
               onTap: _toggleCam,
             ),
+            _Control(icon: LucideIcons.ellipsisVertical, label: 'More options', onTap: _moreOptions),
             _Control(icon: LucideIcons.phone, label: 'Leave call', danger: true, onTap: _confirmLeave),
           ],
         ),
