@@ -16,8 +16,12 @@ import {
   RoomAudioRenderer,
   useLocalParticipant,
   useParticipants,
+  isTrackReference,
   useRoomContext,
   useTracks,
+  VideoTrack,
+  type TrackReference,
+  type TrackReferenceOrPlaceholder,
 } from "@livekit/components-react";
 import { RoomEvent, Track } from "livekit-client";
 import {
@@ -190,6 +194,10 @@ function CallTiles() {
 
   const hasScreenShare = sortedTracks.some((trackRef) => trackRef.source === Track.Source.ScreenShare);
 
+  if (!hasScreenShare && sortedTracks.length === 2) {
+    return <OneToOneStage tracks={sortedTracks} />;
+  }
+
   return (
     <main
       className="grid flex-1 gap-3 overflow-y-auto p-3 md:gap-4 md:p-6"
@@ -219,6 +227,119 @@ function CallTiles() {
           <p className="m-0 font-grotesk font-bold">Camera is off</p>
         </div>
       )}
+    </main>
+  );
+}
+
+type InsetCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+const INSET_CORNER_CLASS: Record<InsetCorner, string> = {
+  "top-left": "top-3 left-3",
+  "top-right": "top-3 right-3",
+  "bottom-left": "bottom-3 left-3",
+  "bottom-right": "bottom-3 right-3",
+};
+
+function hasLiveVideo(trackRef: TrackReferenceOrPlaceholder): trackRef is TrackReference {
+  return isTrackReference(trackRef) && Boolean(trackRef.publication.track) && !trackRef.publication.isMuted;
+}
+
+// 1:1 calls: the other person fills the stage uncropped, your own camera floats in a corner.
+// Drag the inset to move it to another corner, tap it to swap the two views.
+function OneToOneStage({ tracks }: { tracks: TrackReferenceOrPlaceholder[] }) {
+  const stageRef = useRef<HTMLElement>(null);
+  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; moved: boolean } | null>(null);
+  const [swapped, setSwapped] = useState(false);
+  const [corner, setCorner] = useState<InsetCorner>("bottom-right");
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
+
+  const local = tracks.find((trackRef) => trackRef.participant.isLocal) ?? tracks[0];
+  const remote = tracks.find((trackRef) => trackRef !== local) ?? tracks[1];
+  const main = swapped ? local : remote;
+  const inset = swapped ? remote : local;
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const x = event.clientX - drag.startX;
+    const y = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(x, y) < 6) return;
+    drag.moved = true;
+    setDragOffset({ x, y });
+  };
+
+  const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragOffset(null);
+    if (!drag.moved) {
+      setSwapped((value) => !value);
+      return;
+    }
+    const stage = stageRef.current?.getBoundingClientRect();
+    const inset = event.currentTarget.getBoundingClientRect();
+    if (!stage) return;
+    const left = inset.left + inset.width / 2 < stage.left + stage.width / 2;
+    const top = inset.top + inset.height / 2 < stage.top + stage.height / 2;
+    setCorner(`${top ? "top" : "bottom"}-${left ? "left" : "right"}`);
+  };
+
+  return (
+    <main
+      ref={stageRef}
+      className="relative m-3 flex-1 overflow-hidden rounded-nb-lg border-nb bg-black md:m-6"
+    >
+      {hasLiveVideo(main) && (
+        <VideoTrack
+          trackRef={main}
+          aria-hidden
+          muted
+          className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl"
+        />
+      )}
+      <ParticipantTile
+        key={`main-${main.participant.identity}`}
+        trackRef={main}
+        className="relative h-full w-full bg-transparent! [&_.lk-participant-media-video]:bg-transparent! [&_.lk-participant-media-video]:object-contain!"
+        disableSpeakingIndicator={false}
+      />
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Swap video views"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          dragRef.current = null;
+          setDragOffset(null);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setSwapped((value) => !value);
+          }
+        }}
+        className={cx(
+          "absolute z-10 aspect-[3/4] w-28 touch-none overflow-hidden rounded-nb border-nb bg-card shadow-lg select-none md:w-44",
+          dragOffset ? "cursor-grabbing" : "cursor-grab transition-[top,right,bottom,left] duration-200",
+          INSET_CORNER_CLASS[corner],
+        )}
+        style={dragOffset ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
+      >
+        <ParticipantTile
+          key={`inset-${inset.participant.identity}`}
+          trackRef={inset}
+          className="pointer-events-none h-full w-full bg-card [&_.lk-participant-media-video]:object-cover! [&_.lk-participant-metadata]:hidden"
+          disableSpeakingIndicator={false}
+        />
+      </div>
     </main>
   );
 }
