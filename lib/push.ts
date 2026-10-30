@@ -6,11 +6,17 @@ let configured = false;
 function configure() {
   if (configured) return true;
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return false;
-  webpush.setVapidDetails(
-    `mailto:${process.env.VAPID_EMAIL || "admin@zenvy.app"}`,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY,
-  );
+  try {
+    webpush.setVapidDetails(
+      `mailto:${process.env.VAPID_EMAIL || "admin@zenvy.app"}`,
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY,
+    );
+  } catch (err) {
+    // Malformed keys (like CI's placeholders) turn push off instead of failing the caller.
+    console.error("Web push disabled:", err instanceof Error ? err.message : err);
+    return false;
+  }
   configured = true;
   return true;
 }
