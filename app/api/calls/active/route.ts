@@ -8,6 +8,7 @@ import {
   serializeCall,
   type CallScope,
 } from "@/lib/calls";
+import { expireRingingDmCalls } from "@/lib/missed-calls";
 
 function parseScope(searchParams: URLSearchParams): CallScope | null {
   const conversationId = searchParams.get("conversationId");
@@ -32,6 +33,7 @@ export async function GET(req: NextRequest) {
 
   try {
     await assertCanAccessCallScope(session.user.id, scope);
+    if (scope.type === "DM") await expireRingingDmCalls();
     const call = await prisma.callSession.findUnique({
       where: { roomId: getCallRoomId(scope) },
       select: { id: true, status: true },

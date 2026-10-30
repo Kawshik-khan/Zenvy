@@ -17,6 +17,7 @@ import {
   RoomHeader,
   TypingIndicator,
 } from '@/components/chat';
+import { useRingtone } from '@/components/chat/use-ringtone';
 import { Avatar, Badge, Button, buttonClasses, cx, EmptyState, IconButton, Input } from '@/components/ui';
 
 type ConversationSummary = {
@@ -83,6 +84,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
+  useRingtone(Boolean(incomingCall));
   const [activeCall, setActiveCall] = useState<IncomingCall | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -648,6 +650,9 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
                         deleted={message.status === 'DELETED'}
                         pending={message.pending}
                         onDelete={deleteMessage}
+                        callBackHref={(mediaType) =>
+                          `/call/active?type=dm&id=${activeConversation.id}&media=${mediaType === 'VIDEO' ? 'video' : 'audio'}`
+                        }
                       />
                     ))}
                   </ul>

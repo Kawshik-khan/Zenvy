@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { assertCanAccessCall } from '@/lib/calls';
+import { recordMissedDmCall } from '@/lib/missed-calls';
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,6 +44,26 @@ export async function POST(req: NextRequest) {
       });
     } catch (e) {
       // Ignore if not found
+    }
+
+    // A DM call is over as soon as either side hangs up. Counting the other person's
+    // still-INVITED row as "active" kept the call RINGING, so it rang on and the next
+    // start reopened the same session.
+    if (callSession.type === 'DM') {
+      // Hanging up before the other person answered is a missed call for them.
+      if (callSession.status === 'RINGING' && (await recordMissedDmCall(callSession.id))) {
+        return NextResponse.json({ success: true, ended: true }, { status: 200 });
+      }
+      const now = new Date();
+      await prisma.callParticipant.updateMany({
+        where: { callId: callSession.id, leftAt: null },
+        data: { leftAt: now, lastSeenAt: now, audioEnabled: false, videoEnabled: false, screenSharing: false },
+      });
+      await prisma.callSession.update({
+        where: { id: callSession.id },
+        data: { status: 'ENDED', endedAt: now }
+      });
+      return NextResponse.json({ success: true, ended: true }, { status: 200 });
     }
 
     const activeParticipants = await prisma.callParticipant.count({

@@ -14,8 +14,9 @@ export async function listNotifications(userId: string, take = 60) {
 
   const matchIds = notifications.filter((n) => n.type === "MATCH_REQUEST" && n.relatedId).map((n) => n.relatedId!);
   const inviteIds = notifications.filter((n) => n.type === "GROUP_INVITE" && n.relatedId).map((n) => n.relatedId!);
+  const callerIds = notifications.filter((n) => n.type === "MISSED_CALL" && n.relatedId).map((n) => n.relatedId!);
 
-  const [matches, invites] = await Promise.all([
+  const [matches, invites, callers] = await Promise.all([
     matchIds.length
       ? prisma.match.findMany({
           where: { id: { in: matchIds } },
@@ -28,13 +29,17 @@ export async function listNotifications(userId: string, take = 60) {
           select: { id: true, status: true, groupId: true, group: { select: { name: true } }, inviter: { select: { id: true, name: true, image: true } } },
         })
       : Promise.resolve([]),
+    callerIds.length
+      ? prisma.user.findMany({ where: { id: { in: [...new Set(callerIds)] } }, select: { id: true, name: true, image: true } })
+      : Promise.resolve([]),
   ]);
   const matchById = new Map(matches.map((match) => [match.id, match]));
   const inviteById = new Map(invites.map((invite) => [invite.id, invite]));
+  const callerById = new Map(callers.map((caller) => [caller.id, caller]));
 
   return notifications.map((n) => {
     let actor: { id: string; name: string | null; image: string | null } | null = null;
-    let target: { kind: "user" | "group" | "job"; id: string } | null = null;
+    let target: { kind: "user" | "group" | "job" | "dm"; id: string } | null = null;
     let pending = false;
 
     if (n.type === "MATCH_REQUEST" && n.relatedId) {
@@ -51,6 +56,10 @@ export async function listNotifications(userId: string, take = 60) {
         target = { kind: "group", id: invite.groupId };
         pending = invite.status === "PENDING";
       }
+    } else if (n.type === "MISSED_CALL" && n.relatedId) {
+      // relatedId is the caller; the app opens your DM with them to call back.
+      actor = callerById.get(n.relatedId) ?? null;
+      target = { kind: "dm", id: n.relatedId };
     } else if (n.type === "JOB_REVIEW" && n.relatedId) {
       target = { kind: "job", id: n.relatedId };
     }

@@ -30,6 +30,11 @@ export async function POST(req: NextRequest) {
       await assertCanAccessCall(userId, callSession.id);
     }
 
+    // Answering a DM call the caller already hung up would drop you alone into a dead room.
+    if (callSession.type === 'DM' && (callSession.status === 'ENDED' || callSession.status === 'MISSED')) {
+      return NextResponse.json({ error: 'This call has ended' }, { status: 410 });
+    }
+
     await prisma.callParticipant.upsert({
       where: {
         callId_userId: { callId: callSession.id, userId }
@@ -50,6 +55,11 @@ export async function POST(req: NextRequest) {
         videoEnabled: callSession.mediaType === 'VIDEO',
       }
     });
+
+    // Once the other person picks up, a DM call is no longer ringing (and can't ring out as missed).
+    if (callSession.type === 'DM' && callSession.status === 'RINGING' && callSession.startedById !== userId) {
+      await prisma.callSession.update({ where: { id: callSession.id }, data: { status: 'ACTIVE' } });
+    }
 
     const updated = await getCallWithParticipants(callSession.id);
     const liveKit = await createLiveKitCallCredentials({

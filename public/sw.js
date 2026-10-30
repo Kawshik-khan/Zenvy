@@ -25,13 +25,16 @@ self.addEventListener('push', function(event) {
       callerAvatar: data.callerAvatar,
       isVideo: data.isVideo,
       roomId: data.roomId,
-      url: data.callerId
+      url: data.url || (data.callerId
         ? `/chat/personal?id=${data.callerId}`
-        : '/',
+        : '/'),
+      callBackUrl: data.callBackUrl,
     },
     actions: data.type === 'incoming_call' ? [
       { action: 'answer', title: '📞 Answer' },
       { action: 'decline', title: '❌ Decline' },
+    ] : data.type === 'missed_call' && data.callBackUrl ? [
+      { action: 'callback', title: '📞 Call back' },
     ] : [],
   };
 
@@ -45,6 +48,7 @@ self.addEventListener('notificationclick', function(event) {
 
   const data = event.notification.data || {};
   let targetUrl = data.url || '/';
+  if (event.action === 'callback' && data.callBackUrl) targetUrl = data.callBackUrl;
 
   if (event.action === 'decline') {
     return;
