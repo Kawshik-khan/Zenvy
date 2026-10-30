@@ -62,7 +62,8 @@ jobs:
 
   e2e:
     name: End-to-end smoke
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, where Playwright 1.56 can't install Chromium.
+    runs-on: ubuntu-24.04
     # Always runs against a throwaway Postgres service, never a shared database.
     services:
       postgres:
