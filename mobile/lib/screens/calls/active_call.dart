@@ -328,16 +328,29 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
 
   Widget _callBody() {
     final room = _room!;
-    final tiles = <Widget>[
-      if (room.localParticipant != null) _Tile(participant: room.localParticipant!, label: 'You', cameraOff: !_cam),
-      for (final p in room.remoteParticipants.values) _Tile(participant: p, label: p.name.isNotEmpty ? p.name : 'Zenvy student'),
-    ];
+    final local = room.localParticipant;
+    final remotes = room.remoteParticipants.values.toList();
+    String remoteLabel(lk.Participant p) => p.name.isNotEmpty ? p.name : 'Zenvy student';
+    final Widget stage;
+    if (local != null && remotes.length == 1) {
+      stage = _Spotlight(
+        local: _Tile(participant: local, label: 'You', cameraOff: !_cam),
+        remote: _Tile(participant: remotes.single, label: remoteLabel(remotes.single)),
+      );
+    } else {
+      stage = _Grid(
+        children: [
+          if (local != null) _Tile(participant: local, label: 'You', cameraOff: !_cam),
+          for (final p in remotes) _Tile(participant: p, label: remoteLabel(p)),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 14,
       children: [
         _header(),
-        Expanded(child: _Grid(children: tiles)),
+        Expanded(child: stage),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -390,11 +403,95 @@ class _Grid extends StatelessWidget {
   }
 }
 
+/// 1:1 calls: the other person fills the stage uncropped, your own camera floats in a corner.
+/// Drag the inset to move it to another corner, tap it to swap the two views.
+class _Spotlight extends StatefulWidget {
+  const _Spotlight({required this.local, required this.remote});
+  final _Tile local;
+  final _Tile remote;
+
+  @override
+  State<_Spotlight> createState() => _SpotlightState();
+}
+
+class _SpotlightState extends State<_Spotlight> {
+  static const _margin = 10.0;
+  bool _swapped = false;
+  Alignment _corner = Alignment.bottomRight;
+  Offset? _drag;
+
+  @override
+  Widget build(BuildContext context) {
+    final main = _swapped ? widget.local : widget.remote;
+    final inset = _swapped ? widget.remote : widget.local;
+    return LayoutBuilder(
+      builder: (context, box) {
+        final w = math.min(120.0, box.maxWidth * 0.32);
+        final h = w * 4 / 3;
+        final maxX = math.max(_margin, box.maxWidth - w - _margin);
+        final maxY = math.max(_margin, box.maxHeight - h - _margin);
+        final docked = Offset(_corner.x < 0 ? _margin : maxX, _corner.y < 0 ? _margin : maxY);
+        final pos = _drag ?? docked;
+        return Stack(
+          children: [
+            Positioned.fill(child: main.copyWith(fit: lk.VideoViewFit.contain)),
+            AnimatedPositioned(
+              duration: _drag == null ? const Duration(milliseconds: 200) : Duration.zero,
+              curve: Curves.easeOut,
+              left: pos.dx,
+              top: pos.dy,
+              width: w,
+              height: h,
+              child: Semantics(
+                button: true,
+                label: 'Swap video views',
+                child: GestureDetector(
+                  onTap: () => setState(() => _swapped = !_swapped),
+                  onPanStart: (_) => setState(() => _drag = pos),
+                  onPanUpdate: (d) => setState(() {
+                    final next = (_drag ?? pos) + d.delta;
+                    _drag = Offset(next.dx.clamp(_margin, maxX), next.dy.clamp(_margin, maxY));
+                  }),
+                  onPanEnd: (_) => setState(() {
+                    final center = (_drag ?? pos) + Offset(w / 2, h / 2);
+                    _corner = Alignment(center.dx < box.maxWidth / 2 ? -1 : 1, center.dy < box.maxHeight / 2 ? -1 : 1);
+                    _drag = null;
+                  }),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: const [BoxShadow(color: Color(0x55000000), blurRadius: 12, offset: Offset(0, 4))],
+                    ),
+                    child: inset.copyWith(compact: true),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _Tile extends StatelessWidget {
-  const _Tile({required this.participant, required this.label, this.cameraOff = false});
+  const _Tile({
+    required this.participant,
+    required this.label,
+    this.cameraOff = false,
+    this.fit = lk.VideoViewFit.cover,
+    this.compact = false,
+  });
   final lk.Participant participant;
   final String label;
   final bool cameraOff;
+  final lk.VideoViewFit fit;
+
+  /// Small floating inset: smaller avatar and no name badge.
+  final bool compact;
+
+  _Tile copyWith({lk.VideoViewFit? fit, bool? compact}) =>
+      _Tile(participant: participant, label: label, cameraOff: cameraOff, fit: fit ?? this.fit, compact: compact ?? this.compact);
 
   @override
   Widget build(BuildContext context) {
@@ -418,29 +515,30 @@ class _Tile extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             if (video != null)
-              Positioned.fill(child: lk.VideoTrackRenderer(video, fit: lk.VideoViewFit.cover))
+              Positioned.fill(child: lk.VideoTrackRenderer(video, fit: fit))
             else
-              Avatar(initials: user.initials, color: Palette.quietCard, size: 72),
-            Positioned(
-              left: 8,
-              bottom: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Palette.quietCard,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Palette.quietInk, width: 2),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 5,
-                  children: [
-                    if (muted) const Icon(LucideIcons.micOff, size: 13, color: Palette.quietInk),
-                    ZText('$label${p.isSpeaking ? ' · speaking' : ''}', variant: TextVariant.h3, style: const TextStyle(fontSize: 12)),
-                  ],
+              Avatar(initials: user.initials, color: Palette.quietCard, size: compact ? 48 : 72),
+            if (!compact)
+              Positioned(
+                left: 8,
+                bottom: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Palette.quietCard,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Palette.quietInk, width: 2),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 5,
+                    children: [
+                      if (muted) const Icon(LucideIcons.micOff, size: 13, color: Palette.quietInk),
+                      ZText('$label${p.isSpeaking ? ' · speaking' : ''}', variant: TextVariant.h3, style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
