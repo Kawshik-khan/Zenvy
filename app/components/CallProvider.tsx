@@ -117,6 +117,8 @@ const CallContext = createContext<CallContextValue | null>(null);
 const STORAGE_KEY = "zenvy.activeCall";
 const CALL_PANEL_POSITION_PREFIX = "zenvy.callPanelPosition.";
 const PANEL_MARGIN = 12;
+/** How long a direct call waits for a dropped peer to reconnect before it ends. */
+const PEER_RECONNECT_GRACE_MS = 30_000;
 const MOBILE_BOTTOM_CLEARANCE = 168;
 const DESKTOP_BOTTOM_CLEARANCE = 24;
 
@@ -541,18 +543,40 @@ function LiveCallSurface({
   const room = useRoomContext();
   const isDirectCall = (call?.type || (scope?.type === "dm" ? "DM" : "")) === "DM";
 
-  // A direct call ends for both sides as soon as one hangs up. If the other person drops out of
-  // the media room, hang up too rather than sit alone in it (the app does the same).
+  const [peerReconnecting, setPeerReconnecting] = useState(false);
+
+  // A hang-up ends a direct call at once (through the server). If the other person instead drops
+  // out of the media room, e.g. their network failed, give them a grace period to come back
+  // before ending the call, rather than either cutting them off or sitting alone forever.
   useEffect(() => {
     if (!isDirectCall) return;
+    let timer: number | undefined;
+    const stopWaiting = () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = undefined;
+      setPeerReconnecting(false);
+    };
     const onParticipantDisconnected = () => {
-      if (room.remoteParticipants.size === 0) onLeave();
+      if (room.remoteParticipants.size > 0 || timer !== undefined) return;
+      setPeerReconnecting(true);
+      timer = window.setTimeout(() => {
+        timer = undefined;
+        if (room.remoteParticipants.size === 0) onLeave();
+        else setPeerReconnecting(false);
+      }, PEER_RECONNECT_GRACE_MS);
     };
     room.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+    room.on(RoomEvent.ParticipantConnected, stopWaiting);
     return () => {
       room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+      room.off(RoomEvent.ParticipantConnected, stopWaiting);
+      if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [isDirectCall, onLeave, room]);
+
+  const callStatusText = peerReconnecting
+    ? "Connection lost, waiting for them to reconnect"
+    : `${(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, ${participants.length || 1} active`;
 
   const selectedCallTrack = focusTracks[0];
   const callMusicRef = useRef<HTMLAudioElement | null>(null);
@@ -810,8 +834,8 @@ function LiveCallSurface({
             <Avatar name={title} src={avatar} size="md" />
             <span className="min-w-0">
               <span className="block truncate font-grotesk font-bold">{title}</span>
-              <span className="block truncate text-sm text-fg-muted">
-                {(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, {participants.length || 1} active
+              <span className="block truncate text-sm text-fg-muted" role="status">
+                {callStatusText}
               </span>
             </span>
           </button>
@@ -854,8 +878,8 @@ function LiveCallSurface({
           <Avatar name={title} src={avatar} size="md" />
           <div className="min-w-0">
             <h1 className="m-0 truncate font-grotesk text-lg font-bold">{title}</h1>
-            <p className="m-0 text-sm text-fg-muted">
-              {(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, {participants.length || 1} active
+            <p className="m-0 text-sm text-fg-muted" role="status">
+              {callStatusText}
             </p>
           </div>
         </div>
