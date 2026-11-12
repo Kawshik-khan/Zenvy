@@ -197,6 +197,8 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
       setIncomingCall((current) => (current?.id === callId ? null : current));
       setActiveCall((current) => (current?.id === callId ? null : current));
     };
+    // The caller hung up (or the call rang out): stop showing it as ringing or joinable.
+    const onCallEnded = onCallDeclined;
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -209,6 +211,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
     socket.on('call:incoming', onIncomingCall);
     socket.on('call:state', onCallState);
     socket.on('call:declined', onCallDeclined);
+    socket.on('call:ended', onCallEnded);
 
     if (socket.connected) setIsConnected(true);
 
@@ -224,6 +227,7 @@ export default function ChatClient({ user, groups, partners }: ChatClientProps) 
       socket.off('call:incoming', onIncomingCall);
       socket.off('call:state', onCallState);
       socket.off('call:declined', onCallDeclined);
+      socket.off('call:ended', onCallEnded);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, [activeConversationId, user.id, user.name]);

@@ -190,14 +190,19 @@ export default function GroupChatClient({
       });
     });
 
-    socket.on('call:state', (payload: ActiveCall) => {
+    const onCallState = (payload: ActiveCall) => {
       if (payload.groupId !== group.id) return;
       if (payload.status === 'ENDED' || payload.status === 'MISSED') {
         setActiveCall(null);
       } else {
         setActiveCall(payload);
       }
-    });
+    };
+    const onCallEnded = ({ callId }: { callId: string }) => {
+      setActiveCall((current) => (current?.id === callId ? null : current));
+    };
+    socket.on('call:state', onCallState);
+    socket.on('call:ended', onCallEnded);
 
     return () => {
       socket.off('connect');
@@ -207,7 +212,8 @@ export default function GroupChatClient({
       socket.off('group_error');
       socket.off('user_typing');
       socket.off('user_stopped_typing');
-      socket.off('call:state');
+      socket.off('call:state', onCallState);
+      socket.off('call:ended', onCallEnded);
       socket.disconnect();
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
