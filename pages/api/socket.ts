@@ -371,6 +371,16 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
         if (call.groupId) io.to(`group_${call.groupId}`).emit('call:state', payload);
         if (call.channelId) io.to(`channel_${call.channelId}`).emit('call:state', payload);
         if (call.conversationId) io.to(`conversation_${call.conversationId}`).emit('call:state', payload);
+        // A finished call is announced to everyone in it, including an invitee whose phone is still
+        // ringing and who is in none of the rooms above, so no screen is left waiting on a dead call.
+        if (call.status === 'ENDED' || call.status === 'MISSED') {
+          const targets = [`call_${call.id}`];
+          if (call.groupId) targets.push(`group_${call.groupId}`);
+          if (call.channelId) targets.push(`channel_${call.channelId}`);
+          if (call.conversationId) targets.push(`conversation_${call.conversationId}`);
+          for (const participant of call.participants) targets.push(...getUserSocketIds(participant.userId));
+          io.to(targets).emit('call:ended', { callId: call.id, status: call.status });
+        }
       };
 
       function isSocketInCallRoom(targetSocket: any, callId: string) {
@@ -465,7 +475,7 @@ export default function SocketHandler(req: NextApiRequest, res: any) {
       socket.on('call:leave', async (data: { callId: string }) => {
         if (!userId) return;
         try {
-          if (!isSocketInCallRoom(socket, data.callId)) return;
+          if (!isSocketInCallRoom(socket, data.callId)) await assertCanAccessCall(userId, data.callId);
           socket.leave(`call_${data.callId}`);
           socket.to(`call_${data.callId}`).emit('call:peer-left', {
             callId: data.callId,

@@ -117,6 +117,8 @@ const CallContext = createContext<CallContextValue | null>(null);
 const STORAGE_KEY = "zenvy.activeCall";
 const CALL_PANEL_POSITION_PREFIX = "zenvy.callPanelPosition.";
 const PANEL_MARGIN = 12;
+/** How long a direct call waits for a dropped peer to reconnect before it ends. */
+const PEER_RECONNECT_GRACE_MS = 30_000;
 const MOBILE_BOTTOM_CLEARANCE = 168;
 const DESKTOP_BOTTOM_CLEARANCE = 24;
 
@@ -538,6 +540,44 @@ function LiveCallSurface({
   const { openPomodoro } = usePomodoro();
   const [notePadOpen, setNotePadOpen] = useState(false);
   const participants = useParticipants();
+  const room = useRoomContext();
+  const isDirectCall = (call?.type || (scope?.type === "dm" ? "DM" : "")) === "DM";
+
+  const [peerReconnecting, setPeerReconnecting] = useState(false);
+
+  // A hang-up ends a direct call at once (through the server). If the other person instead drops
+  // out of the media room, e.g. their network failed, give them a grace period to come back
+  // before ending the call, rather than either cutting them off or sitting alone forever.
+  useEffect(() => {
+    if (!isDirectCall) return;
+    let timer: number | undefined;
+    const stopWaiting = () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = undefined;
+      setPeerReconnecting(false);
+    };
+    const onParticipantDisconnected = () => {
+      if (room.remoteParticipants.size > 0 || timer !== undefined) return;
+      setPeerReconnecting(true);
+      timer = window.setTimeout(() => {
+        timer = undefined;
+        if (room.remoteParticipants.size === 0) onLeave();
+        else setPeerReconnecting(false);
+      }, PEER_RECONNECT_GRACE_MS);
+    };
+    room.on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+    room.on(RoomEvent.ParticipantConnected, stopWaiting);
+    return () => {
+      room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+      room.off(RoomEvent.ParticipantConnected, stopWaiting);
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [isDirectCall, onLeave, room]);
+
+  const callStatusText = peerReconnecting
+    ? "Connection lost, waiting for them to reconnect"
+    : `${(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, ${participants.length || 1} active`;
+
   const selectedCallTrack = focusTracks[0];
   const callMusicRef = useRef<HTMLAudioElement | null>(null);
   const [callMusicOn, setCallMusicOn] = useState(false);
@@ -794,8 +834,8 @@ function LiveCallSurface({
             <Avatar name={title} src={avatar} size="md" />
             <span className="min-w-0">
               <span className="block truncate font-grotesk font-bold">{title}</span>
-              <span className="block truncate text-sm text-fg-muted">
-                {(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, {participants.length || 1} active
+              <span className="block truncate text-sm text-fg-muted" role="status">
+                {callStatusText}
               </span>
             </span>
           </button>
@@ -838,8 +878,8 @@ function LiveCallSurface({
           <Avatar name={title} src={avatar} size="md" />
           <div className="min-w-0">
             <h1 className="m-0 truncate font-grotesk text-lg font-bold">{title}</h1>
-            <p className="m-0 text-sm text-fg-muted">
-              {(call?.mediaType || mediaType) === "VIDEO" ? "Video" : "Voice"} call, {participants.length || 1} active
+            <p className="m-0 text-sm text-fg-muted" role="status">
+              {callStatusText}
             </p>
           </div>
         </div>
@@ -912,10 +952,16 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   const mediaTypeRef = useRef<"AUDIO" | "VIDEO">("AUDIO");
   const inFlightKeyRef = useRef("");
   const restoreAttemptedRef = useRef(false);
+  const pathnameRef = useRef(pathname);
+  const leavingRef = useRef(false);
 
   const expanded = pathname === "/call/active";
   const liveKitReady = Boolean(credentials?.serverUrl && credentials?.token && activeCallId);
   const hasActiveCallSurface = Boolean(liveKitReady && currentUser);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     activeCallIdRef.current = activeCallId;
@@ -950,6 +996,13 @@ export default function CallProvider({ children }: { children: React.ReactNode }
     persistCall(null);
     clearCallPanelPosition(previousCallId);
   }, [persistCall]);
+
+  // Tears down the call and gets off the full-screen call page. Clearing alone left /call/active
+  // showing its "Connecting media" placeholder forever. replace() keeps Back from reopening the call.
+  const endCall = useCallback(() => {
+    clearCall();
+    if (pathnameRef.current === "/call/active") router.replace("/chat");
+  }, [clearCall, router]);
 
   const startOrJoinCall = useCallback(
     async (input: CallSessionInput) => {
@@ -1049,6 +1102,8 @@ export default function CallProvider({ children }: { children: React.ReactNode }
           scope: resolvedScope,
         });
       } catch (err: any) {
+        // Forget the call, or every reload would try to rejoin it again.
+        persistCall(null);
         setError(err.message || "Unable to initialize call");
       } finally {
         setIsConnecting(false);
@@ -1081,46 +1136,104 @@ export default function CallProvider({ children }: { children: React.ReactNode }
   }, [activeCallId, persistCall, startOrJoinCall]);
 
   useEffect(() => {
+    if (!activeCallId) return;
+
     const onCallState = (payload: CallPayload) => {
-      if (payload.id === activeCallId) {
-        setCall(payload);
-        if (payload.status === "ENDED" || payload.status === "MISSED") clearCall();
+      if (payload.id !== activeCallId) return;
+      if (payload.status === "ENDED" || payload.status === "MISSED") {
+        endCall();
+        return;
       }
+      setCall(payload);
     };
 
-    const onCallEnded = (payload: CallPayload | { callId: string }) => {
-      if ("id" in payload && payload.id !== activeCallId) return;
-      if ("callId" in payload && payload.callId !== activeCallId) return;
-      clearCall();
-      if (pathname === "/call/active") router.push("/chat");
+    const onCallEnded = (payload: { callId?: string; id?: string }) => {
+      if ((payload.callId || payload.id) !== activeCallId) return;
+      endCall();
     };
 
-    const onSocketError = (payload: { message: string }) => setError(payload.message);
+    // The other person declined a direct call: it is over for the caller too.
+    const onCallDeclined = (payload: { callId: string }) => {
+      if (payload.callId !== activeCallId || callRef.current?.type !== "DM") return;
+      endCall();
+    };
+
+    const onSocketError = (payload: { message: string }) => {
+      if (!leavingRef.current) setError(payload.message);
+    };
 
     socket.on("call:state", onCallState);
     socket.on("call:ended", onCallEnded);
+    socket.on("call:declined", onCallDeclined);
     socket.on("call:error", onSocketError);
 
     return () => {
       socket.off("call:state", onCallState);
       socket.off("call:ended", onCallEnded);
+      socket.off("call:declined", onCallDeclined);
       socket.off("call:error", onSocketError);
     };
-  }, [activeCallId, clearCall, pathname, router]);
+  }, [activeCallId, endCall]);
+
+  // Safety net for missed socket events (pages that disconnect the shared socket, a dropped
+  // connection, a socket server on another host). It also drives the ring timeout: the poll
+  // turns a call nobody answered into a missed call, which then ends here.
+  useEffect(() => {
+    if (!activeCallId) return;
+    let cancelled = false;
+
+    const check = async () => {
+      if (!socket.connected) {
+        socket.connect();
+        socket.emit("call:join", { callId: activeCallId });
+      }
+      const target = getCallTarget(callRef.current, scopeRef.current);
+      if (!target || target.type !== "dm") return;
+      try {
+        const res = await fetch(`/api/calls/active?conversationId=${encodeURIComponent(target.id)}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || activeCallIdRef.current !== activeCallId) return;
+        if (data.call?.id !== activeCallId) {
+          // Ended without a broadcast (e.g. it rang out): have the socket server announce it, so
+          // the other person's ringing banner goes away too.
+          socket.emit("call:leave", { callId: activeCallId });
+          endCall();
+        }
+      } catch {
+        // A failed check just waits for the next one.
+      }
+    };
+
+    const timer = window.setInterval(check, 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [activeCallId, endCall]);
 
   const leaveCall = useCallback(async () => {
-    const callId = activeCallId;
-    if (callId) {
-      socket.emit("call:leave", { callId });
-      await fetch("/api/calls/leave", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ callId }),
-      }).catch(() => {});
+    const callId = activeCallIdRef.current;
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    // Hang up locally straight away, so a slow network never leaves the button looking dead.
+    endCall();
+    try {
+      if (callId) {
+        // Save the hang-up first, then tell the socket server: it broadcasts the call's state
+        // from the database, and only now does that state say the call is over.
+        await fetch("/api/calls/leave", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callId }),
+          keepalive: true,
+        }).catch(() => {});
+        socket.emit("call:leave", { callId });
+      }
+    } finally {
+      leavingRef.current = false;
     }
-    clearCall();
-    if (pathname === "/call/active") router.push("/chat");
-  }, [activeCallId, clearCall, pathname, router]);
+  }, [endCall]);
 
   const minimizeCall = useCallback(() => {
     if (pathname === "/call/active") router.back();

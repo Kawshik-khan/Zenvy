@@ -70,6 +70,9 @@ class _Control extends StatelessWidget {
 
 /// A live call over LiveKit. Opens with [callId] to join a call, or with [conversationId]
 /// (a DM) or [groupId] to start one, through the same /api/calls routes the web app uses.
+/// How long a direct call waits for a dropped peer to reconnect before it ends.
+const _peerReconnectGrace = Duration(seconds: 30);
+
 class ActiveCallScreen extends StatefulWidget {
   const ActiveCallScreen({super.key, this.callId, this.conversationId, this.groupId, required this.title, this.video = false});
 
@@ -95,6 +98,8 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   int _elapsed = 0;
   Timer? _clock;
   Timer? _statusPoll;
+  // Running while the other person in a DM has dropped out of the room and may still come back.
+  Timer? _peerGrace;
   lk.EventsListener<lk.RoomEvent>? _events;
   // Set for DM calls, which end for both sides as soon as one person hangs up.
   String? _dmConversationId;
@@ -132,8 +137,9 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
       events
         ..on<lk.ParticipantDisconnectedEvent>((e) {
           final othersLeft = room.remoteParticipants.values.where((p) => p.identity != e.participant.identity).isEmpty;
-          if (_dmConversationId != null && othersLeft) unawaited(_endedElsewhere());
+          if (_dmConversationId != null && othersLeft) _waitForPeerToReconnect();
         })
+        ..on<lk.ParticipantConnectedEvent>((_) => _stopWaitingForPeer())
         ..on<lk.RoomDisconnectedEvent>((_) => unawaited(_endedElsewhere()));
       _events = events;
       await room.connect(session.liveKit.serverUrl, session.liveKit.token);
@@ -256,6 +262,27 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     }
   }
 
+  /// The other person dropped out without hanging up (a hang-up ends the call through the server
+  /// and is caught by the status poll). Give them [_peerReconnectGrace] to come back first.
+  void _waitForPeerToReconnect() {
+    if (_left || _peerGrace != null) return;
+    _peerGrace = Timer(_peerReconnectGrace, () {
+      _peerGrace = null;
+      if (_room?.remoteParticipants.isEmpty ?? true) {
+        unawaited(_endedElsewhere());
+      } else if (mounted) {
+        setState(() {});
+      }
+    });
+    if (mounted) setState(() {});
+  }
+
+  void _stopWaitingForPeer() {
+    _peerGrace?.cancel();
+    _peerGrace = null;
+    if (mounted) setState(() {});
+  }
+
   /// The other side hung up, declined, or the room closed: leave too instead of waiting alone.
   Future<void> _endedElsewhere() async {
     if (_left || !mounted) return;
@@ -271,6 +298,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
     _left = true;
     _clock?.cancel();
     _statusPoll?.cancel();
+    _peerGrace?.cancel();
     unawaited(_events?.dispose());
     _events = null;
     final room = _room;
@@ -290,6 +318,7 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
   void dispose() {
     _clock?.cancel();
     _statusPoll?.cancel();
+    _peerGrace?.cancel();
     unawaited(_events?.dispose());
     final room = _room;
     if (room != null && !_left) {
@@ -389,7 +418,11 @@ class _ActiveCallScreenState extends State<ActiveCallScreen> {
             children: [
               ZText(widget.title, variant: TextVariant.h3, maxLines: 1, style: const TextStyle(fontSize: 16)),
               ZText(
-                people <= 1 ? (_room == null ? 'Connecting' : 'Waiting for others to join') : '$people in call',
+                _peerGrace != null
+                    ? 'Connection lost, waiting for them to reconnect'
+                    : people <= 1
+                    ? (_room == null ? 'Connecting' : 'Waiting for others to join')
+                    : '$people in call',
                 variant: TextVariant.small,
                 muted: true,
                 style: const TextStyle(fontSize: 12),
