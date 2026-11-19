@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { ButtonLink, cx } from "@/components/ui";
 
@@ -17,10 +17,7 @@ export function LandingNav({ jobsEnabled }: { jobsEnabled: boolean }) {
   const [active, setActive] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const navRef = useRef<HTMLElement>(null);
-  const [pill, setPill] = useState<{ left: number; width: number } | null>(null);
-
-  // Highlight the section in view, with a sliding sticker behind its link.
+  // Underline the link for the section in view.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -42,27 +39,20 @@ export function LandingNav({ jobsEnabled }: { jobsEnabled: boolean }) {
     };
   }, []);
 
-  useEffect(() => {
-    const link = active ? navRef.current?.querySelector<HTMLAnchorElement>(`a[href="${active}"]`) : null;
-    setPill(link ? { left: link.offsetLeft, width: link.offsetWidth } : null);
-  }, [active]);
-
   return (
-    <header className={cx("sticky top-0 z-50 border-b-[length:var(--nb-border-width)] border-line bg-canvas transition-shadow duration-200", scrolled && "shadow-[0_4px_0_0_var(--nb-line)]")}>
+    <header className={cx("sticky top-0 z-50 border-b-2 bg-canvas transition-colors duration-200", scrolled ? "border-line" : "border-transparent")}>
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <Logo />
-        <nav ref={navRef} aria-label="Page sections" className="relative hidden items-center gap-1 font-grotesk font-medium lg:flex">
-          <span
-            aria-hidden="true"
-            className="absolute top-1/2 h-10 -translate-y-1/2 rounded-nb border-2 border-line bg-focus shadow-nb-sm transition-[left,width,opacity] duration-[380ms] ease-[var(--ease-nb-spring)]"
-            style={{ left: pill?.left ?? 0, width: pill?.width ?? 0, opacity: pill ? 1 : 0 }}
-          />
+        <nav aria-label="Page sections" className="hidden items-center gap-1 font-grotesk text-[15px] font-medium lg:flex">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
               aria-current={active === link.href ? "true" : undefined}
-              className="nb-focus relative inline-flex min-h-11 items-center rounded-nb px-3 text-fg no-underline"
+              className={cx(
+                "nb-focus inline-flex min-h-11 items-center rounded-nb px-3 text-fg underline decoration-2 underline-offset-[7px] transition-[text-decoration-color] duration-200",
+                active === link.href ? "decoration-match" : "decoration-transparent hover:decoration-line/40",
+              )}
             >
               {link.label}
             </a>

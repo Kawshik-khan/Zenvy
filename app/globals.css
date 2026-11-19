@@ -226,6 +226,7 @@
 
   --font-grotesk: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-jetbrains: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
 }
 
 /* Standard edge: 3px ink (2px in quiet volume). */
